@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@formbro/shared",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "clsx": "2.1.1",
+    "tailwind-merge": "3.5.0"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

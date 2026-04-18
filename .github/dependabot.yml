@@ -1,0 +1,20 @@
+name: Dependabot
+
+version: 2
+
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    target-branch: "canary"
+    assignees:
+      - "CrutchTheClutch"
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    target-branch: "canary"
+    assignees:
+      - "CrutchTheClutch"

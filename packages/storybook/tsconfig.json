@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@tsconfig/node22/tsconfig.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "strict": true,
+    "types": ["vite/client", "node"]
+  },
+  "include": [
+    ".storybook/**/*.ts",
+    ".storybook/**/*.tsx",
+    "stories/**/*.stories.ts",
+    "stories/**/*.stories.tsx",
+    "vitest.config.ts",
+    "../ui/src/**/*.stories.ts",
+    "../ui/src/**/*.stories.tsx"
+  ]
+}

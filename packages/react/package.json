@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@formbro/react",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    "./*": "./src/*.tsx"
+  },
+  "dependencies": {
+    "@formbro/core": "workspace:*",
+    "@formbro/shared": "workspace:*",
+    "@formbro/ui": "workspace:*",
+    "@tanstack/react-form-nextjs": "1.28.3",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "slugify": "1.6.9",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "catalog:"
+  }
+}

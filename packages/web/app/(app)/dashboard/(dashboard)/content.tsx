@@ -1,0 +1,29 @@
+"use client";
+
+import { useDashboardData } from "./data-provider";
+import { EmptyDashboard } from "./empty";
+import { WorkspaceCard } from "./workspace-card";
+
+export function DashboardContent() {
+  const { workspaces } = useDashboardData();
+
+  if (workspaces.length === 0) {
+    return <EmptyDashboard />;
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-6xl px-5 py-8">
+      <div className="mb-6">
+        <h1 className="font-display text-2xl font-bold tracking-tight">All Workspaces</h1>
+        <p className="mt-1 font-mono text-xs tracking-wider text-muted-foreground uppercase">
+          {workspaces.length} workspace{workspaces.length === 1 ? "" : "s"}
+        </p>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {workspaces.map((workspace) => (
+          <WorkspaceCard key={workspace._id} workspace={workspace} />
+        ))}
+      </div>
+    </div>
+  );
+}

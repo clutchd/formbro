@@ -1,0 +1,11 @@
+.DS_Store
+node_modules
+.env*
+.next
+.react-email
+.turbo
+dist
+tsconfig.tsbuildinfo
+next-env.d.ts
+*storybook.log
+storybook-static
