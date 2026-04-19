@@ -6,11 +6,8 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(),
     ownerAuthId: v.string(),
-    plan: v.union(
-      v.literal("hobby"),
-      v.literal("standard"),
-      v.literal("pro"),
-      v.literal("unlimited"),
+    plan: v.optional(
+      v.union(v.literal("hobby"), v.literal("standard"), v.literal("pro"), v.literal("unlimited")),
     ),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),

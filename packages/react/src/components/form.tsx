@@ -13,8 +13,23 @@ import { Progress } from "@formbro/ui/progress";
 import { RiArrowLeftLine, RiArrowRightLine } from "@remixicon/react";
 import { useEffect, useState } from "react";
 import * as React from "react";
-import { useForm } from "../hooks/use-form";
+import { type UseFormInstrumentation, useForm } from "../hooks/use-form";
 import { Page } from "./page";
+
+export type FormProps<T extends FormInput = FormInput, TData = unknown> = {
+  schema: T;
+  className?: string;
+  action?: FormAction<T, TData>;
+  onMutate?: FormOnMutate<T>;
+  onSuccess?: FormOnSuccess<T, TData>;
+  onError?: FormOnError<T>;
+  instrumentation?: UseFormInstrumentation<T, TData>;
+  onPercentChange?: (percent: number) => void;
+  disabled?: boolean;
+  preview?: boolean;
+  debug?: boolean;
+  children?: (formState: ReturnType<typeof useForm<T, TData>>) => React.ReactNode;
+};
 
 export function Form<T extends FormInput = FormInput, TData = unknown>({
   schema,
@@ -22,6 +37,7 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   onMutate,
   onSuccess,
   onError,
+  instrumentation,
   disabled,
   preview,
   className,
@@ -29,25 +45,14 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   children,
   onPercentChange,
   ...props
-}: {
-  schema: T;
-  className?: string;
-  action?: FormAction<T, TData>;
-  onMutate?: FormOnMutate<T>;
-  onSuccess?: FormOnSuccess<T, TData>;
-  onError?: FormOnError<T>;
-  onPercentChange?: (percent: number) => void;
-  disabled?: boolean;
-  preview?: boolean;
-  debug?: boolean;
-  children?: (formState: ReturnType<typeof useForm<T, TData>>) => React.ReactNode;
-}) {
+}: FormProps<T, TData>) {
   const state = useForm<T, TData>({
     schema,
     action,
     onMutate,
     onSuccess,
     onError,
+    instrumentation,
     disabled,
     preview,
     debug,

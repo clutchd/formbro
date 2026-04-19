@@ -5,7 +5,7 @@ import { DevTools } from "@/components/dev-tools";
 import { Toaster } from "@/components/sonner";
 import { ThemeProvider } from "@/components/theme";
 import { getToken } from "@/lib/auth/server";
-import { ConvexProvider } from "@/lib/convex";
+import { ConvexProvider } from "@/lib/convex/client";
 import { devOnly, rl } from "@/lib/env";
 import { PosthogProvider } from "@/lib/posthog";
 import "./globals.css";

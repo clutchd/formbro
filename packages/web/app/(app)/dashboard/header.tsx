@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 import { useAppData } from "../data-provider";
+import { useDashboardPrewarmIntent } from "./(dashboard)/data-provider";
 import { AccountMenu } from "./account-menu";
 
 function formatSegment(segment: string) {
@@ -27,7 +28,7 @@ export function DashboardHeader({ children = null }: { children?: React.ReactNod
   return (
     <header className="sticky top-0 z-50 mx-auto flex w-full flex-row items-center justify-between border-b bg-sidebar px-5 py-3">
       <div className="flex flex-row items-center gap-4">
-        <Link href="/dashboard">
+        <Link {...useDashboardPrewarmIntent()}>
           <Logo className="text-center text-xl hover:opacity-80" />
         </Link>
 

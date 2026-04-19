@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "bun --env-file=../../.env next build",
-    "dev": "bun --env-file=../../.env next dev"
+    "dev": "bun --env-file=../../.env next dev",
+    "start": "bun --env-file=../../.env next start"
   },
   "dependencies": {
     "@convex-dev/better-auth": "catalog:",

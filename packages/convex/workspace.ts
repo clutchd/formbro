@@ -2,7 +2,76 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import type { Doc } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
-import { getUser, identityAvatarUrl, identityEmail, identityName, requireUser } from "./auth";
+import {
+  getUser,
+  identityAvatarUrl,
+  identityEmail,
+  identityName,
+  requireUser,
+  requireWorkspaceAccess,
+} from "./auth";
+import { FormBroError } from "./errors";
+
+function buildCanonicalPath(input: { workspaceSlug: string; formId?: string }) {
+  if (input.formId) {
+    return `/dashboard/${input.workspaceSlug}/${input.formId}`;
+  }
+
+  return `/dashboard/${input.workspaceSlug}`;
+}
+
+export const context = query({
+  args: {
+    workspaceSlug: v.optional(v.string()),
+    formId: v.optional(v.id("forms")),
+  },
+  handler: async (ctx, args) => {
+    const user = await getUser(ctx);
+    if (!user) return null;
+
+    let workspace: Doc<"workspaces"> | null = null;
+    let form: Doc<"forms"> | null = null;
+
+    if (args.formId) {
+      form = await ctx.db.get(args.formId);
+      if (!form) return null;
+
+      workspace = await ctx.db.get(form.workspaceId);
+      if (!workspace) return null;
+    } else if (args.workspaceSlug) {
+      const workspaceSlug = args.workspaceSlug;
+      workspace = await ctx.db
+        .query("workspaces")
+        .withIndex("by_slug", (q) => q.eq("slug", workspaceSlug))
+        .unique();
+      if (!workspace) return null;
+    } else {
+      return null;
+    }
+
+    const { membership } = await requireWorkspaceAccess(ctx, workspace._id);
+    if (!membership) return null;
+
+    const canonicalPath = buildCanonicalPath({
+      workspaceSlug: workspace.slug,
+      formId: form?._id,
+    });
+
+    const sameWorkspaceSlug =
+      args.workspaceSlug === undefined || args.workspaceSlug === workspace.slug;
+    const sameFormId = args.formId === undefined || args.formId === form?._id;
+
+    return {
+      workspace: {
+        ...workspace,
+        role: membership.role,
+      },
+      form: form ?? undefined,
+      canonicalPath,
+      isCanonical: sameWorkspaceSlug && sameFormId,
+    };
+  },
+});
 
 function normalizedEmail(value: string) {
   return value.trim().toLowerCase();
@@ -27,7 +96,7 @@ export async function _createWorkspace({
   ctx,
   name,
   owner,
-  plan = "hobby",
+  plan,
 }: {
   ctx: MutationCtx;
   name: string;
@@ -98,6 +167,21 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
+
+    const unpaidWorkspaces = await ctx.db
+      .query("workspaces")
+      .withIndex("by_owner", (q) => q.eq("ownerAuthId", user.subject))
+      .filter(
+        (q) => q.eq(q.field("billingStatus"), "not_subscribed") || q.eq(q.field("plan"), undefined),
+      )
+      .collect();
+
+    if (unpaidWorkspaces.length > 0) {
+      throw new FormBroError("CONFLICT", {
+        message: "You can only have one unpaid workspace at a time",
+      });
+    }
+
     return await _createWorkspace({
       ctx,
       name: args.name,

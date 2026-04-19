@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThemeIcon, useToggleTheme } from "@/components/theme";
 import { signOut } from "@/lib/auth/client";
+import { useDashboardPrewarmIntent } from "./(dashboard)/data-provider";
 
 type User =
   | {
@@ -62,7 +63,7 @@ export function AccountMenu({ user }: { user: User }) {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link className="flex items-center gap-2" href="/dashboard">
+            <Link className="flex items-center gap-2" {...useDashboardPrewarmIntent()}>
               <RiHomeLine />
               <span>Dashboard</span>
             </Link>

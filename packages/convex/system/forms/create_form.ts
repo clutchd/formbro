@@ -2,14 +2,14 @@ import type { FormInput } from "@formbro/core/schema/form";
 import { FORMBRO_SCHEMA_VERSION } from "@formbro/core/schema/version";
 import { initForm } from "./_init";
 
-export const CREATE_WORKSPACE = initForm("create-workspace", {
+export const CREATE_FORM = initForm("create-form", {
   version: FORMBRO_SCHEMA_VERSION,
-  name: "Create Workspace",
+  name: "Create Form",
   elements: [
     {
       name: "Name",
       type: "short_text",
-      description: "The name of this workspace.",
+      description: "The name of this form.",
       rules: [
         {
           type: "required",
@@ -17,14 +17,15 @@ export const CREATE_WORKSPACE = initForm("create-workspace", {
         },
         {
           type: "max",
-          value: 32,
+          value: 64,
+          message: "Name must be less than 64 characters",
         },
       ],
     },
   ],
   toasts: {
-    success: "Workspace created successfully",
-    error: "Failed to create workspace",
-    loading: "Creating workspace",
+    success: "Form created successfully!",
+    error: "Failed to create form.",
+    loading: "Creating form",
   },
 } as const satisfies FormInput);

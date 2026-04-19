@@ -1,24 +1,32 @@
 "use client";
 
-import type { api } from "@formbro/convex/_generated/api";
-import { usePreloadedQuery, type Preloaded } from "convex/react";
+import { api } from "@formbro/convex/_generated/api";
+import { useConvex, useQuery } from "convex/react";
 import { createContext, useContext, type ReactNode } from "react";
+import { nextUseRoutePrewarmIntent } from "@/lib/convex/next-use-route-prewarm-intent";
+import { makeRouteQuerySpec, prewarmSpecs } from "@/lib/convex/route-data";
+
+export function useDashboardPrewarmIntent() {
+  const convex = useConvex();
+  return nextUseRoutePrewarmIntent("/dashboard", () => {
+    prewarmSpecs(convex, [makeRouteQuerySpec(api.workspace.list, {})]);
+  });
+}
 
 const DashboardDataContext = createContext<{
-  workspaces: Awaited<ReturnType<typeof usePreloadedQuery<typeof api.workspace.list>>>;
+  workspaces: NonNullable<Awaited<ReturnType<typeof useQuery<typeof api.workspace.list>>>>;
+  loading: boolean;
 } | null>(null);
 
-export function DashboardDataProvider({
-  preloadedWorkspaces,
-  children,
-}: {
-  preloadedWorkspaces: Preloaded<typeof api.workspace.list>;
-  children: ReactNode;
-}) {
-  const workspaces = usePreloadedQuery(preloadedWorkspaces);
+export function DashboardDataProvider({ children }: { children: ReactNode }) {
+  const workspacesQuery = useQuery(api.workspace.list);
+  const workspaces = workspacesQuery ?? [];
+  const loading = workspacesQuery === undefined;
 
   return (
-    <DashboardDataContext.Provider value={{ workspaces }}>{children}</DashboardDataContext.Provider>
+    <DashboardDataContext.Provider value={{ workspaces, loading }}>
+      {children}
+    </DashboardDataContext.Provider>
   );
 }
 

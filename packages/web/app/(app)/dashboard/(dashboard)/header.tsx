@@ -5,6 +5,10 @@ import { CreateWorkspace } from "./create-workspace-form";
 import { useDashboardData } from "./data-provider";
 
 export function AllWorkspacesHeader() {
-  const { workspaces } = useDashboardData();
-  return <DashboardHeader>{workspaces.length > 0 ? <CreateWorkspace /> : null}</DashboardHeader>;
+  const { workspaces, loading } = useDashboardData();
+  return (
+    <DashboardHeader>
+      {!loading && workspaces.length > 0 ? <CreateWorkspace /> : null}
+    </DashboardHeader>
+  );
 }
