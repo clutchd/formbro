@@ -13,14 +13,17 @@ export function useDashboardPrewarmIntent() {
   });
 }
 
+type WorkspacesResult = Awaited<ReturnType<typeof useQuery<typeof api.workspace.list>>>;
+type Workspaces = NonNullable<WorkspacesResult>["data"];
+
 const DashboardDataContext = createContext<{
-  workspaces: NonNullable<Awaited<ReturnType<typeof useQuery<typeof api.workspace.list>>>>;
+  workspaces: Workspaces;
   loading: boolean;
 } | null>(null);
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
   const workspacesQuery = useQuery(api.workspace.list);
-  const workspaces = workspacesQuery ?? [];
+  const workspaces = workspacesQuery?.data ?? [];
   const loading = workspacesQuery === undefined;
 
   return (

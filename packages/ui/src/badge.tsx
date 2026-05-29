@@ -15,10 +15,13 @@ export const badgeVariants = cva(
       },
       status: {
         none: "",
-        success: "select-none bg-green-50 text-green-700 border-green-200",
-        warning: "select-none bg-yellow-50 text-yellow-700 border-yellow-200",
-        error: "select-none bg-red-50 text-red-700 border-red-200",
-        info: "select-none bg-blue-50 text-blue-700 border-blue-200",
+        success:
+          "select-none border-green-300 bg-green-100 text-green-950 dark:border-green-400/40 dark:bg-green-400/15 dark:text-green-200",
+        warning:
+          "select-none border-amber-300 bg-amber-100 text-amber-950 dark:border-amber-400/40 dark:bg-amber-400/15 dark:text-amber-200",
+        error:
+          "select-none border-red-300 bg-red-100 text-red-950 dark:border-red-400/40 dark:bg-red-400/15 dark:text-red-200",
+        info: "select-none border-blue-300 bg-blue-100 text-blue-950 dark:border-blue-400/40 dark:bg-blue-400/15 dark:text-blue-200",
         neutral: "select-none bg-muted text-muted-foreground border-border",
       },
     },

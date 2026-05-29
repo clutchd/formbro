@@ -1,7 +1,7 @@
+import { error, fail, ok } from "@formbro/core/result";
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
-import type { Doc } from "./_generated/dataModel";
-import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
+import type { Doc, Id } from "./_generated/dataModel";
+import { mutation, query, type MutationCtx } from "./_generated/server";
 import {
   getUser,
   identityAvatarUrl,
@@ -10,7 +10,6 @@ import {
   requireUser,
   requireWorkspaceAccess,
 } from "./auth";
-import { FormBroError } from "./errors";
 
 function buildCanonicalPath(input: { workspaceSlug: string; formId?: string }) {
   if (input.formId) {
@@ -27,30 +26,29 @@ export const context = query({
   },
   handler: async (ctx, args) => {
     const user = await getUser(ctx);
-    if (!user) return null;
+    if (!user) return fail(null);
 
     let workspace: Doc<"workspaces"> | null = null;
     let form: Doc<"forms"> | null = null;
 
     if (args.formId) {
       form = await ctx.db.get(args.formId);
-      if (!form) return null;
+      if (!form) return fail(null);
 
       workspace = await ctx.db.get(form.workspaceId);
-      if (!workspace) return null;
+      if (!workspace) return fail(null);
     } else if (args.workspaceSlug) {
       const workspaceSlug = args.workspaceSlug;
       workspace = await ctx.db
         .query("workspaces")
         .withIndex("by_slug", (q) => q.eq("slug", workspaceSlug))
         .unique();
-      if (!workspace) return null;
+      if (!workspace) return fail(null);
     } else {
-      return null;
+      return fail(null);
     }
 
     const { membership } = await requireWorkspaceAccess(ctx, workspace._id);
-    if (!membership) return null;
 
     const canonicalPath = buildCanonicalPath({
       workspaceSlug: workspace.slug,
@@ -61,7 +59,7 @@ export const context = query({
       args.workspaceSlug === undefined || args.workspaceSlug === workspace.slug;
     const sameFormId = args.formId === undefined || args.formId === form?._id;
 
-    return {
+    return ok({
       workspace: {
         ...workspace,
         role: membership.role,
@@ -69,7 +67,7 @@ export const context = query({
       form: form ?? undefined,
       canonicalPath,
       isCanonical: sameWorkspaceSlug && sameFormId,
-    };
+    });
   },
 });
 
@@ -177,21 +175,25 @@ export const create = mutation({
       .collect();
 
     if (unpaidWorkspaces.length > 0) {
-      throw new FormBroError("CONFLICT", {
+      return error({
+        code: "UNPAID_WORKSPACE_LIMIT",
         message: "You can only have one unpaid workspace at a time",
+        status: "CONFLICT",
       });
     }
 
-    return await _createWorkspace({
-      ctx,
-      name: args.name,
-      owner: {
-        authId: user.subject,
-        email: identityEmail(user),
-        name: identityName(user),
-        avatarUrl: identityAvatarUrl(user),
-      },
-    });
+    return ok(
+      await _createWorkspace({
+        ctx,
+        name: args.name,
+        owner: {
+          authId: user.subject,
+          email: identityEmail(user),
+          name: identityName(user),
+          avatarUrl: identityAvatarUrl(user),
+        },
+      }),
+    );
   },
 });
 
@@ -199,7 +201,7 @@ export const list = query({
   args: {},
   handler: async (ctx) => {
     const user = await getUser(ctx);
-    if (!user) return [];
+    if (!user) return fail([]);
 
     const memberships = await ctx.db
       .query("workspaceMembers")
@@ -213,6 +215,6 @@ export const list = query({
       }),
     );
 
-    return workspaces.filter((w): w is NonNullable<typeof w> => Boolean(w));
+    return ok(workspaces.filter((w): w is NonNullable<typeof w> => Boolean(w)));
   },
 });

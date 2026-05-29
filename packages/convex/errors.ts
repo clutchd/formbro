@@ -1,95 +1,66 @@
+import { codes, type Result, type Status, type StatusCodeName } from "@formbro/core/result";
 import { ConvexError, type Value } from "convex/values";
 
-export const _statusCode = {
-  CONTINUE: 100,
-  SWITCHING_PROTOCOLS: 101,
-  PROCESSING: 102,
-  EARLY_HINTS: 103,
-  OK: 200,
-  CREATED: 201,
-  ACCEPTED: 202,
-  NON_AUTHORITATIVE_INFORMATION: 203,
-  NO_CONTENT: 204,
-  RESET_CONTENT: 205,
-  PARTIAL_CONTENT: 206,
-  MULTI_STATUS: 207,
-  ALREADY_REPORTED: 208,
-  IM_USED: 226,
-  MULTIPLE_CHOICES: 300,
-  MOVED_PERMANENTLY: 301,
-  FOUND: 302,
-  SEE_OTHER: 303,
-  NOT_MODIFIED: 304,
-  USE_PROXY: 305,
-  UNUSED: 306,
-  TEMPORARY_REDIRECT: 307,
-  PERMANENT_REDIRECT: 308,
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  PAYMENT_REQUIRED: 402,
-  FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  METHOD_NOT_ALLOWED: 405,
-  NOT_ACCEPTABLE: 406,
-  PROXY_AUTHENTICATION_REQUIRED: 407,
-  REQUEST_TIMEOUT: 408,
-  CONFLICT: 409,
-  GONE: 410,
-  LENGTH_REQUIRED: 411,
-  PRECONDITION_FAILED: 412,
-  PAYLOAD_TOO_LARGE: 413,
-  URI_TOO_LONG: 414,
-  UNSUPPORTED_MEDIA_TYPE: 415,
-  RANGE_NOT_SATISFIABLE: 416,
-  EXPECTATION_FAILED: 417,
-  "I'M_A_TEAPOT": 418,
-  MISDIRECTED_REQUEST: 421,
-  UNPROCESSABLE_ENTITY: 422,
-  LOCKED: 423,
-  FAILED_DEPENDENCY: 424,
-  TOO_EARLY: 425,
-  UPGRADE_REQUIRED: 426,
-  PRECONDITION_REQUIRED: 428,
-  TOO_MANY_REQUESTS: 429,
-  REQUEST_HEADER_FIELDS_TOO_LARGE: 431,
-  UNAVAILABLE_FOR_LEGAL_REASONS: 451,
-  INTERNAL_SERVER_ERROR: 500,
-  NOT_IMPLEMENTED: 501,
-  BAD_GATEWAY: 502,
-  SERVICE_UNAVAILABLE: 503,
-  GATEWAY_TIMEOUT: 504,
-  HTTP_VERSION_NOT_SUPPORTED: 505,
-  VARIANT_ALSO_NEGOTIATES: 506,
-  INSUFFICIENT_STORAGE: 507,
-  LOOP_DETECTED: 508,
-  NOT_EXTENDED: 510,
-  NETWORK_AUTHENTICATION_REQUIRED: 511,
-} as const;
-
-export type StatusCodeName = keyof typeof _statusCode;
-export type Status = (typeof _statusCode)[StatusCodeName];
-
 const statusCodeToName: Record<Status, StatusCodeName> = Object.fromEntries(
-  (Object.entries(_statusCode) as [StatusCodeName, Status][]).map(([name, code]) => [code, name]),
+  (Object.entries(codes) as [StatusCodeName, Status][]).map(([name, code]) => [code, name]),
 ) as Record<Status, StatusCodeName>;
 
 function defaultDataFor(status: StatusCodeName | Status): StatusCodeName | string {
   return typeof status === "number" ? (statusCodeToName[status] ?? status.toString()) : status;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object";
+}
+
+type ResultError = Extract<
+  Result<unknown>,
+  { ok: false; error: { message: string; status: StatusCodeName | Status } }
+>["error"];
+
+function isResultError(value: unknown): value is ResultError {
+  if (!isRecord(value)) return false;
+
+  return (
+    typeof value.code === "string" &&
+    typeof value.message === "string" &&
+    (typeof value.status === "string" || typeof value.status === "number")
+  );
+}
+
 export function getErrorMessage(error: unknown) {
   if (typeof error === "string") return error;
+  if (isResultError(error)) return error.message;
   if (error && typeof error === "object" && "data" in error) {
     const data = error.data;
     if (typeof data === "string") return data;
+    if (isResultError(data)) return data.message;
     if (data && typeof data === "object" && "message" in data && typeof data.message === "string") {
       return data.message;
     }
+  }
+  if (
+    error &&
+    typeof error === "object" &&
+    "message" in error &&
+    typeof error.message === "string"
+  ) {
+    return error.message;
   }
   if (error instanceof Error && error.message) {
     return error.message;
   }
   return "Something went wrong.";
+}
+
+export function shouldReportError(error: unknown) {
+  if (isResultError(error)) return false;
+
+  if (error && typeof error === "object" && "data" in error && isResultError(error.data)) {
+    return false;
+  }
+
+  return true;
 }
 
 export class FormBroError<TData extends Value> extends ConvexError<TData> {
@@ -101,6 +72,6 @@ export class FormBroError<TData extends Value> extends ConvexError<TData> {
     super(payload);
     this.name = "FormBroError";
     this.status = status;
-    this.statusCode = typeof status === "number" ? status : _statusCode[status];
+    this.statusCode = typeof status === "number" ? status : codes[status];
   }
 }

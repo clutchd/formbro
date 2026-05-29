@@ -1,6 +1,7 @@
 import type { FunctionArgs, PaginationResult } from "convex/server";
 import { createClient, type AuthFunctions, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
+import { fail, ok } from "@formbro/core/result";
 import { betterAuth } from "better-auth/minimal";
 import type { DataModel, Id } from "./_generated/dataModel";
 import type { Doc as BetterAuthDoc } from "./node_modules/@convex-dev/better-auth/src/component/_generated/dataModel";
@@ -13,6 +14,10 @@ export type Identity = NonNullable<Awaited<ReturnType<QueryCtx["auth"]["getUserI
 
 function hasString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
+}
+
+function normalizeEmail(value: string) {
+  return value.trim().toLowerCase();
 }
 
 function getOptionalString(identity: Identity, key: string): string | undefined {
@@ -43,8 +48,7 @@ export function identityAvatarUrl(identity: Identity): string | undefined {
 }
 
 export async function getUser(ctx: QueryCtx | MutationCtx) {
-  const identity = await ctx.auth.getUserIdentity();
-  return identity;
+  return await ctx.auth.getUserIdentity();
 }
 
 export async function requireUser(ctx: QueryCtx | MutationCtx) {
@@ -55,11 +59,35 @@ export async function requireUser(ctx: QueryCtx | MutationCtx) {
   return identity;
 }
 
-export function getAdminEmails(): string[] {
+export function getAdminEmails() {
   if (!process.env.ADMIN) {
     throw new FormBroError("INTERNAL_SERVER_ERROR", "Admin access is not set.");
   }
-  return process.env.ADMIN?.split(",").map((email) => email.trim().toLowerCase()) ?? [];
+
+  return process.env.ADMIN.split(",").map(normalizeEmail).filter(hasString);
+}
+
+export async function getAdminAccounts(ctx: QueryCtx | MutationCtx) {
+  const adminEmails = getAdminEmails();
+  const admins: Array<{ authId: string; email: string; name: string; avatarUrl?: string }> = [];
+
+  for (const email of adminEmails) {
+    const admin = await adapterFindOne(ctx, {
+      model: "user",
+      where: [{ field: "email", operator: "eq", value: email }],
+    });
+
+    if (admin) {
+      admins.push({
+        authId: String(admin._id),
+        email: admin.email,
+        name: admin.name,
+        avatarUrl: admin.image ?? undefined,
+      });
+    }
+  }
+
+  return admins;
 }
 
 export async function getAdminUser(ctx: QueryCtx | MutationCtx) {
@@ -69,7 +97,7 @@ export async function getAdminUser(ctx: QueryCtx | MutationCtx) {
   const email = identityEmail(identity);
   if (!email) return null;
 
-  if (!getAdminEmails().includes(email)) {
+  if (!getAdminEmails().includes(normalizeEmail(email))) {
     return null;
   }
 
@@ -98,7 +126,7 @@ export async function requireWorkspaceAccess(
     .unique();
 
   if (!membership) {
-    throw new Error("Not a workspace member");
+    throw new FormBroError("FORBIDDEN", "Workspace access required.");
   }
 
   return { user, membership };
@@ -108,13 +136,13 @@ export const get = query({
   args: {},
   handler: async (ctx) => {
     const identity = await getUser(ctx);
-    if (!identity) return null;
+    if (!identity) return fail(null);
 
-    return {
+    return ok({
       name: identityName(identity),
       email: identityEmail(identity),
       image: identityAvatarUrl(identity),
-    };
+    });
   },
 });
 
@@ -122,13 +150,13 @@ export const getAdmin = query({
   args: {},
   handler: async (ctx) => {
     const identity = await getAdminUser(ctx);
-    if (!identity) return null;
+    if (!identity) return fail(null);
 
-    return {
+    return ok({
       name: identityName(identity),
       email: identityEmail(identity),
       image: identityAvatarUrl(identity),
-    };
+    });
   },
 });
 

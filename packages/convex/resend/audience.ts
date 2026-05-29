@@ -1,3 +1,4 @@
+import { ok } from "@formbro/core/result";
 import { split } from "@formbro/shared/names";
 import { v } from "convex/values";
 import { Resend } from "resend";
@@ -45,6 +46,8 @@ export const add = action({
         },
       });
     }
+
+    return ok();
   },
 });
 
@@ -79,6 +82,8 @@ export const update = action({
         },
       });
     }
+
+    return ok();
   },
 });
 
@@ -114,5 +119,7 @@ export const upsert = internalAction({
       email: user.email,
       name: user.name,
     });
+
+    return ok();
   },
 });

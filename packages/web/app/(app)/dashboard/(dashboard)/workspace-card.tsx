@@ -45,11 +45,26 @@ function FormPreviewRow({ name, updatedLabel }: { name: string; updatedLabel: st
   );
 }
 
+export function WorkspacePlanBadge({ workspace }: { workspace: Workspace }) {
+  const isFreeWorkspace = workspace.billingStatus === "not_subscribed" || !workspace.plan;
+
+  return (
+    <Badge
+      variant="outline"
+      status={isFreeWorkspace ? "warning" : "success"}
+      className="ml-auto uppercase"
+    >
+      {isFreeWorkspace ? "unpaid" : workspace.plan}
+    </Badge>
+  );
+}
+
 export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   const convex = useConvex();
   const router = useRouter();
   const forms: { name: string; updatedLabel: string }[] = [];
   const href = `/dashboard/${workspace.slug}`;
+  const isFreeWorkspace = workspace.billingStatus === "not_subscribed" || !workspace.plan;
   const prewarmIntentHandlers = useRoutePrewarmIntent(() => {
     router.prefetch(href);
     prewarmWorkspace(convex, {
@@ -65,13 +80,7 @@ export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
     >
       <div className="flex items-center gap-3 border-b px-5 py-4">
         <h3 className="font-semibold">{workspace.name}</h3>
-        <Badge
-          variant="outline"
-          status={workspace.billingStatus === "not_subscribed" ? "neutral" : "success"}
-          className="ml-auto uppercase"
-        >
-          {workspace.plan ?? "unpaid"}
-        </Badge>
+        <WorkspacePlanBadge workspace={workspace} />
       </div>
 
       <div className="px-5">

@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormProps } from "@formbro/react/components/form";
-import { getErrorMessage } from "@formbro/convex/errors";
+import { getErrorMessage, shouldReportError } from "@formbro/convex/errors";
 import { Form } from "@formbro/react/components/form";
 import { Button } from "@formbro/ui/button";
 import {
@@ -83,16 +83,18 @@ export function InternalDialogForm<
               }
             },
             onSubmitError: ({ form, error }) => {
-              captureException(error, {
-                extra: {
-                  formId: form.id,
-                  formName: form.name,
-                  version: form.version,
-                },
-                tags: {
-                  type: "form_submission",
-                },
-              });
+              if (shouldReportError(error)) {
+                captureException(error, {
+                  extra: {
+                    formId: form.id,
+                    formName: form.name,
+                    version: form.version,
+                  },
+                  tags: {
+                    type: "form_submission",
+                  },
+                });
+              }
 
               if (form.toasts?.error) {
                 const message = getErrorMessage(error);

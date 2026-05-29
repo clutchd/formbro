@@ -76,18 +76,35 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
         return;
       }
 
+      if (!action) {
+        return;
+      }
+
       const stringValues = stringifyValues<T>(value);
 
       try {
         instrumentation?.onSubmitStart?.({ form: compiled, values: stringValues });
         const mutatedValues = onMutate ? onMutate({ values: stringValues }) : stringValues;
-        const data = action ? await action({ values: mutatedValues }) : undefined;
+        const result = await action({ values: mutatedValues });
+
+        if (!result.ok) {
+          const error = "error" in result ? result.error : result.data;
+
+          instrumentation?.onSubmitError?.({
+            form: compiled,
+            values: stringValues,
+            error,
+          });
+          onError?.({ error });
+          return;
+        }
+
         instrumentation?.onSubmitSuccess?.({
           form: compiled,
           values: stringValues,
-          data: data as TData,
+          data: result.data,
         });
-        onSuccess?.({ result: stringValues, data: data as TData });
+        onSuccess?.({ result: stringValues, data: result.data });
       } catch (error) {
         instrumentation?.onSubmitError?.({
           form: compiled,

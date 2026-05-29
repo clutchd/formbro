@@ -1,6 +1,10 @@
-# Agent Info
+# FormBro Agent Guide
 
-- Read the code to understand what's going on, yes even node_modules.
+Read the code to understand what's going on, yes even node_modules.
+
+## Mission
+
+FormBro is the open-source form layer for serious workflows.
 
 ## Philosophy
 
