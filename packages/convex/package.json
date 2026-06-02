@@ -16,7 +16,12 @@
     "@formbro/shared": "workspace:*",
     "@react-email/render": "catalog:",
     "better-auth": "catalog:",
-    "convex": "catalog:"
+    "convex": "catalog:",
+    "resend": "catalog:"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "catalog:"
+  }
 }
