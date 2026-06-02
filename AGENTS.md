@@ -4,7 +4,7 @@ Read the code to understand what's going on, yes even node_modules.
 
 ## Mission
 
-FormBro is the open-source form layer for serious workflows.
+FormBro is the open-source form platform for serious workflows.
 
 ## Philosophy
 

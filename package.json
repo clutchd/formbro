@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/package.json",
   "name": "formbro",
   "private": true,
-  "description": "Form platform for fast-moving teams.",
+  "description": "The open-source form platform for serious workflows.",
   "repository": {
     "type": "git",
     "url": "https://github.com/clutchd/formbro"
