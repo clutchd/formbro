@@ -1,16 +1,22 @@
 import { APP_URL } from "@formbro/shared/brand";
 import { Head, Heading, Html, Preview, Section, Text } from "@react-email/components";
-import React from "react";
 import Card from "../../components/card";
 import { CTA } from "../../components/cta";
 import Tailwind from "../../components/tailwind";
 
-export default function Signup() {
+export function SignupSubject() {
+  return "Welcome to FormBro";
+}
+
+export default function SignupComponent() {
   return (
     <Html>
       <Tailwind>
         <Head />
-        <Preview>Welcome to FormBro</Preview>
+        <Preview>
+          Thank you for signing up! Your dashboard is ready - and your first form is just seconds
+          away.
+        </Preview>
         <Card utmMedium="signup">
           <Section className="text-center">
             <Text className="dark:text-muted-foreground-dark m-0 font-mono text-xs tracking-wider text-muted-foreground uppercase">

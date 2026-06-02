@@ -6,7 +6,7 @@
   "type": "module",
   "exports": {
     "./package.json": "./package.json",
-    "./*": "./src/*.tsx"
+    "./*": "./emails/*.tsx"
   },
   "scripts": {
     "dev": "email dev --port 3001"
@@ -14,7 +14,7 @@
   "dependencies": {
     "@formbro/shared": "workspace:*",
     "@react-email/components": "1.0.12",
-    "@react-email/render": "2.0.8",
+    "@react-email/render": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

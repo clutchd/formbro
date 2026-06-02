@@ -2,6 +2,7 @@ import type { FunctionArgs, PaginationResult } from "convex/server";
 import { createClient, type AuthFunctions, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { fail, ok } from "@formbro/core/result";
+import { APP_URL } from "@formbro/shared/brand";
 import { betterAuth } from "better-auth/minimal";
 import type { DataModel, Id } from "./_generated/dataModel";
 import type { Doc as BetterAuthDoc } from "./node_modules/@convex-dev/better-auth/src/component/_generated/dataModel";
@@ -171,6 +172,12 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
           email: doc.email,
           name: doc.name,
         });
+        await ctx.scheduler.runAfter(0, api.resend.emails.send, {
+          email: {
+            template: "welcome",
+            to: doc.email,
+          },
+        });
       },
       onUpdate: async (ctx, doc) => {
         await ctx.scheduler.runAfter(0, api.resend.audience.update, {
@@ -185,11 +192,9 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
 export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
 
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
-  const baseURL = process.env.BETTER_AUTH_URL;
-
   return betterAuth({
     secret: process.env.BETTER_AUTH_SECRET,
-    baseURL,
+    baseURL: APP_URL,
     trustedOrigins: [
       "https://formbro.com",
       "https://api.formbro.com",
