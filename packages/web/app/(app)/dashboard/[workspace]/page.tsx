@@ -53,9 +53,7 @@ function EmptyFormsDashboard() {
         <EmptyDescription>Create your first form to start collecting data</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>
-        <div className="flex gap-2">
-          <CreateForm />
-        </div>
+        <CreateForm />
       </EmptyContent>
     </Empty>
   );

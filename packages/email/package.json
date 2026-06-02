@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@formbro/email",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json",
+    "./*": "./src/*.tsx"
+  },
+  "scripts": {
+    "dev": "email dev --port 3001"
+  },
+  "dependencies": {
+    "@formbro/shared": "workspace:*",
+    "@react-email/components": "1.0.12",
+    "@react-email/render": "2.0.8",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@react-email/preview-server": "5.2.9",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "catalog:"
+  }
+}
