@@ -172,7 +172,7 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
           email: doc.email,
           name: doc.name,
         });
-        await ctx.scheduler.runAfter(0, api.resend.emails.send, {
+        await ctx.scheduler.runAfter(0, api.resend.emails.transactional, {
           email: {
             template: "welcome",
             to: doc.email,

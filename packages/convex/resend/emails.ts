@@ -5,22 +5,46 @@ import SignupComponent, { SignupSubject } from "@formbro/email/transactional/sig
 import { render } from "@react-email/render";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
-import { action } from "../_generated/server";
+import { action, ActionCtx } from "../_generated/server";
 
 export const resendClient = new Resend(components.resend, {
   testMode: false,
 });
 
-const template_args = {
+async function _send(
+  ctx: ActionCtx,
+  {
+    component,
+    subject,
+    to,
+    from,
+  }: { component: React.ReactElement; subject: string; to: string; from: string },
+) {
+  const [html, text] = await Promise.all([
+    render(component),
+    render(component, { plainText: true }),
+  ]);
+
+  const emailId = await resendClient.sendEmail(ctx, {
+    from,
+    to,
+    subject,
+    html,
+    text,
+  });
+  return emailId;
+}
+
+const transactional_args = {
   welcome: {
     template: v.literal("welcome"),
     to: v.string(),
   },
 } as const;
 
-export const send = action({
+export const transactional = action({
   args: {
-    email: v.union(...Object.values(template_args).map((arg) => v.object(arg))),
+    email: v.union(...Object.values(transactional_args).map((arg) => v.object(arg))),
   },
   handler: async (ctx, { email }) => {
     let component: React.ReactElement;
@@ -33,18 +57,11 @@ export const send = action({
         break;
     }
 
-    const [html, text] = await Promise.all([
-      render(component),
-      render(component, { plainText: true }),
-    ]);
-
-    const emailId = await resendClient.sendEmail(ctx, {
+    return _send(ctx, {
       from: "FormBro <notifications@mail.formbro.com>",
-      to: email.to,
+      component,
       subject,
-      html,
-      text,
+      to: email.to,
     });
-    return emailId;
   },
 });
