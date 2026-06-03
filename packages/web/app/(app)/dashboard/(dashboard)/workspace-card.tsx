@@ -1,7 +1,6 @@
 "use client";
 
 import { twx } from "@formbro/shared/twx";
-import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
 import { Card } from "@formbro/ui/card";
 import { tuiFont } from "@formbro/ui/typography";
@@ -12,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { useRoutePrewarmIntent } from "@/lib/convex/use-route-prewarm-intent";
 import type { useDashboardData } from "./data-provider";
 import { prewarmWorkspace } from "../[workspace]/data-provider";
+import { isUnpaidWorkspace, WorkspacePlanBadge } from "../workspace-plan-badge";
 
 type Workspace = ReturnType<typeof useDashboardData>["workspaces"][number];
 
@@ -45,25 +45,12 @@ function FormPreviewRow({ name, updatedLabel }: { name: string; updatedLabel: st
   );
 }
 
-export function WorkspacePlanBadge({ workspace }: { workspace: Workspace }) {
-  const isFreeWorkspace = workspace.billingStatus === "not_subscribed" || !workspace.plan;
-
-  return (
-    <Badge
-      variant="outline"
-      status={isFreeWorkspace ? "warning" : "success"}
-      className="ml-auto uppercase"
-    >
-      {isFreeWorkspace ? "unpaid" : workspace.plan}
-    </Badge>
-  );
-}
-
 export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   const convex = useConvex();
   const router = useRouter();
   const forms: { name: string; updatedLabel: string }[] = [];
-  const href = `/dashboard/${workspace.slug}`;
+  const isUnpaid = isUnpaidWorkspace(workspace);
+  const href = isUnpaid ? `/dashboard/${workspace.slug}/settings` : `/dashboard/${workspace.slug}`;
   const prewarmIntentHandlers = useRoutePrewarmIntent(() => {
     router.prefetch(href);
     prewarmWorkspace(convex, {
@@ -79,7 +66,7 @@ export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
     >
       <div className="flex items-center gap-3 border-b px-5 py-4">
         <h3 className="font-semibold">{workspace.name}</h3>
-        <WorkspacePlanBadge workspace={workspace} />
+        <WorkspacePlanBadge workspace={workspace} className="ml-auto" />
       </div>
 
       <div className="px-5">
@@ -102,7 +89,7 @@ export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
           onBlur={prewarmIntentHandlers.onBlur}
           onTouchStart={prewarmIntentHandlers.onTouchStart}
         >
-          Open Workspace
+          {isUnpaid ? "Manage Billing" : "Open Workspace"}
           <RiArrowRightLine className="size-3 transition-transform group-hover/button:translate-x-1" />
         </Link>
       </Button>

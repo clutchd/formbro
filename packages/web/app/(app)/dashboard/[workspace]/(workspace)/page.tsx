@@ -9,8 +9,8 @@ import {
   EmptyTitle,
 } from "@formbro/ui/empty";
 import { RiErrorWarningLine, RiFileAiLine, RiLoader4Line } from "@remixicon/react";
-import { CreateForm } from "./create-form-form";
-import { useWorkspaceData } from "./data-provider";
+import { CreateForm } from "../create-form-form";
+import { useWorkspaceData } from "../data-provider";
 
 function WorkspaceLoadingState() {
   return (
