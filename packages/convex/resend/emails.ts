@@ -5,7 +5,7 @@ import SignupComponent, { SignupSubject } from "@formbro/email/transactional/sig
 import { render } from "@react-email/render";
 import { v } from "convex/values";
 import { components } from "../_generated/api";
-import { action, ActionCtx } from "../_generated/server";
+import { action, type ActionCtx } from "../_generated/server";
 
 export const resendClient = new Resend(components.resend, {
   testMode: false,
