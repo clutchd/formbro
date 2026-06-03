@@ -12,7 +12,12 @@ export default defineSchema({
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     stripePriceId: v.optional(v.string()),
-    billingStatus: v.optional(v.union(v.literal("not_subscribed"))),
+    billingStatus: v.optional(
+      v.union(
+        v.literal("active"),
+        v.literal("not_subscribed"),
+      ),
+    ),
   })
     .index("by_slug", ["slug"])
     .index("by_owner", ["ownerAuthId"])

@@ -122,7 +122,7 @@ export async function _createWorkspace({
     slug,
     ownerAuthId: owner.authId,
     plan,
-    billingStatus: "not_subscribed",
+    billingStatus: plan === "unlimited" ? "active" : "not_subscribed",
   });
 
   await _addWorkspaceMember({

@@ -64,7 +64,6 @@ export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   const router = useRouter();
   const forms: { name: string; updatedLabel: string }[] = [];
   const href = `/dashboard/${workspace.slug}`;
-  const isFreeWorkspace = workspace.billingStatus === "not_subscribed" || !workspace.plan;
   const prewarmIntentHandlers = useRoutePrewarmIntent(() => {
     router.prefetch(href);
     prewarmWorkspace(convex, {
