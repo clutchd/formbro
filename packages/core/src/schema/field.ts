@@ -19,12 +19,12 @@ export const BaseFieldSchema = BaseElementSchema.extend({
   orientation: OrientationSchema,
 });
 
-export const FieldSchema = z.union([
-  ...FieldRegistry.map((f) =>
+export const FieldSchema = z.union(
+  FieldRegistry.map((f) =>
     BaseFieldSchema.extend({
       type: z.literal(f.key),
       category: z.literal(f.category).default(f.category),
       rules: SupportedRuleSchema(f.rules),
     }),
   ),
-]);
+);

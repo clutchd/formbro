@@ -1,4 +1,3 @@
-import React from "react";
 import {
   TypographyH1,
   TypographyH2,
@@ -121,4 +120,3 @@ export const FontFamilies = {
     </div>
   ),
 };
-

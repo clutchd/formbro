@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { geistMono, inter, manrope } from "@formbro/ui/typography";
+import { fonts } from "@formbro/ui/typography";
 import Script from "next/script";
 import { DevTools } from "@/components/dev-tools";
 import { Toaster } from "@/components/sonner";
@@ -13,11 +13,7 @@ import "./globals.css";
 export default async function RootLayout({ children }: PropsWithChildren) {
   const token = await getToken();
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${manrope.variable} ${geistMono.variable} size-full antialiased`}
-      suppressHydrationWarning
-    >
+    <html lang="en" className={`${fonts.join(" ")} size-full antialiased`} suppressHydrationWarning>
       <head>
         {devOnly(<Script src="https://unpkg.com/react-scan/dist/auto.global.js" async />)}
       </head>

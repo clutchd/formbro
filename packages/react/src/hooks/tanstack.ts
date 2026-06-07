@@ -8,9 +8,9 @@ import { SubmitButton } from "../components/submit-button";
 import { fieldContext, formContext } from "../hooks/tanstack-context";
 import { FieldComponents } from "../registry";
 
-const fieldComponents = {
-  ...Object.fromEntries(Object.entries(FieldComponents).map(([key, mod]) => [key, mod.component])),
-};
+const fieldComponents = Object.fromEntries(
+  Object.entries(FieldComponents).map(([key, mod]) => [key, mod.component]),
+);
 
 const formComponents = {
   SubmitButton,

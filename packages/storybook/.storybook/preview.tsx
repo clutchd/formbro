@@ -1,37 +1,10 @@
 import type { Preview } from "@storybook/nextjs-vite";
-import type { CSSProperties, ReactNode } from "react";
 import { useEffect } from "react";
+import { fonts } from "../../ui/src/typography";
 import "../../web/app/globals.css";
 
 function resolveTheme(value: unknown) {
   return value === "dark" ? "dark" : "light";
-}
-
-function ThemeFrame({ theme, children }: { theme: "light" | "dark"; children: ReactNode }) {
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(theme);
-
-    return () => {
-      root.classList.remove("light", "dark");
-    };
-  }, [theme]);
-
-  return (
-    <div
-      style={
-        {
-          "--font-inter": "Inter, system-ui, sans-serif",
-          "--font-manrope": "Manrope, system-ui, sans-serif",
-          "--font-geist-mono": '"SFMono-Regular", ui-monospace, monospace',
-        } as CSSProperties
-      }
-      className="w-full bg-background p-6 text-foreground"
-    >
-      <div className="flex items-start justify-center">{children}</div>
-    </div>
-  );
 }
 
 const preview: Preview = {
@@ -45,12 +18,24 @@ const preview: Preview = {
   decorators: [
     (Story, context) => {
       const override = context.parameters?.themes?.themeOverride;
-      const theme = resolveTheme(override ?? context.globals.theme);
+      const theme = (override ?? context.globals.theme) === "dark" ? "dark" : "light";
+
+      useEffect(() => {
+        const root = document.documentElement;
+        root.classList.remove("light", "dark");
+        root.classList.add(theme, ...fonts);
+
+        return () => {
+          root.classList.remove("light", "dark", ...fonts);
+        };
+      }, [theme]);
 
       return (
-        <ThemeFrame theme={theme}>
-          <Story />
-        </ThemeFrame>
+        <div className="min-h-screen w-full bg-background p-6 text-foreground">
+          <div className="flex min-h-[calc(100vh-3rem)] items-start justify-center">
+            <Story />
+          </div>
+        </div>
       );
     },
   ],

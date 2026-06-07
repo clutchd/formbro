@@ -2,20 +2,22 @@ import { twx } from "@formbro/shared/twx";
 import { Geist_Mono, Inter, Manrope } from "next/font/google";
 import * as React from "react";
 
-export const inter = Inter({
+const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
 });
 
-export const manrope = Manrope({
+const manrope = Manrope({
   variable: "--font-manrope",
   subsets: ["latin"],
 });
 
-export const geistMono = Geist_Mono({
+const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+export const fonts = [inter.variable, manrope.variable, geistMono.variable];
 
 export const displayFont = "font-display font-bold tracking-tight";
 export const monoFont = "font-mono tracking-wider";
