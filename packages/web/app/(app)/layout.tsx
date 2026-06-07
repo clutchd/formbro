@@ -8,7 +8,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     redirect("/sign-in");
   }
 
-  const [preloadedAuthUser] = await Promise.all([preloadAuthQuery(api.auth.get)]);
-
+  const preloadedAuthUser = await preloadAuthQuery(api.auth.get);
   return <AppDataProvider preloadedAuthUser={preloadedAuthUser}>{children}</AppDataProvider>;
 }

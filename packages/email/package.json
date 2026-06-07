@@ -14,7 +14,6 @@
   "dependencies": {
     "@formbro/shared": "workspace:*",
     "@react-email/components": "1.0.12",
-    "@react-email/render": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },

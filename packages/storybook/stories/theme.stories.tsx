@@ -65,10 +65,6 @@ const brandScale = [
   { name: "950", token: "--color-brand-950" },
 ] as const;
 
-function resolveTheme(value: unknown) {
-  return value === "dark" ? "dark" : "light";
-}
-
 function cssVar(token: string) {
   return `var(${token})`;
 }
@@ -139,7 +135,7 @@ function BrandScaleStrip() {
   );
 }
 
-function ThemeShowcase({ theme = "light" }: { theme?: "light" | "dark" }) {
+function ThemeShowcase() {
   return (
     <div className="mx-auto w-full max-w-6xl space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -241,5 +237,5 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Theme: Story = {
-  render: (_, context) => <ThemeShowcase theme={resolveTheme(context.globals.theme)} />,
+  render: () => <ThemeShowcase />,
 };

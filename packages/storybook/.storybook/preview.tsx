@@ -3,10 +3,6 @@ import { useEffect } from "react";
 import { fonts } from "../../ui/src/typography";
 import "../../web/app/globals.css";
 
-function resolveTheme(value: unknown) {
-  return value === "dark" ? "dark" : "light";
-}
-
 const preview: Preview = {
   globalTypes: {
     theme: {
