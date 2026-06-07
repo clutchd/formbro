@@ -12,6 +12,7 @@ import type * as auth from "../auth.js";
 import type * as errors from "../errors.js";
 import type * as forms from "../forms.js";
 import type * as http from "../http.js";
+import type * as lib from "../lib.js";
 import type * as resend_audience from "../resend/audience.js";
 import type * as resend_emails from "../resend/emails.js";
 import type * as stripe_client from "../stripe/client.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   errors: typeof errors;
   forms: typeof forms;
   http: typeof http;
+  lib: typeof lib;
   "resend/audience": typeof resend_audience;
   "resend/emails": typeof resend_emails;
   "stripe/client": typeof stripe_client;

@@ -1,15 +1,9 @@
 import { error, fail, ok } from "@formbro/core/result";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { mutation, query, type MutationCtx } from "./_generated/server";
-import {
-  getUser,
-  identityAvatarUrl,
-  identityEmail,
-  identityName,
-  requireUser,
-  requireWorkspaceAccess,
-} from "./auth";
+import { internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
+import { getUser, requireUser, requireWorkspaceAccess, userProfileFromIdentity } from "./auth";
+import { hasString, normalizeEmail } from "./lib";
 
 function buildCanonicalPath(input: { workspaceSlug: string; formId?: string }) {
   if (input.formId) {
@@ -70,10 +64,6 @@ export const context = query({
     });
   },
 });
-
-function normalizedEmail(value: string) {
-  return value.trim().toLowerCase();
-}
 
 export function generateSlug(name: string): string {
   return name
@@ -152,12 +142,31 @@ export async function _addWorkspaceMember({
   await ctx.db.insert("workspaceMembers", {
     workspaceId,
     userAuthId: member.authId,
-    userEmail: normalizedEmail(member.email),
+    userEmail: normalizeEmail(member.email),
     userName: member.name,
     userAvatarUrl: member.avatarUrl,
     role,
   });
 }
+
+export const syncMemberAvatar = internalMutation({
+  args: {
+    userAuthId: v.string(),
+    image: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const image = hasString(args.image) ? args.image : undefined;
+    const memberships = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_user", (q) => q.eq("userAuthId", args.userAuthId))
+      .filter((q) => q.neq(q.field("userAvatarUrl"), image))
+      .collect();
+
+    await Promise.all(
+      memberships.map((membership) => ctx.db.patch(membership._id, { userAvatarUrl: image })),
+    );
+  },
+});
 
 export const create = mutation({
   args: {
@@ -165,6 +174,7 @@ export const create = mutation({
   },
   handler: async (ctx, args) => {
     const user = await requireUser(ctx);
+    const profile = await userProfileFromIdentity(ctx, user);
 
     const unpaidWorkspaces = await ctx.db
       .query("workspaces")
@@ -188,9 +198,9 @@ export const create = mutation({
         name: args.name,
         owner: {
           authId: user.subject,
-          email: identityEmail(user),
-          name: identityName(user),
-          avatarUrl: identityAvatarUrl(user),
+          email: profile.email,
+          name: profile.name,
+          avatarUrl: profile.image,
         },
       }),
     );

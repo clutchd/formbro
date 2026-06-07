@@ -10,16 +10,9 @@ import { api, components, internal } from "./_generated/api";
 import { query, type ActionCtx, type MutationCtx, type QueryCtx } from "./_generated/server";
 import authConfig from "./auth.config";
 import { FormBroError } from "./errors";
+import { hasString, normalizeEmail } from "./lib";
 
 export type Identity = NonNullable<Awaited<ReturnType<QueryCtx["auth"]["getUserIdentity"]>>>;
-
-function hasString(value: unknown): value is string {
-  return typeof value === "string" && value.length > 0;
-}
-
-function normalizeEmail(value: string) {
-  return value.trim().toLowerCase();
-}
 
 function getOptionalString(identity: Identity, key: string): string | undefined {
   const value = (identity as Record<string, unknown>)[key];
@@ -45,7 +38,20 @@ export function identityEmail(identity: Identity): string {
 }
 
 export function identityAvatarUrl(identity: Identity): string | undefined {
-  return getOptionalString(identity, "pictureUrl");
+  return getOptionalString(identity, "image");
+}
+
+export async function userProfileFromIdentity(ctx: QueryCtxLike, identity: Identity) {
+  const storedUser = await adapterFindOne(ctx, {
+    model: "user",
+    where: [{ field: "_id", operator: "eq", value: identity.subject }],
+  });
+
+  return {
+    name: hasString(storedUser?.name) ? storedUser.name : identityName(identity),
+    email: hasString(storedUser?.email) ? storedUser.email : identityEmail(identity),
+    image: hasString(storedUser?.image) ? storedUser.image : identityAvatarUrl(identity),
+  };
 }
 
 export async function getUser(ctx: QueryCtx | MutationCtx) {
@@ -139,11 +145,7 @@ export const get = query({
     const identity = await getUser(ctx);
     if (!identity) return fail(null);
 
-    return ok({
-      name: identityName(identity),
-      email: identityEmail(identity),
-      image: identityAvatarUrl(identity),
-    });
+    return ok(await userProfileFromIdentity(ctx, identity));
   },
 });
 
@@ -153,11 +155,7 @@ export const getAdmin = query({
     const identity = await getAdminUser(ctx);
     if (!identity) return fail(null);
 
-    return ok({
-      name: identityName(identity),
-      email: identityEmail(identity),
-      image: identityAvatarUrl(identity),
-    });
+    return ok(await userProfileFromIdentity(ctx, identity));
   },
 });
 
@@ -180,6 +178,10 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
         });
       },
       onUpdate: async (ctx, doc) => {
+        await ctx.scheduler.runAfter(0, internal.workspace.syncMemberAvatar, {
+          userAuthId: String(doc._id),
+          image: hasString(doc.image) ? doc.image : undefined,
+        });
         await ctx.scheduler.runAfter(0, api.resend.audience.update, {
           email: doc.email,
           name: doc.name,
@@ -206,11 +208,16 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID as string,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        mapProfileToUser: (profile) => ({ image: profile.picture }),
+        overrideUserInfoOnSignIn: true,
       },
       microsoft: {
         clientId: process.env.MICROSOFT_CLIENT_ID as string,
         clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-        tenantId: "common",
+        tenantId: process.env.MICROSOFT_TENANT_ID ?? "common",
+        prompt: "select_account",
+        mapProfileToUser: (profile) => ({ image: profile.picture }),
+        overrideUserInfoOnSignIn: true,
       },
     },
     database: authComponent.adapter(ctx),
