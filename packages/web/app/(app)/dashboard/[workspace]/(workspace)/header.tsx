@@ -27,11 +27,11 @@ export function WorkspaceHomeHeader() {
       breadcrumbs={
         workspace
           ? [
-            {
-              href: `/dashboard/${workspace.slug}`,
-              label: <WorkspaceBreadcrumbLabel workspace={workspace} />,
-            },
-          ]
+              {
+                href: `/dashboard/${workspace.slug}`,
+                label: <WorkspaceBreadcrumbLabel workspace={workspace} />,
+              },
+            ]
           : []
       }
       actions={

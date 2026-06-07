@@ -1,5 +1,5 @@
 import type { PropsWithChildren } from "react";
-import { Geist_Mono, Inter, Manrope } from "next/font/google";
+import { geistMono, inter, manrope } from "@formbro/ui/typography";
 import Script from "next/script";
 import { DevTools } from "@/components/dev-tools";
 import { Toaster } from "@/components/sonner";
@@ -9,21 +9,6 @@ import { ConvexProvider } from "@/lib/convex/client";
 import { devOnly, rl } from "@/lib/env";
 import { PosthogProvider } from "@/lib/posthog";
 import "./globals.css";
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const manrope = Manrope({
-  variable: "--font-manrope",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export default async function RootLayout({ children }: PropsWithChildren) {
   const token = await getToken();
