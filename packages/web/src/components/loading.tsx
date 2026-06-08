@@ -1,7 +1,16 @@
-export function Loading() {
+import { PageState } from "./page-state";
+
+export function Loading({ title }: { title?: string }) {
   return (
-    <div className="absolute inset-0 -z-50 flex min-h-dvh items-center justify-center">
-      <p className="font-mono text-sm tracking-wider text-muted-foreground uppercase">Loading...</p>
-    </div>
+    <PageState
+      title={
+        <span aria-live="polite" className="inline-flex items-center text-muted-foreground">
+          {title ? `Loading ${title}` : "Loading"}
+          <span aria-hidden="true" className="inline-block w-[3ch] text-left">
+            <span className="loading-dots-text" />
+          </span>
+        </span>
+      }
+    />
   );
 }

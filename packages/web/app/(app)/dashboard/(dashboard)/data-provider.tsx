@@ -18,16 +18,16 @@ type Workspaces = NonNullable<WorkspacesResult>["data"];
 
 const DashboardDataContext = createContext<{
   workspaces: Workspaces;
-  loading: boolean;
+  isLoading: boolean;
 } | null>(null);
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
   const workspacesQuery = useQuery(api.workspace.list);
   const workspaces = workspacesQuery?.data ?? [];
-  const loading = workspacesQuery === undefined;
+  const isLoading = workspacesQuery === undefined;
 
   return (
-    <DashboardDataContext.Provider value={{ workspaces, loading }}>
+    <DashboardDataContext.Provider value={{ workspaces, isLoading }}>
       {children}
     </DashboardDataContext.Provider>
   );

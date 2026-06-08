@@ -1,10 +1,11 @@
+import { WorkspaceContentBoundary } from "../data-provider";
 import { WorkspaceHomeHeader } from "./header";
 
 export default function WorkspaceHomeLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
       <WorkspaceHomeHeader />
-      {children}
+      <WorkspaceContentBoundary>{children}</WorkspaceContentBoundary>
     </>
   );
 }

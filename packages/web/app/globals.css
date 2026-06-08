@@ -149,3 +149,30 @@
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes loading-dots-text {
+  0%,
+  24.99% {
+    content: ".";
+  }
+  25%,
+  49.99% {
+    content: "..";
+  }
+  50%,
+  100% {
+    content: "...";
+  }
+}
+
+.loading-dots-text::after {
+  content: ".";
+  animation: loading-dots-text 0.8s steps(1, end) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-dots-text::after {
+    content: "...";
+    animation: none;
+  }
+}

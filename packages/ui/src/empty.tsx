@@ -1,10 +1,17 @@
 import { twx } from "@formbro/shared/twx";
+import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
 
-export function Empty({ className, ...props }: React.ComponentProps<"div">) {
+export function Empty({
+  className,
+  asChild,
+  ...props
+}: React.ComponentProps<"div"> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot : "span";
+
   return (
-    <div
+    <Comp
       data-slot="empty"
       className={twx(
         "flex min-w-0 flex-1 flex-col items-center justify-center gap-6 border-dashed p-6 text-center text-balance md:p-12",

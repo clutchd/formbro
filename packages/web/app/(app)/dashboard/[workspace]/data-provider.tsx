@@ -1,9 +1,12 @@
 "use client";
 
 import { api } from "@formbro/convex/_generated/api";
+import { RiErrorWarningLine } from "@remixicon/react";
 import { useQuery, type ConvexReactClient } from "convex/react";
 import { usePathname, useRouter } from "next/navigation";
 import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { Loading } from "@/components/loading";
+import { PageState } from "@/components/page-state";
 import { makeRouteQuerySpec, prewarmSpecs } from "@/lib/convex/route-data";
 
 type WorkspaceRouteContextResult = Awaited<
@@ -20,7 +23,8 @@ type WorkspaceDataContextValue = {
   workspace: WorkspaceRouteContext["workspace"] | undefined;
   forms: Forms | undefined;
   isLoading: boolean;
-  isNotFound: boolean;
+  isFormsLoading: boolean;
+  isUnavailable: boolean;
 };
 
 const WorkspaceDataContext = createContext<WorkspaceDataContextValue | null>(null);
@@ -72,8 +76,9 @@ export function WorkspaceDataProvider({
   const workspace = data?.workspace;
   const formsResult = useQuery(api.forms.list, workspace ? { workspaceId: workspace._id } : "skip");
   const forms = formsResult?.ok ? formsResult.data : undefined;
-  const isLoading = context === undefined || (workspace !== undefined && formsResult === undefined);
-  const isNotFound = context !== undefined && !context.ok;
+  const isLoading = context === undefined;
+  const isFormsLoading = workspace !== undefined && formsResult === undefined;
+  const isUnavailable = context !== undefined && !context.ok;
 
   useEffect(() => {
     if (!data || data.isCanonical || pathname === data.canonicalPath) {
@@ -85,11 +90,32 @@ export function WorkspaceDataProvider({
 
   return (
     <WorkspaceDataContext.Provider
-      value={{ context: data, workspace, forms, isLoading, isNotFound }}
+      value={{ context: data, workspace, forms, isLoading, isFormsLoading, isUnavailable }}
     >
       {children}
     </WorkspaceDataContext.Provider>
   );
+}
+
+export function WorkspaceContentBoundary({ children }: { children: ReactNode }) {
+  const { isLoading, isUnavailable } = useWorkspaceData();
+
+  if (isLoading) {
+    return <Loading title="workspace" />;
+  }
+
+  if (isUnavailable) {
+    return (
+      <PageState
+        icon={<RiErrorWarningLine />}
+        title="Workspace unavailable"
+        description="This workspace does not exist or you no longer have access."
+        error
+      />
+    );
+  }
+
+  return children;
 }
 
 export function useWorkspaceData() {
