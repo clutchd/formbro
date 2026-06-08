@@ -13,7 +13,7 @@ import type { useDashboardData } from "./data-provider";
 import { prewarmWorkspace } from "../[workspace]/data-provider";
 import { isUnpaidWorkspace, WorkspacePlanBadge } from "../workspace-plan-badge";
 
-type Workspace = ReturnType<typeof useDashboardData>["workspaces"][number];
+type Workspace = NonNullable<ReturnType<typeof useDashboardData>["workspaces"]>[number];
 
 function EmptyWorkspaceContent() {
   return (

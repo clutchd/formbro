@@ -2,6 +2,7 @@
 
 import { RiFileAiLine } from "@remixicon/react";
 import { Loading } from "@/components/loading";
+import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
 import { CreateForm } from "../create-form-form";
 import { useWorkspaceData } from "../data-provider";
@@ -25,5 +26,5 @@ export default function FormsDashboardContent() {
     );
   }
 
-  return null;
+  return <Page>Forms Here</Page>;
 }

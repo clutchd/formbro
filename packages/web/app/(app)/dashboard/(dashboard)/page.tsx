@@ -2,6 +2,7 @@
 
 import { RiTeamLine } from "@remixicon/react";
 import { Loading } from "@/components/loading";
+import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
 import { CreateWorkspace } from "./create-workspace-form";
 import { useDashboardData } from "./data-provider";
@@ -27,7 +28,7 @@ export default function DashboardContent() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-5 py-8">
+    <Page>
       <div className="mb-6">
         <h1 className="font-display text-2xl font-bold tracking-tight">All Workspaces</h1>
         <p className="mt-1 font-mono text-xs tracking-wider text-muted-foreground uppercase">
@@ -39,6 +40,6 @@ export default function DashboardContent() {
           <WorkspaceCard key={workspace._id} workspace={workspace} />
         ))}
       </div>
-    </main>
+    </Page>
   );
 }
