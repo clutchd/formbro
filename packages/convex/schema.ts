@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { PLANS } from "./lib";
+import { BILLING_STATUSES, PLANS } from "./lib";
 
 export default defineSchema({
   workspaces: defineTable({
@@ -11,19 +11,7 @@ export default defineSchema({
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     stripePriceId: v.optional(v.string()),
-    billingStatus: v.optional(
-      v.union(
-        v.literal("not_subscribed"),
-        v.literal("incomplete"),
-        v.literal("incomplete_expired"),
-        v.literal("trialing"),
-        v.literal("active"),
-        v.literal("past_due"),
-        v.literal("canceled"),
-        v.literal("unpaid"),
-        v.literal("paused"),
-      ),
-    ),
+    billingStatus: v.optional(v.union(...BILLING_STATUSES.map((status) => v.literal(status)))),
   })
     .index("by_slug", ["slug"])
     .index("by_owner", ["ownerAuthId"])

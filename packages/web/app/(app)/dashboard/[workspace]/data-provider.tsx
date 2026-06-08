@@ -120,3 +120,14 @@ export function useWorkspaceData() {
 
   return value;
 }
+
+export function useRequiredWorkspaceData() {
+  const value = useWorkspaceData();
+  if (!value.workspace) {
+    throw new Error("useRequiredWorkspaceData must be used behind WorkspaceContentBoundary");
+  }
+  return {
+    ...value,
+    workspace: value.workspace,
+  };
+}

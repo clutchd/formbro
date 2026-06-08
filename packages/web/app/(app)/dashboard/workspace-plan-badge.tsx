@@ -1,21 +1,10 @@
+import { getBillingPaymentStatus } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
+import type { Workspace } from "./(dashboard)/data-provider";
 
-type WorkspaceBillingSummary = {
-  billingStatus?: string;
-  plan?: string;
-};
-
-export function isUnpaidWorkspace(workspace: WorkspaceBillingSummary) {
-  return workspace.billingStatus === "not_subscribed" || !workspace.plan;
-}
-
-export function workspacePlanBadgeLabel(workspace: WorkspaceBillingSummary) {
-  if (isUnpaidWorkspace(workspace)) {
-    return "unpaid";
-  }
-
-  return workspace.plan;
+export function workspacePlanBadgeLabel(workspace: Workspace) {
+  return workspace.plan ?? "unpaid";
 }
 
 export function WorkspacePlanBadge({
@@ -25,14 +14,12 @@ export function WorkspacePlanBadge({
 }: {
   className?: string;
   size?: "default" | "sm";
-  workspace: WorkspaceBillingSummary;
+  workspace: Workspace;
 }) {
-  const isUnpaid = isUnpaidWorkspace(workspace);
-
   return (
     <Badge
       variant="outline"
-      status={isUnpaid ? "warning" : "success"}
+      status={getBillingPaymentStatus(workspace.billingStatus)}
       className={twx(
         "uppercase",
         size === "sm" && "px-1.5 py-0 text-[10px] leading-4 tracking-normal",

@@ -1,5 +1,6 @@
 "use client";
 
+import { getBillingPaymentStatus } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { Card } from "@formbro/ui/card";
@@ -9,11 +10,12 @@ import { useConvex } from "convex/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRoutePrewarmIntent } from "@/lib/convex/use-route-prewarm-intent";
-import type { useDashboardData } from "./data-provider";
+import type { Workspace } from "./data-provider";
 import { prewarmWorkspace } from "../[workspace]/data-provider";
-import { isUnpaidWorkspace, WorkspacePlanBadge } from "../workspace-plan-badge";
+import { WorkspacePlanBadge } from "../workspace-plan-badge";
 
-type Workspace = NonNullable<ReturnType<typeof useDashboardData>["workspaces"]>[number];
+const isUnpaid = (workspace: Workspace) =>
+  getBillingPaymentStatus(workspace.billingStatus) != "success";
 
 function EmptyWorkspaceContent() {
   return (
@@ -49,8 +51,9 @@ export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   const convex = useConvex();
   const router = useRouter();
   const forms: { name: string; updatedLabel: string }[] = [];
-  const isUnpaid = isUnpaidWorkspace(workspace);
-  const href = isUnpaid ? `/dashboard/${workspace.slug}/settings` : `/dashboard/${workspace.slug}`;
+  const href = isUnpaid(workspace)
+    ? `/dashboard/${workspace.slug}/settings`
+    : `/dashboard/${workspace.slug}`;
   const prewarmIntentHandlers = useRoutePrewarmIntent(() => {
     router.prefetch(href);
     prewarmWorkspace(convex, {
@@ -89,7 +92,7 @@ export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
           onBlur={prewarmIntentHandlers.onBlur}
           onTouchStart={prewarmIntentHandlers.onTouchStart}
         >
-          {isUnpaid ? "Manage Billing" : "Open Workspace"}
+          {isUnpaid(workspace) ? "Manage Billing" : "Open Workspace"}
           <RiArrowRightLine className="size-3 transition-transform group-hover/button:translate-x-1" />
         </Link>
       </Button>

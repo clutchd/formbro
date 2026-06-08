@@ -15,6 +15,7 @@ export function useDashboardPrewarmIntent() {
 
 type WorkspacesResult = Awaited<ReturnType<typeof useQuery<typeof api.workspace.list>>>;
 type Workspaces = NonNullable<WorkspacesResult>["data"];
+export type Workspace = NonNullable<Workspaces>[number];
 
 const DashboardDataContext = createContext<{
   workspaces: Workspaces | undefined;
