@@ -22,9 +22,6 @@ type WorkspaceDataContextValue = {
   context: WorkspaceRouteContext | null | undefined;
   workspace: WorkspaceRouteContext["workspace"] | undefined;
   forms: Forms | undefined;
-  isLoading: boolean;
-  isFormsLoading: boolean;
-  isUnavailable: boolean;
 };
 
 const WorkspaceDataContext = createContext<WorkspaceDataContextValue | null>(null);
@@ -69,42 +66,38 @@ export function WorkspaceDataProvider({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const context = useQuery(api.workspace.context, {
+  const contextResult = useQuery(api.workspace.context, {
     workspaceSlug,
   });
-  const data = context?.ok ? context.data : null;
-  const workspace = data?.workspace;
+  const context =
+    contextResult === undefined ? undefined : contextResult.ok ? contextResult.data : null;
+  const workspace = context?.workspace;
   const formsResult = useQuery(api.forms.list, workspace ? { workspaceId: workspace._id } : "skip");
   const forms = formsResult?.ok ? formsResult.data : undefined;
-  const isLoading = context === undefined;
-  const isFormsLoading = workspace !== undefined && formsResult === undefined;
-  const isUnavailable = context !== undefined && !context.ok;
 
   useEffect(() => {
-    if (!data || data.isCanonical || pathname === data.canonicalPath) {
+    if (!context || context.isCanonical || pathname === context.canonicalPath) {
       return;
     }
 
-    router.replace(data.canonicalPath);
-  }, [data, pathname, router]);
+    router.replace(context.canonicalPath);
+  }, [context, pathname, router]);
 
   return (
-    <WorkspaceDataContext.Provider
-      value={{ context: data, workspace, forms, isLoading, isFormsLoading, isUnavailable }}
-    >
+    <WorkspaceDataContext.Provider value={{ context, workspace, forms }}>
       {children}
     </WorkspaceDataContext.Provider>
   );
 }
 
 export function WorkspaceContentBoundary({ children }: { children: ReactNode }) {
-  const { isLoading, isUnavailable } = useWorkspaceData();
+  const { context, workspace } = useWorkspaceData();
 
-  if (isLoading) {
+  if (context === undefined) {
     return <Loading title="workspace" />;
   }
 
-  if (isUnavailable) {
+  if (!workspace) {
     return (
       <PageState
         icon={<RiErrorWarningLine />}

@@ -8,9 +8,9 @@ import { useDashboardData } from "./data-provider";
 import { WorkspaceCard } from "./workspace-card";
 
 export default function DashboardContent() {
-  const { workspaces, isLoading } = useDashboardData();
+  const { workspaces } = useDashboardData();
 
-  if (isLoading) {
+  if (!workspaces) {
     return <Loading title="workspaces" />;
   }
 

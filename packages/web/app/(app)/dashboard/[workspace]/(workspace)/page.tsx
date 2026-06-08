@@ -7,19 +7,23 @@ import { CreateForm } from "../create-form-form";
 import { useWorkspaceData } from "../data-provider";
 
 export default function FormsDashboardContent() {
-  const { isFormsLoading } = useWorkspaceData();
+  const { forms } = useWorkspaceData();
 
-  if (isFormsLoading) {
+  if (!forms) {
     return <Loading title="forms" />;
   }
 
-  return (
-    <PageState
-      icon={<RiFileAiLine />}
-      title="No forms yet"
-      description="Create your first form to start collecting data"
-    >
-      <CreateForm />
-    </PageState>
-  );
+  if (forms.length === 0) {
+    return (
+      <PageState
+        icon={<RiFileAiLine />}
+        title="No forms yet"
+        description="Create your first form to start collecting data"
+      >
+        <CreateForm />
+      </PageState>
+    );
+  }
+
+  return null;
 }
