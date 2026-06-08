@@ -2,8 +2,8 @@ import { error, fail, ok } from "@formbro/core/result";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
-import { getUser, requireUser, requireWorkspaceAccess, userProfileFromIdentity } from "./auth";
-import { hasString, normalizeEmail } from "./lib";
+import { getUser, requireUser, userProfileFromIdentity } from "./auth";
+import { hasString, normalizeEmail, type Plan } from "./lib";
 
 function buildCanonicalPath(input: { workspaceSlug: string; formId?: string }) {
   if (input.formId) {
@@ -42,7 +42,13 @@ export const context = query({
       return fail(null);
     }
 
-    const { membership } = await requireWorkspaceAccess(ctx, workspace._id);
+    const membership = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace_and_user", (q) =>
+        q.eq("workspaceId", workspace._id).eq("userAuthId", user.subject),
+      )
+      .unique();
+    if (!membership) return fail(null);
 
     const canonicalPath = buildCanonicalPath({
       workspaceSlug: workspace.slug,
@@ -89,7 +95,7 @@ export async function _createWorkspace({
   ctx: MutationCtx;
   name: string;
   owner: WorkspaceMember;
-  plan?: "hobby" | "standard" | "pro" | "unlimited";
+  plan?: Plan | "unlimited";
 }) {
   let slug = generateSlug(name);
   let existingWithSlug = await ctx.db
