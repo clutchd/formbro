@@ -9,13 +9,13 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as billing from "../billing.js";
 import type * as errors from "../errors.js";
 import type * as forms from "../forms.js";
 import type * as http from "../http.js";
 import type * as lib from "../lib.js";
 import type * as resend_audience from "../resend/audience.js";
 import type * as resend_emails from "../resend/emails.js";
-import type * as stripe_client from "../stripe/client.js";
 import type * as system_forms__init from "../system/forms/_init.js";
 import type * as system_forms_create_form from "../system/forms/create_form.js";
 import type * as system_forms_create_workspace from "../system/forms/create_workspace.js";
@@ -30,13 +30,13 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  billing: typeof billing;
   errors: typeof errors;
   forms: typeof forms;
   http: typeof http;
   lib: typeof lib;
   "resend/audience": typeof resend_audience;
   "resend/emails": typeof resend_emails;
-  "stripe/client": typeof stripe_client;
   "system/forms/_init": typeof system_forms__init;
   "system/forms/create_form": typeof system_forms_create_form;
   "system/forms/create_workspace": typeof system_forms_create_workspace;

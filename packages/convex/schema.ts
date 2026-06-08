@@ -1,21 +1,27 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { PLANS } from "./lib";
 
 export default defineSchema({
   workspaces: defineTable({
     name: v.string(),
     slug: v.string(),
     ownerAuthId: v.string(),
-    plan: v.optional(
-      v.union(v.literal("hobby"), v.literal("standard"), v.literal("pro"), v.literal("unlimited")),
-    ),
+    plan: v.optional(v.union(...PLANS.map((plan) => v.literal(plan)), v.literal("unlimited"))),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     stripePriceId: v.optional(v.string()),
     billingStatus: v.optional(
       v.union(
-        v.literal("active"),
         v.literal("not_subscribed"),
+        v.literal("incomplete"),
+        v.literal("incomplete_expired"),
+        v.literal("trialing"),
+        v.literal("active"),
+        v.literal("past_due"),
+        v.literal("canceled"),
+        v.literal("unpaid"),
+        v.literal("paused"),
       ),
     ),
   })
