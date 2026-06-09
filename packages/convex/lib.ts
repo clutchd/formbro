@@ -10,6 +10,16 @@ export const PLANS = ["basic", "pro"] as const;
 export type Plan = (typeof PLANS)[number];
 export type WorkspacePlan = Plan | "unlimited";
 
+export const WORKSPACE_PLAN_LABELS: Record<WorkspacePlan, string> = {
+  basic: "Basic",
+  pro: "Pro",
+  unlimited: "Unlimited",
+};
+
+export function getWorkspacePlanLabel(plan?: WorkspacePlan) {
+  return plan ? WORKSPACE_PLAN_LABELS[plan] : "Unpaid";
+}
+
 export const PLAN_MONTHLY_PRICE_USD: Record<Plan, number> = {
   basic: 10,
   pro: 25,
@@ -29,7 +39,7 @@ export const BILLING_STATUSES = [
   "paused",
 ] as const;
 
-export function getBillingPaymentStatus(billingStatus?: string) {
+export function getWorkspaceBillingState(billingStatus?: string) {
   switch (billingStatus) {
     case "active":
     case "trialing":
@@ -42,7 +52,7 @@ export function getBillingPaymentStatus(billingStatus?: string) {
   }
 }
 
-const GIBIBYTE = 1024 ** 3;
+export const GIBIBYTE = 1024 ** 3;
 
 export const PLAN_STORAGE_LIMIT_BYTES: Record<Plan, number> = {
   basic: 100 * GIBIBYTE,

@@ -1,6 +1,7 @@
 "use client";
 
-import { getBillingPaymentStatus } from "@formbro/convex/lib";
+import { getWorkspaceBillingState } from "@formbro/convex/lib";
+import { getWorkspacePlanLabel } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { Card } from "@formbro/ui/card";
@@ -12,10 +13,10 @@ import { useRouter } from "next/navigation";
 import { useRoutePrewarmIntent } from "@/lib/convex/use-route-prewarm-intent";
 import type { Workspace } from "./data-provider";
 import { prewarmWorkspace } from "../[workspace]/data-provider";
-import { WorkspacePlanBadge } from "../workspace-plan-badge";
+import { WorkspaceBillingStateBadge } from "../workspace-billing-state-badge";
 
 const isUnpaid = (workspace: Workspace) =>
-  getBillingPaymentStatus(workspace.billingStatus) != "success";
+  getWorkspaceBillingState(workspace.billingStatus) != "success";
 
 function EmptyWorkspaceContent() {
   return (
@@ -69,7 +70,9 @@ export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
     >
       <div className="flex items-center gap-3 border-b px-5 py-4">
         <h3 className="font-semibold">{workspace.name}</h3>
-        <WorkspacePlanBadge workspace={workspace} className="ml-auto" />
+        <WorkspaceBillingStateBadge workspace={workspace} className="ml-auto">
+          {getWorkspacePlanLabel(workspace.plan)}
+        </WorkspaceBillingStateBadge>
       </div>
 
       <div className="px-5">

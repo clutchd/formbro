@@ -1,10 +1,11 @@
 "use client";
 
+import { getWorkspacePlanLabel } from "@formbro/convex/lib";
 import { Button } from "@formbro/ui/button";
 import { RiBankCardLine } from "@remixicon/react";
 import Link from "next/link";
 import { DashboardHeader } from "../../header";
-import { WorkspacePlanBadge } from "../../workspace-plan-badge";
+import { WorkspaceBillingStateBadge } from "../../workspace-billing-state-badge";
 import { CreateForm } from "../create-form-form";
 import { useWorkspaceData } from "../data-provider";
 
@@ -14,7 +15,9 @@ function WorkspaceBreadcrumbLabel({ workspace }: { workspace: Workspace }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
       <span className="truncate">{workspace.name}</span>
-      <WorkspacePlanBadge workspace={workspace} size="sm" />
+      <WorkspaceBillingStateBadge workspace={workspace} size="sm">
+        {getWorkspacePlanLabel(workspace.plan)}
+      </WorkspaceBillingStateBadge>
     </span>
   );
 }
