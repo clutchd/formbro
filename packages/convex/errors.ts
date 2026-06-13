@@ -62,8 +62,18 @@ export class FormBroError extends ConvexError<
   status: Status;
   statusCode: number;
 
-  constructor(error: Error<string, Status>, context?: Record<string, Value>) {
-    const payload = context ? { ...error, context } : error;
+  constructor(error: Error<string, Status>, context?: Record<string, Value | undefined>) {
+    const payload =
+      context && Object.keys(context).length > 0
+        ? {
+            ...error,
+            context: context
+              ? (Object.fromEntries(
+                  Object.entries(context).filter(([, value]) => value !== undefined),
+                ) as Record<string, Value>)
+              : undefined,
+          }
+        : error;
     super(payload);
     this.name = "FormBroError";
     this.status = error.status;
@@ -71,7 +81,7 @@ export class FormBroError extends ConvexError<
   }
 }
 
-function defineErrors<const T extends Record<string, Omit<Error<string, Status>, "code">>>(
+export function defineErrors<const T extends Record<string, Omit<Error<string, Status>, "code">>>(
   defs: T,
 ): {
   [K in keyof T]: { code: K & string; message: T[K]["message"]; status: T[K]["status"] };
@@ -87,66 +97,3 @@ function defineErrors<const T extends Record<string, Omit<Error<string, Status>,
 
   return result;
 }
-
-export const errors = defineErrors({
-  NOT_AUTHENTICATED: {
-    message: "Not authenticated.",
-    status: "UNAUTHORIZED",
-  },
-  ADMIN_REQUIRED: {
-    message: "Admin access required.",
-    status: "UNAUTHORIZED",
-  },
-  ADMIN_NOT_CONFIGURED: {
-    message: "Admin access is not set.",
-    status: "INTERNAL_SERVER_ERROR",
-  },
-  WORKSPACE_ACCESS_REQUIRED: {
-    message: "Workspace access required.",
-    status: "FORBIDDEN",
-  },
-  WORKSPACE_NOT_FOUND: {
-    message: "Workspace not found.",
-    status: "NOT_FOUND",
-  },
-  BILLING_OWNER_ONLY: {
-    message: "Only workspace owners can manage billing.",
-    status: "FORBIDDEN",
-  },
-  STRIPE_CUSTOMER_NOT_FOUND: {
-    message: "No Stripe customer found for this workspace yet.",
-    status: "NOT_FOUND",
-  },
-  UNPAID_WORKSPACE_LIMIT: {
-    message: "You can only have one unpaid workspace at a time.",
-    status: "CONFLICT",
-  },
-  ADMIN_USERS_NOT_FOUND: {
-    message: "Admin users not found.",
-    status: "INTERNAL_SERVER_ERROR",
-  },
-  SYSTEM_WORKSPACE_INIT_FAILED: {
-    message: "Failed to initialize system workspace.",
-    status: "INTERNAL_SERVER_ERROR",
-  },
-  RESEND_AUDIENCE_ADD_INVALID: {
-    message: "Failed to add user to audience.",
-    status: "BAD_REQUEST",
-  },
-  RESEND_AUDIENCE_ADD_FAILED: {
-    message: "Failed to add user to audience.",
-    status: "INTERNAL_SERVER_ERROR",
-  },
-  RESEND_AUDIENCE_UPDATE_INVALID: {
-    message: "Failed to update user in audience.",
-    status: "BAD_REQUEST",
-  },
-  RESEND_AUDIENCE_UPDATE_FAILED: {
-    message: "Failed to update user in audience.",
-    status: "INTERNAL_SERVER_ERROR",
-  },
-  RESEND_AUDIENCE_USER_NOT_FOUND: {
-    message: "Failed to find user.",
-    status: "NOT_FOUND",
-  },
-});

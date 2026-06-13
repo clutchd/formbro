@@ -1,18 +1,80 @@
 import { ok } from "@formbro/core/result";
+import { hasString } from "@formbro/core/util";
 import { split } from "@formbro/shared/names";
 import { v } from "convex/values";
-import { Resend } from "resend";
-import { api, components } from "../_generated/api";
-import { action, internalAction } from "../_generated/server";
-import { FormBroError } from "../errors";
+import {
+  CreateContactOptions,
+  CreateContactResponse,
+  Resend,
+  UpdateContactOptions,
+  UpdateContactResponse,
+} from "resend";
+import { action } from "../_generated/server";
+import { defineErrors, FormBroError } from "../errors";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const ERRORS = {
-  FAILED_TO_ADD_CONTACT: "Failed to add user to audience.",
-  FAILED_TO_UPDATE_CONTACT: "Failed to update user in audience.",
-  FAILED_TO_FIND_USER: "Failed to find user.",
-};
+const ERRORS = defineErrors({
+  AUDIENCE_SYNC_FAILED: {
+    message: "Failed to sync contact to audience.",
+    status: "INTERNAL_SERVER_ERROR",
+  },
+  EMAIL_REQUIRED: {
+    message: "Email is required to add or update a contact in the audience.",
+    status: "BAD_REQUEST",
+  },
+  USER_ID_REQUIRED: {
+    message: "User id is required to add or update a contact in the audience.",
+    status: "BAD_REQUEST",
+  },
+});
+
+async function syncToAudience(
+  input:
+    | ({ action: "add"; name?: string } & CreateContactOptions)
+    | ({ action: "update"; name?: string } & UpdateContactOptions),
+) {
+  if (!hasString(input.email)) {
+    throw new FormBroError(ERRORS.EMAIL_REQUIRED, { email: input.email, name: input.name });
+  }
+
+  const { firstName, lastName } = split(input.name);
+
+  let contact: CreateContactResponse | UpdateContactResponse;
+
+  switch (input.action) {
+    case "add": {
+      const { action: _action, name: _name, email, ...options } = input;
+      contact = await resend.contacts.create({
+        email,
+        ...options,
+        firstName,
+        lastName,
+      });
+      break;
+    }
+    case "update": {
+      const { action: _action, name: _name, email, id: _id, ...options } = input;
+      contact = await resend.contacts.update({
+        email,
+        ...options,
+        firstName,
+        lastName,
+      });
+      break;
+    }
+  }
+
+  if (!contact.data || contact.error) {
+    throw new FormBroError(ERRORS.AUDIENCE_SYNC_FAILED, {
+      email: input.email,
+      name: input.name,
+      resend: contact,
+    });
+  }
+
+  return ok();
+}
 
 export const add = action({
   args: {
@@ -20,34 +82,11 @@ export const add = action({
     name: v.optional(v.string()),
   },
   handler: async (_ctx, args) => {
-    if (!args.email) {
-      throw new FormBroError("BAD_REQUEST", {
-        message: ERRORS.FAILED_TO_ADD_CONTACT,
-        data: {
-          email: args.email,
-        },
-      });
-    }
-
-    const { firstName, lastName } = split(args.name);
-    const contact = await resend.contacts.create({
+    return await syncToAudience({
       email: args.email,
-      firstName: firstName ?? undefined,
-      lastName: lastName ?? undefined,
-      unsubscribed: false,
+      name: args.name,
+      action: "add",
     });
-
-    if (!contact.data || contact.error) {
-      throw new FormBroError("INTERNAL_SERVER_ERROR", {
-        message: ERRORS.FAILED_TO_ADD_CONTACT,
-        data: {
-          email: args.email,
-          error: contact.error,
-        },
-      });
-    }
-
-    return ok();
   },
 });
 
@@ -57,69 +96,10 @@ export const update = action({
     name: v.optional(v.string()),
   },
   handler: async (_ctx, args) => {
-    if (!args.email) {
-      throw new FormBroError("BAD_REQUEST", {
-        message: ERRORS.FAILED_TO_UPDATE_CONTACT,
-        data: {
-          email: args.email,
-        },
-      });
-    }
-
-    const { firstName, lastName } = split(args.name);
-    const contact = await resend.contacts.update({
+    return await syncToAudience({
       email: args.email,
-      firstName: firstName,
-      lastName: lastName,
+      name: args.name,
+      action: "update",
     });
-
-    if (!contact.data || contact.error) {
-      throw new FormBroError("INTERNAL_SERVER_ERROR", {
-        message: ERRORS.FAILED_TO_UPDATE_CONTACT,
-        data: {
-          email: args.email,
-          error: contact.error,
-        },
-      });
-    }
-
-    return ok();
-  },
-});
-
-export const upsert = internalAction({
-  args: {
-    id: v.string(),
-  },
-  handler: async (ctx, args) => {
-    if (!args.id) {
-      throw new FormBroError("BAD_REQUEST", {
-        message: ERRORS.FAILED_TO_ADD_CONTACT,
-        data: {
-          id: args.id,
-        },
-      });
-    }
-
-    const user = await ctx.runQuery(components.betterAuth.adapter.findOne, {
-      model: "user",
-      where: [{ field: "_id", operator: "eq", value: args.id }],
-    });
-
-    if (!user) {
-      throw new FormBroError("NOT_FOUND", {
-        message: ERRORS.FAILED_TO_FIND_USER,
-        data: {
-          id: args.id,
-        },
-      });
-    }
-
-    await ctx.scheduler.runAfter(0, api.resend.audience.add, {
-      email: user.email,
-      name: user.name,
-    });
-
-    return ok();
   },
 });

@@ -17,14 +17,6 @@ export function Result<T extends Validator<any, any, any>>(schema: T) {
   );
 }
 
-export function hasString(value: unknown): value is string {
-  return typeof value === "string" && value.length > 0;
-}
-
-export function normalizeEmail(value: string) {
-  return value.trim().toLowerCase();
-}
-
 export const PLANS = ["basic", "pro"] as const;
 export type Plan = (typeof PLANS)[number];
 export type WorkspacePlan = Plan | "unlimited";
