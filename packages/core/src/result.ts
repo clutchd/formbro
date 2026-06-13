@@ -64,23 +64,29 @@ export const codes = {
   NETWORK_AUTHENTICATION_REQUIRED: 511,
 } as const;
 
-export type StatusCodeName = keyof typeof codes;
-export type StatusCode = (typeof codes)[StatusCodeName];
+export type Status = keyof typeof codes;
+export type StatusCode = (typeof codes)[Status];
+
+export type Error<TCode extends string, TStatus extends Status> = {
+  code: TCode;
+  message: string;
+  status: TStatus;
+};
 
 type BaseResult<T extends boolean> = { ok: T };
 type BaseResultWithData<T extends boolean, TData> = BaseResult<T> & { data: TData };
 type BaseResultWithError<
   T extends boolean,
   TErrorCode extends string,
-  TStatus extends StatusCodeName,
-> = BaseResult<T> & { error: { code: TErrorCode; message: string; status: TStatus } };
+  TStatus extends Status,
+> = BaseResult<T> & { error: Error<TErrorCode, TStatus> };
 type BaseResultWithDataAndError<
   T extends boolean,
   TData,
   TErrorCode extends string,
-  TStatus extends StatusCodeName,
+  TStatus extends Status,
 > = BaseResultWithData<T, TData> & {
-  error: { code: TErrorCode; message: string; status: TStatus };
+  error: Error<TErrorCode, TStatus>;
 };
 
 export function ok(): BaseResult<true>;
@@ -92,21 +98,21 @@ export function ok<TData>(data?: TData) {
 
 export function fail(): BaseResult<false>;
 export function fail<TData>({ data }: { data: TData }): BaseResultWithData<false, TData>;
-export function fail<TCode extends string, TStatus extends StatusCodeName>({
+export function fail<TCode extends string, TStatus extends Status>({
   error,
 }: {
-  error: { code: TCode; message: string; status: TStatus };
+  error: Error<TCode, TStatus>;
 }): BaseResultWithError<false, TCode, TStatus>;
-export function fail<TData, TCode extends string, TStatus extends StatusCodeName>({
+export function fail<TData, TCode extends string, TStatus extends Status>({
   data,
   error,
 }: {
   data: TData;
-  error: { code: TCode; message: string; status: TStatus };
+  error: Error<TCode, TStatus>;
 }): BaseResultWithDataAndError<false, TData, TCode, TStatus>;
-export function fail<TData, TErrorCode extends string, TStatus extends StatusCodeName>(args?: {
+export function fail<TData, TErrorCode extends string, TStatus extends Status>(args?: {
   data?: TData;
-  error?: { code: TErrorCode; message: string; status: TStatus };
+  error?: Error<TErrorCode, TStatus>;
 }) {
   const { data, error } = args ?? {};
   const hasData = data !== undefined;
@@ -120,7 +126,7 @@ export function fail<TData, TErrorCode extends string, TStatus extends StatusCod
 }
 
 type OkResult<TData> = BaseResult<true> | BaseResultWithData<true, TData>;
-type FailResult<TData, TErrorCode extends string, TStatus extends StatusCodeName> =
+type FailResult<TData, TErrorCode extends string, TStatus extends Status> =
   | BaseResult<false>
   | BaseResultWithData<false, TData>
   | BaseResultWithError<false, TErrorCode, TStatus>
@@ -129,5 +135,5 @@ type FailResult<TData, TErrorCode extends string, TStatus extends StatusCodeName
 export type Result<
   TData = void,
   TErrorCode extends string = string,
-  TStatus extends StatusCodeName = StatusCodeName,
+  TStatus extends Status = Status,
 > = OkResult<TData> | FailResult<TData, TErrorCode, TStatus>;
