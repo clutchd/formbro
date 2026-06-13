@@ -1,3 +1,22 @@
+import { v, Validator } from "convex/values";
+
+export function Result<T extends Validator<any, any, any>>(schema: T) {
+  return v.union(
+    v.object({ ok: v.literal(true), data: v.optional(schema) }),
+    v.object({
+      ok: v.literal(false),
+      data: v.optional(v.any()),
+      error: v.optional(
+        v.object({
+          code: v.optional(v.string()),
+          message: v.string(),
+          status: v.union(v.string()),
+        }),
+      ),
+    }),
+  );
+}
+
 export function hasString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }

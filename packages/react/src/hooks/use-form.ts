@@ -88,7 +88,7 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
         const result = await action({ values: mutatedValues });
 
         if (!result.ok) {
-          const error = "error" in result ? result.error : result.data;
+          const error = "error" in result ? result.error : "data" in result ? result.data : result;
 
           instrumentation?.onSubmitError?.({
             form: compiled,
@@ -99,12 +99,14 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
           return;
         }
 
+        const data = "data" in result ? result.data : (undefined as TData);
+
         instrumentation?.onSubmitSuccess?.({
           form: compiled,
           values: stringValues,
-          data: result.data,
+          data,
         });
-        onSuccess?.({ result: stringValues, data: result.data });
+        onSuccess?.({ result: stringValues, data });
       } catch (error) {
         instrumentation?.onSubmitError?.({
           form: compiled,

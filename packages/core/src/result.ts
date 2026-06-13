@@ -65,57 +65,69 @@ export const codes = {
 } as const;
 
 export type StatusCodeName = keyof typeof codes;
-export type Status = (typeof codes)[StatusCodeName];
+export type StatusCode = (typeof codes)[StatusCodeName];
 
-export function ok(): { ok: true };
-export function ok<TData>(data: TData): { ok: true; data: TData };
-export function ok<TData>(...args: [] | [data: TData]) {
-  if (args.length === 0) {
-    return {
-      ok: true as const,
-    };
-  }
+type BaseResult<T extends boolean> = { ok: T };
+type BaseResultWithData<T extends boolean, TData> = BaseResult<T> & { data: TData };
+type BaseResultWithError<
+  T extends boolean,
+  TErrorCode extends string,
+  TStatus extends StatusCodeName,
+> = BaseResult<T> & { error: { code: TErrorCode; message: string; status: TStatus } };
+type BaseResultWithDataAndError<
+  T extends boolean,
+  TData,
+  TErrorCode extends string,
+  TStatus extends StatusCodeName,
+> = BaseResultWithData<T, TData> & {
+  error: { code: TErrorCode; message: string; status: TStatus };
+};
 
-  const [data] = args;
-
-  return {
-    ok: true as const,
-    data,
-  };
+export function ok(): BaseResult<true>;
+export function ok<TData>(data: TData): BaseResultWithData<true, TData>;
+export function ok<TData>(data?: TData) {
+  if (data === undefined) return { ok: true as const };
+  return { ok: true as const, data };
 }
 
-export function fail(): { ok: false };
-export function fail<TData>(data: TData): { ok: false; data: TData };
-export function fail<TData>(...args: [] | [data: TData]) {
-  if (args.length === 0) {
-    return {
-      ok: false as const,
-    };
-  }
+export function fail(): BaseResult<false>;
+export function fail<TData>({ data }: { data: TData }): BaseResultWithData<false, TData>;
+export function fail<TCode extends string, TStatus extends StatusCodeName>({
+  error,
+}: {
+  error: { code: TCode; message: string; status: TStatus };
+}): BaseResultWithError<false, TCode, TStatus>;
+export function fail<TData, TCode extends string, TStatus extends StatusCodeName>({
+  data,
+  error,
+}: {
+  data: TData;
+  error: { code: TCode; message: string; status: TStatus };
+}): BaseResultWithDataAndError<false, TData, TCode, TStatus>;
+export function fail<TData, TErrorCode extends string, TStatus extends StatusCodeName>(args?: {
+  data?: TData;
+  error?: { code: TErrorCode; message: string; status: TStatus };
+}) {
+  const { data, error } = args ?? {};
+  const hasData = data !== undefined;
+  const hasError = error !== undefined;
 
-  const [data] = args;
+  if (!hasData && !hasError) return { ok: false as const };
+  if (hasData && !hasError) return { ok: false as const, data };
+  if (!hasData && hasError) return { ok: false as const, error };
 
-  return {
-    ok: false as const,
-    data,
-  };
+  return { ok: false as const, data, error };
 }
 
-export function error<
-  TCode extends string,
-  TStatus extends StatusCodeName | Status = "INTERNAL_SERVER_ERROR",
->({ code, message, status }: { code: TCode; message: string; status: TStatus }) {
-  return {
-    ok: false as const,
-    error: {
-      code,
-      message,
-      status,
-    },
-  };
-}
+type OkResult<TData> = BaseResult<true> | BaseResultWithData<true, TData>;
+type FailResult<TData, TErrorCode extends string, TStatus extends StatusCodeName> =
+  | BaseResult<false>
+  | BaseResultWithData<false, TData>
+  | BaseResultWithError<false, TErrorCode, TStatus>
+  | BaseResultWithDataAndError<false, TData, TErrorCode, TStatus>;
 
-export type Result<T> =
-  | ReturnType<typeof ok<T>>
-  | ReturnType<typeof fail<T>>
-  | ReturnType<typeof error>;
+export type Result<
+  TData = void,
+  TErrorCode extends string = string,
+  TStatus extends StatusCodeName = StatusCodeName,
+> = OkResult<TData> | FailResult<TData, TErrorCode, TStatus>;
