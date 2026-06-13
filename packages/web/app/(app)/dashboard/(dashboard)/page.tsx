@@ -1,5 +1,6 @@
 "use client";
 
+import { TypographyH1, TypographySubheading } from "@formbro/ui/typography";
 import { RiTeamLine } from "@remixicon/react";
 import { Loading } from "@/components/loading";
 import { Page } from "@/components/page";
@@ -30,10 +31,10 @@ export default function DashboardContent() {
   return (
     <Page>
       <div className="mb-6">
-        <h1 className="font-display text-2xl font-bold tracking-tight">All Workspaces</h1>
-        <p className="mt-1 font-mono text-xs tracking-wider text-muted-foreground uppercase">
+        <TypographyH1>All Workspaces</TypographyH1>
+        <TypographySubheading>
           {workspaces.length} workspace{workspaces.length === 1 ? "" : "s"}
-        </p>
+        </TypographySubheading>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {workspaces.map((workspace) => (

@@ -45,6 +45,14 @@ export function TypographyH2({ children, className, ...props }: React.ComponentP
   );
 }
 
+export function TypographySubheading({ children, className, ...props }: React.ComponentProps<"p">) {
+  return (
+    <p className={twx(tuiFont, "mt-1 text-muted-foreground", className)} {...props}>
+      {children}
+    </p>
+  );
+}
+
 export function TypographyP({ children, className, ...props }: React.ComponentProps<"p">) {
   return (
     <p className={twx(p, className)} {...props}>
