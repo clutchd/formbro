@@ -1,29 +1,20 @@
-import { codes, type Result, type Status, type StatusCodeName } from "@formbro/core/result";
+import { codes, type Result, type StatusCode, type Status, type Error } from "@formbro/core/result";
 import { ConvexError, type Value } from "convex/values";
 
-const statusCodeToName: Record<Status, StatusCodeName> = Object.fromEntries(
-  (Object.entries(codes) as [StatusCodeName, Status][]).map(([name, code]) => [code, name]),
-) as Record<Status, StatusCodeName>;
-
-function defaultDataFor(status: StatusCodeName | Status): StatusCodeName | string {
-  return typeof status === "number" ? (statusCodeToName[status] ?? status.toString()) : status;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object";
-}
-
-type ResultError = Extract<
+function isResultError(
+  value: unknown,
+): value is Extract<
   Result<unknown>,
-  { ok: false; error: { message: string; status: StatusCodeName | Status } }
->["error"];
-
-function isResultError(value: unknown): value is ResultError {
-  if (!isRecord(value)) return false;
+  { ok: false; error: { message: string; status: Status | StatusCode } }
+>["error"] {
+  if (!(value !== null && typeof value === "object")) return false;
 
   return (
+    "code" in value &&
     typeof value.code === "string" &&
+    "message" in value &&
     typeof value.message === "string" &&
+    "status" in value &&
     (typeof value.status === "string" || typeof value.status === "number")
   );
 }
@@ -63,15 +54,99 @@ export function shouldReportError(error: unknown) {
   return true;
 }
 
-export class FormBroError<TData extends Value> extends ConvexError<TData> {
-  status: StatusCodeName | Status = "INTERNAL_SERVER_ERROR";
+export class FormBroError extends ConvexError<
+  Error<string, Status> & {
+    context?: Record<string, Value>;
+  }
+> {
+  status: Status;
   statusCode: number;
 
-  constructor(status: StatusCodeName | Status = "INTERNAL_SERVER_ERROR", data?: TData) {
-    const payload = (data ?? defaultDataFor(status)) as TData;
+  constructor(error: Error<string, Status>, context?: Record<string, Value>) {
+    const payload = context ? { ...error, context } : error;
     super(payload);
     this.name = "FormBroError";
-    this.status = status;
-    this.statusCode = typeof status === "number" ? status : codes[status];
+    this.status = error.status;
+    this.statusCode = codes[error.status];
   }
 }
+
+function defineErrors<const T extends Record<string, Omit<Error<string, Status>, "code">>>(
+  defs: T,
+): {
+  [K in keyof T]: { code: K & string; message: T[K]["message"]; status: T[K]["status"] };
+} {
+  const result = {} as {
+    [K in keyof T]: { code: K & string; message: T[K]["message"]; status: T[K]["status"] };
+  };
+
+  for (const code in defs) {
+    const key = code as keyof T & string;
+    result[key] = { code: key, ...defs[key] };
+  }
+
+  return result;
+}
+
+export const errors = defineErrors({
+  NOT_AUTHENTICATED: {
+    message: "Not authenticated.",
+    status: "UNAUTHORIZED",
+  },
+  ADMIN_REQUIRED: {
+    message: "Admin access required.",
+    status: "UNAUTHORIZED",
+  },
+  ADMIN_NOT_CONFIGURED: {
+    message: "Admin access is not set.",
+    status: "INTERNAL_SERVER_ERROR",
+  },
+  WORKSPACE_ACCESS_REQUIRED: {
+    message: "Workspace access required.",
+    status: "FORBIDDEN",
+  },
+  WORKSPACE_NOT_FOUND: {
+    message: "Workspace not found.",
+    status: "NOT_FOUND",
+  },
+  BILLING_OWNER_ONLY: {
+    message: "Only workspace owners can manage billing.",
+    status: "FORBIDDEN",
+  },
+  STRIPE_CUSTOMER_NOT_FOUND: {
+    message: "No Stripe customer found for this workspace yet.",
+    status: "NOT_FOUND",
+  },
+  UNPAID_WORKSPACE_LIMIT: {
+    message: "You can only have one unpaid workspace at a time.",
+    status: "CONFLICT",
+  },
+  ADMIN_USERS_NOT_FOUND: {
+    message: "Admin users not found.",
+    status: "INTERNAL_SERVER_ERROR",
+  },
+  SYSTEM_WORKSPACE_INIT_FAILED: {
+    message: "Failed to initialize system workspace.",
+    status: "INTERNAL_SERVER_ERROR",
+  },
+  RESEND_AUDIENCE_ADD_INVALID: {
+    message: "Failed to add user to audience.",
+    status: "BAD_REQUEST",
+  },
+  RESEND_AUDIENCE_ADD_FAILED: {
+    message: "Failed to add user to audience.",
+    status: "INTERNAL_SERVER_ERROR",
+  },
+  RESEND_AUDIENCE_UPDATE_INVALID: {
+    message: "Failed to update user in audience.",
+    status: "BAD_REQUEST",
+  },
+  RESEND_AUDIENCE_UPDATE_FAILED: {
+    message: "Failed to update user in audience.",
+    status: "INTERNAL_SERVER_ERROR",
+  },
+  RESEND_AUDIENCE_USER_NOT_FOUND: {
+    message: "Failed to find user.",
+    status: "NOT_FOUND",
+  },
+});

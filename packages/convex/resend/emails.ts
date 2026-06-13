@@ -32,6 +32,7 @@ async function _send(
     html,
     text,
   });
+
   return emailId;
 }
 
