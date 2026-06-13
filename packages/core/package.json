@@ -9,6 +9,7 @@
   },
   "scripts": {},
   "dependencies": {
+    "nanoid": "5.1.11",
     "zod": "catalog:"
   },
   "devDependencies": {
