@@ -1,4 +1,4 @@
-import { RiAddLine, RiFileAiLine, RiSearchLine, RiUploadCloudLine } from "@remixicon/react";
+import { RiAddLine, RiFileAiLine } from "@remixicon/react";
 import React from "react";
 import { Button } from "./button";
 import {
