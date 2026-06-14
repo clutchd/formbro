@@ -66,7 +66,7 @@ export async function resolveUserProfile(ctx: QueryCtxLike, identity: Identity) 
   };
 }
 
-export async function getUser(ctx: QueryCtx | MutationCtx) {
+export async function getUser(ctx: QueryCtx | MutationCtx | ActionCtx) {
   const user = await ctx.auth.getUserIdentity();
   if (!user) return fail({ error: ERRORS.NOT_AUTHENTICATED });
   return ok(user);

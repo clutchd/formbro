@@ -11,7 +11,7 @@ export default defineSchema({
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     stripePriceId: v.optional(v.string()),
-    billingStatus: v.optional(v.union(...BILLING_STATUSES.map((status) => v.literal(status)))),
+    billingStatus: v.optional(v.string()),
   })
     .index("by_slug", ["slug"])
     .index("by_owner", ["ownerAuthId"])

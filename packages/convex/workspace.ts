@@ -261,3 +261,14 @@ export const list = query({
     return ok(workspaces.filter((w): w is NonNullable<typeof w> => Boolean(w)));
   },
 });
+
+export const linkStripeCustomer = internalMutation({
+  args: {
+    workspaceId: v.id("workspaces"),
+    stripeCustomerId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.workspaceId, { stripeCustomerId: args.stripeCustomerId });
+    return ok({ workspaceId: args.workspaceId, stripeCustomerId: args.stripeCustomerId });
+  },
+});

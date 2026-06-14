@@ -1,6 +1,7 @@
 import type { GenericActionCtx, GenericDataModel } from "convex/server";
 import { registerRoutes } from "@convex-dev/stripe";
 import { ok } from "@formbro/core/result";
+import { hasString } from "@formbro/core/util";
 import { httpRouter } from "convex/server";
 import Stripe from "stripe";
 import { components, internal } from "./_generated/api";
@@ -15,9 +16,10 @@ authComponent.registerRoutes(http, createAuth, { cors: true });
 function getSubscriptionMetadata(subscription: Stripe.Subscription) {
   const workspaceId = subscription.metadata?.workspaceId;
   return {
-    orgId: typeof workspaceId === "string" && workspaceId.length > 0 ? workspaceId : undefined,
-    stripeCustomerId:
-      typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id,
+    workspaceId: hasString(workspaceId) ? workspaceId : undefined,
+    stripeCustomerId: hasString(subscription.customer)
+      ? subscription.customer
+      : subscription.customer.id,
     stripeSubscriptionId: subscription.id,
     stripePriceId: subscription.items.data[0]?.price?.id,
     status: subscription.status,
