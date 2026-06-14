@@ -3,14 +3,14 @@ import { hasString } from "@formbro/core/util";
 import { split } from "@formbro/shared/names";
 import { v } from "convex/values";
 import {
-  CreateContactOptions,
-  CreateContactResponse,
+  type CreateContactOptions,
+  type CreateContactResponse,
   Resend,
-  UpdateContactOptions,
-  UpdateContactResponse,
+  type UpdateContactOptions,
+  type UpdateContactResponse,
 } from "resend";
-import { action } from "../_generated/server";
-import { defineErrors, FormBroError } from "../errors";
+import { action } from "./_generated/server";
+import { defineErrors, FormBroError } from "./errors";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 

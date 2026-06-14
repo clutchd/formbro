@@ -6,7 +6,7 @@ import Stripe from "stripe";
 import { components, internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { authComponent, createAuth } from "./auth";
-import { resendClient } from "./resend/emails";
+import { resendClient } from "./emails";
 
 const http = httpRouter();
 

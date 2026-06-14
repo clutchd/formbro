@@ -4,8 +4,8 @@ import { Resend } from "@convex-dev/resend";
 import SignupComponent, { SignupSubject } from "@formbro/email/transactional/signup";
 import { render } from "@react-email/render";
 import { v } from "convex/values";
-import { components } from "../_generated/api";
-import { action, type ActionCtx } from "../_generated/server";
+import { components } from "./_generated/api";
+import { action, type ActionCtx } from "./_generated/server";
 
 export const resendClient = new Resend(components.resend, {
   testMode: false,

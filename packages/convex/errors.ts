@@ -1,10 +1,16 @@
-import { codes, type Result, type StatusCode, type Status, type Error } from "@formbro/core/result";
+import {
+  codes,
+  type AnyResult,
+  type StatusCode,
+  type Status,
+  type Error,
+} from "@formbro/core/result";
 import { ConvexError, type Value } from "convex/values";
 
 function isResultError(
   value: unknown,
 ): value is Extract<
-  Result<unknown>,
+  AnyResult<unknown>,
   { ok: false; error: { message: string; status: Status | StatusCode } }
 >["error"] {
   if (!(value !== null && typeof value === "object")) return false;
