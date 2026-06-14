@@ -2,7 +2,7 @@ import { fail, ok } from "@formbro/core/result";
 import { type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getUser, resolveUserProfile } from "./auth";
-import { defineErrors, FormBroError } from "./errors";
+import { defineErrors } from "./errors";
 
 export const ERRORS = defineErrors({
   WORKSPACE_ACCESS_REQUIRED: {

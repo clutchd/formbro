@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { BILLING_STATUSES, PLANS } from "./lib";
+import { PLANS } from "./lib";
 
 export default defineSchema({
   workspaces: defineTable({

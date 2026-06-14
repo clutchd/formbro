@@ -22,7 +22,7 @@ export function DashboardHeader({
 }) {
   const { authUser } = useAppData();
   const dashboardPrewarmIntent = useDashboardPrewarmIntent();
-  const user = authUser.ok ? authUser.data : null;
+  const user = authUser?.ok ? authUser.data : null;
 
   return (
     <header className="sticky top-0 z-50 mx-auto flex w-full flex-row items-center justify-between gap-4 border-b bg-sidebar px-5 py-3">
