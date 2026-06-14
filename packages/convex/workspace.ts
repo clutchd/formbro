@@ -1,9 +1,24 @@
-import { error, fail, ok } from "@formbro/core/result";
+import { fail, ok } from "@formbro/core/result";
+import { hasString, normalizeEmail } from "@formbro/core/util";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import { internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
-import { getUser, requireUser, userProfileFromIdentity } from "./auth";
-import { hasString, normalizeEmail, type Plan } from "./lib";
+import { ERRORS as ACCESS_ERRORS, getWorkspaceAccess } from "./access";
+import { getUser, resolveUserProfile } from "./auth";
+import { defineErrors } from "./errors";
+import { ERRORS as FORM_ERRORS } from "./forms";
+import { type Plan } from "./lib";
+
+export const ERRORS = defineErrors({
+  WORKSPACE_NOT_FOUND: {
+    message: "Workspace not found.",
+    status: "NOT_FOUND",
+  },
+  UNPAID_WORKSPACE_LIMIT: {
+    message: "Unpaid workspace limit reached.",
+    status: "FORBIDDEN",
+  },
+});
 
 function buildCanonicalPath(input: { workspaceSlug: string; formId?: string }) {
   if (input.formId) {
@@ -19,36 +34,36 @@ export const context = query({
     formId: v.optional(v.id("forms")),
   },
   handler: async (ctx, args) => {
-    const user = await getUser(ctx);
-    if (!user) return fail(null);
+    const identity = await getUser(ctx);
+    if (!identity.ok) return fail({ data: null, error: identity.error });
 
     let workspace: Doc<"workspaces"> | null = null;
     let form: Doc<"forms"> | null = null;
 
     if (args.formId) {
       form = await ctx.db.get(args.formId);
-      if (!form) return fail(null);
+      if (!form) return fail({ data: null, error: FORM_ERRORS.FORM_NOT_FOUND });
 
       workspace = await ctx.db.get(form.workspaceId);
-      if (!workspace) return fail(null);
+      if (!workspace) return fail({ data: null, error: ERRORS.WORKSPACE_NOT_FOUND });
     } else if (args.workspaceSlug) {
       const workspaceSlug = args.workspaceSlug;
       workspace = await ctx.db
         .query("workspaces")
         .withIndex("by_slug", (q) => q.eq("slug", workspaceSlug))
         .unique();
-      if (!workspace) return fail(null);
+      if (!workspace) return fail({ data: null, error: ERRORS.WORKSPACE_NOT_FOUND });
     } else {
-      return fail(null);
+      return fail({ data: null, error: ERRORS.WORKSPACE_NOT_FOUND });
     }
 
     const membership = await ctx.db
       .query("workspaceMembers")
       .withIndex("by_workspace_and_user", (q) =>
-        q.eq("workspaceId", workspace._id).eq("userAuthId", user.subject),
+        q.eq("workspaceId", workspace._id).eq("userAuthId", identity.data.subject),
       )
       .unique();
-    if (!membership) return fail(null);
+    if (!membership) return fail({ data: null, error: ACCESS_ERRORS.WORKSPACE_ACCESS_REQUIRED });
 
     const canonicalPath = buildCanonicalPath({
       workspaceSlug: workspace.slug,
@@ -179,23 +194,21 @@ export const create = mutation({
     name: v.string(),
   },
   handler: async (ctx, args) => {
-    const user = await requireUser(ctx);
-    const profile = await userProfileFromIdentity(ctx, user);
+    const identity = await getUser(ctx);
+    if (!identity.ok) return fail({ data: undefined, error: identity.error });
+
+    const profile = await resolveUserProfile(ctx, identity.data);
 
     const unpaidWorkspaces = await ctx.db
       .query("workspaces")
-      .withIndex("by_owner", (q) => q.eq("ownerAuthId", user.subject))
+      .withIndex("by_owner", (q) => q.eq("ownerAuthId", identity.data.subject))
       .filter(
         (q) => q.eq(q.field("billingStatus"), "not_subscribed") || q.eq(q.field("plan"), undefined),
       )
       .collect();
 
     if (unpaidWorkspaces.length > 0) {
-      return error({
-        code: "UNPAID_WORKSPACE_LIMIT",
-        message: "You can only have one unpaid workspace at a time",
-        status: "CONFLICT",
-      });
+      return fail({ data: undefined, error: ERRORS.UNPAID_WORKSPACE_LIMIT });
     }
 
     return ok(
@@ -203,7 +216,7 @@ export const create = mutation({
         ctx,
         name: args.name,
         owner: {
-          authId: user.subject,
+          authId: identity.data.subject,
           email: profile.email,
           name: profile.name,
           avatarUrl: profile.image,
@@ -213,15 +226,29 @@ export const create = mutation({
   },
 });
 
+export const get = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    const userWithAccess = await getWorkspaceAccess(ctx, args.workspaceId);
+    if (!userWithAccess.ok) {
+      return fail({ data: null, error: userWithAccess.error });
+    }
+
+    const workspace = await ctx.db.get(args.workspaceId);
+    if (!workspace) return fail({ data: null, error: ERRORS.WORKSPACE_NOT_FOUND });
+    return ok({ ...workspace, role: userWithAccess.data.membership.role });
+  },
+});
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
     const user = await getUser(ctx);
-    if (!user) return fail([]);
+    if (!user.ok) return fail({ data: [], error: user.error });
 
     const memberships = await ctx.db
       .query("workspaceMembers")
-      .withIndex("by_user", (q) => q.eq("userAuthId", user.subject))
+      .withIndex("by_user", (q) => q.eq("userAuthId", user.data.subject))
       .collect();
 
     const workspaces = await Promise.all(
