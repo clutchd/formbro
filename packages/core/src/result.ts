@@ -143,3 +143,12 @@ export type QueryResult<
   TErrorCode extends string = string,
   TStatus extends Status = Status,
 > = ResultWithData<true, TData> | ResultWithDataAndError<false, TData, TErrorCode, TStatus>;
+
+export type MutationResult<
+  TData,
+  TErrorCode extends string = string,
+  TStatus extends Status = Status,
+> =
+  | ResultWithData<true, TData>
+  | ResultWithError<false, TErrorCode, TStatus>
+  | ResultWithDataAndError<false, undefined, TErrorCode, TStatus>;

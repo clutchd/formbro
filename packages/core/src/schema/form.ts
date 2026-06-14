@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { CompiledField } from "../compile";
-import type { AnyResult } from "../result";
-// import type { TanStackForm } from "@/forms/hooks/tanstack";
+import type { MutationResult } from "../result";
 import type { ExtractFormData } from "./extract";
+// import type { TanStackForm } from "@/forms/hooks/tanstack";
 import { ElementSchema } from "./element";
 import { FieldSchema } from "./field";
 import { ListenerSchema } from "./listener";
@@ -47,7 +47,7 @@ export type FormAction<T extends FormInput = FormInput, TData = void> = ({
 }: {
   values: FormValues<T>;
   //tanstack?: TanStackForm;
-}) => AnyResult<TData> | Promise<AnyResult<TData>>;
+}) => MutationResult<TData> | Promise<MutationResult<TData>>;
 
 export type FormOnMutate<T extends FormInput = FormInput> = ({
   values,
