@@ -1,13 +1,5 @@
 import { WorkspaceDataProvider } from "./data-provider";
 
-export default async function WorkspaceLayout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: Promise<{ workspace: string }>;
-}) {
-  const { workspace: slug } = await params;
-
-  return <WorkspaceDataProvider workspaceSlug={slug}>{children}</WorkspaceDataProvider>;
+export default function WorkspaceLayout({ children }: { children: React.ReactNode }) {
+  return <WorkspaceDataProvider>{children}</WorkspaceDataProvider>;
 }

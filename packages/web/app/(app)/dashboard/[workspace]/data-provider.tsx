@@ -1,103 +1,96 @@
 "use client";
 
+import type { ConvexReactClient } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
+import type { ReactNode } from "react";
 import { api } from "@formbro/convex/_generated/api";
 import { RiErrorWarningLine } from "@remixicon/react";
-import { useQuery, type ConvexReactClient } from "convex/react";
-import { usePathname, useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { useConvex, useQuery } from "convex/react";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Loading } from "@/components/loading";
 import { PageState } from "@/components/page-state";
-import { makeRouteQuerySpec, prewarmSpecs } from "@/lib/convex/route-data";
+import {
+  prewarmRoute,
+  useRoutePrewarm,
+  type RoutePrewarmOptions,
+} from "@/lib/convex/route-prewarm";
+import { createSegmentData } from "@/lib/data-segment";
 
-type WorkspaceRouteContextResult = Awaited<
-  ReturnType<typeof useQuery<typeof api.workspace.context>>
->;
-type WorkspaceRouteContext = Extract<
-  NonNullable<WorkspaceRouteContextResult>,
-  { ok: true }
->["data"];
-type FormsResult = Awaited<ReturnType<typeof useQuery<typeof api.forms.list>>>;
-type Forms = Extract<NonNullable<FormsResult>, { ok: true }>["data"];
-type WorkspaceDataContextValue = {
-  context: WorkspaceRouteContext | null | undefined;
-  workspace: WorkspaceRouteContext["workspace"] | undefined;
-  forms: Forms | undefined;
-};
+const workspaceSegment = createSegmentData<{
+  context: FunctionReturnType<typeof api.workspace.context> | undefined;
+  workspace:
+    | Extract<FunctionReturnType<typeof api.workspace.context>, { ok: true }>["data"]["workspace"]
+    | undefined;
+  forms: Extract<FunctionReturnType<typeof api.forms.list>, { ok: true }>["data"] | undefined;
+}>("Workspace");
 
-const WorkspaceDataContext = createContext<WorkspaceDataContextValue | null>(null);
-
-export async function prewarmWorkspace(
-  convex: ConvexReactClient,
-  params: {
-    workspaceSlug: string;
-  },
-) {
-  prewarmSpecs(convex, [
-    makeRouteQuerySpec(api.workspace.context, {
-      workspaceSlug: params.workspaceSlug,
-    }),
-  ]);
+export async function prewarmWorkspaceRoute(convex: ConvexReactClient, workspaceSlug: string) {
+  prewarmRoute(convex, [{ query: api.workspace.context, args: { workspaceSlug } }]);
 
   try {
-    const context = await convex.query(api.workspace.context, {
-      workspaceSlug: params.workspaceSlug,
-    });
+    const context = await convex.query(api.workspace.context, { workspaceSlug });
 
     if (!context?.ok || !context.data.workspace._id) {
       return;
     }
 
-    prewarmSpecs(convex, [
-      makeRouteQuerySpec(api.forms.list, {
-        workspaceId: context.data.workspace._id,
-      }),
+    prewarmRoute(convex, [
+      { query: api.forms.list, args: { workspaceId: context.data.workspace._id } },
     ]);
   } catch (error) {
     console.warn("Workspace dependent prewarm failed", error);
   }
 }
 
-export function WorkspaceDataProvider({
-  workspaceSlug,
-  children,
-}: {
-  workspaceSlug: string;
-  children: ReactNode;
-}) {
+export function useWorkspacePrewarmIntent(
+  workspaceSlug: string,
+  options: RoutePrewarmOptions = {},
+) {
+  const convex = useConvex();
+  return useRoutePrewarm(
+    `/dashboard/${workspaceSlug}`,
+    () => prewarmWorkspaceRoute(convex, workspaceSlug),
+    options,
+  );
+}
+
+export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const contextResult = useQuery(api.workspace.context, {
-    workspaceSlug,
-  });
-  const context =
-    contextResult === undefined ? undefined : contextResult.ok ? contextResult.data : null;
-  const workspace = context?.workspace;
-  const formsResult = useQuery(api.forms.list, workspace ? { workspaceId: workspace._id } : "skip");
+  const { workspace: workspaceSlug } = useParams<{ workspace: string }>();
+  const context = useQuery(api.workspace.context, { workspaceSlug });
+  const contextData = context?.ok ? context.data : null;
+  const workspaceData = contextData?.workspace;
+  const formsResult = useQuery(
+    api.forms.list,
+    workspaceData ? { workspaceId: workspaceData._id } : "skip",
+  );
   const forms = formsResult?.ok ? formsResult.data : undefined;
 
   useEffect(() => {
-    if (!context || context.isCanonical || pathname === context.canonicalPath) {
+    if (!contextData || contextData.isCanonical || pathname === contextData.canonicalPath) {
       return;
     }
 
-    router.replace(context.canonicalPath);
-  }, [context, pathname, router]);
+    router.replace(contextData.canonicalPath);
+  }, [contextData, pathname, router]);
 
   return (
-    <WorkspaceDataContext.Provider value={{ context, workspace, forms }}>
+    <workspaceSegment.Provider value={{ context, workspace: workspaceData, forms }}>
       {children}
-    </WorkspaceDataContext.Provider>
+    </workspaceSegment.Provider>
   );
 }
 
 export function WorkspaceContentBoundary({ children }: { children: ReactNode }) {
-  const { context, workspace } = useWorkspaceData();
+  const { context, workspace: workspaceData } = useWorkspaceData();
 
   if (context === undefined) {
     return <Loading title="workspace" />;
   }
 
-  if (!workspace) {
+  if (!workspaceData) {
     return (
       <PageState
         icon={<RiErrorWarningLine />}
@@ -111,23 +104,12 @@ export function WorkspaceContentBoundary({ children }: { children: ReactNode }) 
   return children;
 }
 
-export function useWorkspaceData() {
-  const value = useContext(WorkspaceDataContext);
-
-  if (!value) {
-    throw new Error("useWorkspaceData must be used within WorkspaceDataProvider");
-  }
-
-  return value;
-}
+export const useWorkspaceData = workspaceSegment.useData;
 
 export function useRequiredWorkspaceData() {
-  const value = useWorkspaceData();
-  if (!value.workspace) {
-    throw new Error("useRequiredWorkspaceData must be used behind WorkspaceContentBoundary");
+  const data = useWorkspaceData();
+  if (!data.workspace) {
+    throw new Error("useRequiredWorkspaceData requires a loaded workspace");
   }
-  return {
-    ...value,
-    workspace: value.workspace,
-  };
+  return { ...data, workspace: data.workspace };
 }
