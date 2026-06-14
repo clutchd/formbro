@@ -2,13 +2,24 @@ import { ok } from "@formbro/core/result";
 import { APP_NAME } from "@formbro/shared/brand";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { getAdminAccounts } from "../auth";
-import { FormBroError } from "../errors";
+import { defineErrors, FormBroError } from "../errors";
 import {
   _addWorkspaceMember,
   _createWorkspace,
   generateSlug,
   type WorkspaceMember,
 } from "../workspace";
+
+const ERRORS = defineErrors({
+  SYSTEM_OWNER_NOT_FOUND: {
+    message: "System owner not found.",
+    status: "INTERNAL_SERVER_ERROR",
+  },
+  SYSTEM_WORKSPACE_INIT_FAILED: {
+    message: "Failed to initialize system workspace.",
+    status: "INTERNAL_SERVER_ERROR",
+  },
+});
 
 const SYSTEM_WORKSPACE_NAME = APP_NAME;
 const SYSTEM_WORKSPACE_SLUG = generateSlug(SYSTEM_WORKSPACE_NAME);
@@ -17,16 +28,16 @@ export const init = internalMutation({
   args: {},
   handler: async (ctx) => {
     const admins = await getAdminAccounts(ctx);
-    const owner = admins[0];
+    const owner = admins.data[0];
 
     if (!owner) {
-      throw new FormBroError("INTERNAL_SERVER_ERROR", "Admin users not found.");
+      throw new FormBroError(ERRORS.SYSTEM_OWNER_NOT_FOUND);
     }
 
-    const workspace = await initWorkspace(ctx, owner, admins);
+    const workspace = await initWorkspace(ctx, owner, admins.data);
 
     if (!workspace) {
-      throw new FormBroError("INTERNAL_SERVER_ERROR", "Failed to initialize system workspace.");
+      throw new FormBroError(ERRORS.SYSTEM_WORKSPACE_INIT_FAILED);
     }
 
     return ok();
