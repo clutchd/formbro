@@ -39,6 +39,7 @@ function UserAvatar({ user }: { user?: User }) {
 export function AccountMenu({ user }: { user: User }) {
   const router = useRouter();
   const { isDark, toggle } = useToggleTheme();
+  const dashboardPrewarmIntent = useDashboardPrewarmIntent();
 
   return (
     <DropdownMenu>
@@ -63,7 +64,7 @@ export function AccountMenu({ user }: { user: User }) {
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
           <DropdownMenuItem asChild>
-            <Link className="flex items-center gap-2" {...useDashboardPrewarmIntent()}>
+            <Link className="flex items-center gap-2" {...dashboardPrewarmIntent}>
               <RiHomeLine />
               <span>Dashboard</span>
             </Link>

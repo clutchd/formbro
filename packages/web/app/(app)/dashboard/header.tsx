@@ -3,7 +3,7 @@
 import { Logo } from "@formbro/ui/logo";
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
-import { useAppData } from "../data-provider";
+import { useAppData } from "../../data-provider";
 import { useDashboardPrewarmIntent } from "./(dashboard)/data-provider";
 import { AccountMenu } from "./account-menu";
 
