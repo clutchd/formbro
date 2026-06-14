@@ -1,14 +1,23 @@
-import { ok } from "@formbro/core/result";
+import { fail, ok } from "@formbro/core/result";
 import { v } from "convex/values";
 import { query } from "./_generated/server";
-import { requireWorkspaceAccess } from "./auth";
+import { getWorkspaceAccess } from "./access";
+import { defineErrors } from "./errors";
+
+export const ERRORS = defineErrors({
+  FORM_NOT_FOUND: {
+    message: "Form not found.",
+    status: "NOT_FOUND",
+  },
+});
 
 export const list = query({
   args: {
     workspaceId: v.id("workspaces"),
   },
   handler: async (ctx, args) => {
-    await requireWorkspaceAccess(ctx, args.workspaceId);
+    const access = await getWorkspaceAccess(ctx, args.workspaceId);
+    if (!access.ok) return fail({ data: [], error: access.error });
 
     const forms = await ctx.db
       .query("forms")
