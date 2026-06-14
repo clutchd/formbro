@@ -1,4 +1,5 @@
-import { v, Validator } from "convex/values";
+import { codes } from "@formbro/core/result";
+import { v, type Validator } from "convex/values";
 
 export function Result<T extends Validator<any, any, any>>(schema: T) {
   return v.union(
@@ -8,9 +9,11 @@ export function Result<T extends Validator<any, any, any>>(schema: T) {
       data: v.optional(v.any()),
       error: v.optional(
         v.object({
-          code: v.optional(v.string()),
+          code: v.string(),
           message: v.string(),
-          status: v.union(v.string()),
+          status: v.union(
+            ...(Object.keys(codes) as Array<keyof typeof codes>).map((status) => v.literal(status)),
+          ),
         }),
       ),
     }),
