@@ -8,7 +8,7 @@ import { useDashboardPrewarmIntent } from "./(app)/dashboard/(dashboard)/data-pr
 export default function Home() {
   const { authUser } = useAppData();
   const user = authUser.ok ? authUser.data : null;
-  const dashboardPrewarmIntent = useDashboardPrewarmIntent();
+  const dashboardPrewarmIntent = useDashboardPrewarmIntent({ eager: true });
 
   return (
     <div>
