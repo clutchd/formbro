@@ -1,11 +1,11 @@
 import type { PropsWithChildren } from "react";
 import { api } from "@formbro/convex/_generated/api";
 import { fonts } from "@formbro/ui/typography";
+import { AppDataProvider } from "app/data-provider";
 import Script from "next/script";
 import { DevTools } from "@/components/dev-tools";
 import { Toaster } from "@/components/sonner";
 import { ThemeProvider } from "@/components/theme";
-import { AuthDataProvider } from "@/lib/auth/data-provider";
 import { getToken, preloadAuthQuery } from "@/lib/auth/server";
 import { ConvexProvider } from "@/lib/convex/client";
 import { devOnly, rl } from "@/lib/env";
@@ -27,7 +27,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
         <ThemeProvider>
           <PosthogProvider>
             <ConvexProvider token={token}>
-              <AuthDataProvider preloadedAuthUser={preloadedAuthUser}>
+              <AppDataProvider preloadedAuthUser={preloadedAuthUser}>
                 {rl(
                   children,
                   <>
@@ -36,7 +36,7 @@ export default async function RootLayout({ children }: PropsWithChildren) {
                   </>,
                 )}
                 <Toaster />
-              </AuthDataProvider>
+              </AppDataProvider>
             </ConvexProvider>
           </PosthogProvider>
         </ThemeProvider>

@@ -150,6 +150,7 @@
       "dependencies": {
         "@convex-dev/better-auth": "catalog:",
         "@formbro/convex": "workspace:*",
+        "@formbro/core": "workspace:*",
         "@formbro/react": "workspace:*",
         "@formbro/shared": "workspace:*",
         "@formbro/ui": "workspace:*",

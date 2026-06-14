@@ -1,12 +1,12 @@
 "use client";
 
 import { TypographyH1 } from "@formbro/ui/typography";
+import { useAppData } from "app/data-provider";
 import Link from "next/link";
-import { useAuthData } from "@/lib/auth/data-provider";
 import { useDashboardPrewarmIntent } from "./(app)/dashboard/(dashboard)/data-provider";
 
 export default function Home() {
-  const { authUser } = useAuthData();
+  const { authUser } = useAppData();
   const user = authUser.ok ? authUser.data : null;
   const dashboardPrewarmIntent = useDashboardPrewarmIntent();
 

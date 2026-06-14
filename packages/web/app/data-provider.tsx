@@ -6,11 +6,11 @@ import type { ReactNode } from "react";
 import { usePreloadedQuery, type Preloaded } from "convex/react";
 import { createSegmentData } from "@/lib/data-segment";
 
-const auth = createSegmentData<{
+const app = createSegmentData<{
   authUser: FunctionReturnType<typeof api.auth.get>;
-}>("Auth");
+}>("App");
 
-export function AuthDataProvider({
+export function AppDataProvider({
   preloadedAuthUser,
   children,
 }: {
@@ -18,7 +18,7 @@ export function AuthDataProvider({
   children: ReactNode;
 }) {
   const authUser = usePreloadedQuery(preloadedAuthUser);
-  return <auth.Provider value={{ authUser }}>{children}</auth.Provider>;
+  return <app.Provider value={{ authUser }}>{children}</app.Provider>;
 }
 
-export const useAuthData = auth.useData;
+export const useAppData = app.useData;
