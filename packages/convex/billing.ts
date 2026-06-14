@@ -13,9 +13,13 @@ export const ERRORS = defineErrors({
     message: "Only workspace owners can manage billing.",
     status: "FORBIDDEN",
   },
-  STRIPE_CUSTOMER_NOT_FOUND: {
-    message: "No Stripe customer found for this workspace yet.",
+  CUSTOMER_NOT_FOUND: {
+    message: "No customer found for this workspace yet.",
     status: "NOT_FOUND",
+  },
+  CUSTOMER_PORTAL_SESSION_NOT_CREATED: {
+    message: "Customer portal session could not be created. Please try again.",
+    status: "INTERNAL_SERVER_ERROR",
   },
 });
 
@@ -66,13 +70,17 @@ export const createCustomerPortalSession = action({
       workspace.data.stripeCustomerId ?? existingSubscription?.stripeCustomerId;
 
     if (!stripeCustomerId) {
-      return fail({ data: undefined, error: ERRORS.STRIPE_CUSTOMER_NOT_FOUND });
+      return fail({ data: undefined, error: ERRORS.CUSTOMER_NOT_FOUND });
     }
 
     const session = await client.createCustomerPortalSession(ctx, {
       customerId: stripeCustomerId,
       returnUrl: args.returnUrl,
     });
+
+    if (!session.url) {
+      return fail({ data: undefined, error: ERRORS.CUSTOMER_PORTAL_SESSION_NOT_CREATED });
+    }
 
     return ok({ url: session.url });
   },
