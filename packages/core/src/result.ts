@@ -137,3 +137,9 @@ export type AnyResult<
   TErrorCode extends string = string,
   TStatus extends Status = Status,
 > = OkResult<TData> | FailResult<TData, TErrorCode, TStatus>;
+
+export type QueryResult<
+  TData,
+  TErrorCode extends string = string,
+  TStatus extends Status = Status,
+> = ResultWithData<true, TData> | ResultWithDataAndError<false, TData, TErrorCode, TStatus>;
