@@ -1,13 +1,14 @@
-import { api } from "@formbro/convex/_generated/api";
-import { redirect } from "next/navigation";
-import { isAuthenticated, preloadAuthQuery } from "@/lib/auth/server";
-import { AppDataProvider } from "./data-provider";
+"use client";
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  if (!(await isAuthenticated())) {
+import { useAppData } from "app/data-provider";
+import { redirect } from "next/navigation";
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const { authUser } = useAppData();
+
+  if (!authUser.ok) {
     redirect("/sign-in");
   }
 
-  const preloadedAuthUser = await preloadAuthQuery(api.auth.get);
-  return <AppDataProvider preloadedAuthUser={preloadedAuthUser}>{children}</AppDataProvider>;
+  return children;
 }
