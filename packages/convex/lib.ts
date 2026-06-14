@@ -67,6 +67,7 @@ export function getWorkspaceBillingState(billingStatus?: string) {
 }
 
 export const GIBIBYTE = 1024 ** 3;
+export const MEGABYTE = 1024 ** 2;
 
 export const PLAN_STORAGE_LIMIT_BYTES: Record<Plan, number> = {
   basic: 100 * GIBIBYTE,
