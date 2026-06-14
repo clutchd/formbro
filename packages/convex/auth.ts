@@ -2,24 +2,39 @@ import type { FunctionArgs, PaginationResult } from "convex/server";
 import { createClient, type AuthFunctions, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
 import { fail, ok } from "@formbro/core/result";
+import { hasString, normalizeEmail } from "@formbro/core/util";
 import { APP_URL } from "@formbro/shared/brand";
 import { betterAuth } from "better-auth/minimal";
-import type { DataModel, Id } from "./_generated/dataModel";
+import type { DataModel } from "./_generated/dataModel";
 import type { Doc as BetterAuthDoc } from "./node_modules/@convex-dev/better-auth/src/component/_generated/dataModel";
 import { api, components, internal } from "./_generated/api";
 import { query, type ActionCtx, type MutationCtx, type QueryCtx } from "./_generated/server";
 import authConfig from "./auth.config";
-import { FormBroError } from "./errors";
-import { hasString, normalizeEmail } from "./lib";
+import { FormBroError, defineErrors } from "./errors";
 
-export type Identity = NonNullable<Awaited<ReturnType<QueryCtx["auth"]["getUserIdentity"]>>>;
+export const ERRORS = defineErrors({
+  ADMIN_REQUIRED: {
+    message: "Admin access required.",
+    status: "FORBIDDEN",
+  },
+  ADMIN_USERS_NOT_CONFIGURED: {
+    message: "Admin users are not configured.",
+    status: "INTERNAL_SERVER_ERROR",
+  },
+  NOT_AUTHENTICATED: {
+    message: "Not authenticated.",
+    status: "UNAUTHORIZED",
+  },
+});
+
+type Identity = NonNullable<Awaited<ReturnType<QueryCtx["auth"]["getUserIdentity"]>>>;
 
 function getOptionalString(identity: Identity, key: string): string | undefined {
   const value = (identity as Record<string, unknown>)[key];
   return hasString(value) ? value : undefined;
 }
 
-export function identityName(identity: Identity): string {
+function identityName(identity: Identity): string {
   const name = getOptionalString(identity, "name");
   if (name) return name;
 
@@ -33,19 +48,16 @@ export function identityName(identity: Identity): string {
   return "Unknown";
 }
 
-export function identityEmail(identity: Identity): string {
+function identityEmail(identity: Identity): string {
   return getOptionalString(identity, "email") ?? "";
 }
 
-export function identityAvatarUrl(identity: Identity): string | undefined {
+function identityAvatarUrl(identity: Identity): string | undefined {
   return getOptionalString(identity, "image");
 }
 
-export async function userProfileFromIdentity(ctx: QueryCtxLike, identity: Identity) {
-  const storedUser = await adapterFindOne(ctx, {
-    model: "user",
-    where: [{ field: "_id", operator: "eq", value: identity.subject }],
-  });
+export async function resolveUserProfile(ctx: QueryCtxLike, identity: Identity) {
+  const storedUser = await authComponent.getAnyUserById(ctx, identity.subject);
 
   return {
     name: hasString(storedUser?.name) ? storedUser.name : identityName(identity),
@@ -55,20 +67,22 @@ export async function userProfileFromIdentity(ctx: QueryCtxLike, identity: Ident
 }
 
 export async function getUser(ctx: QueryCtx | MutationCtx) {
-  return await ctx.auth.getUserIdentity();
+  const user = await ctx.auth.getUserIdentity();
+  if (!user) return fail({ error: ERRORS.NOT_AUTHENTICATED });
+  return ok(user);
 }
 
 export async function requireUser(ctx: QueryCtx | MutationCtx) {
   const identity = await getUser(ctx);
-  if (!identity) {
-    throw new FormBroError("UNAUTHORIZED", "Not authenticated.");
+  if (!identity.ok) {
+    throw new FormBroError(identity.error);
   }
-  return identity;
+  return ok(identity.data);
 }
 
-export function getAdminEmails() {
+function getAdminEmails() {
   if (!process.env.ADMIN) {
-    throw new FormBroError("INTERNAL_SERVER_ERROR", "Admin access is not set.");
+    throw new FormBroError(ERRORS.ADMIN_USERS_NOT_CONFIGURED);
   }
 
   return process.env.ADMIN.split(",").map(normalizeEmail).filter(hasString);
@@ -94,58 +108,36 @@ export async function getAdminAccounts(ctx: QueryCtx | MutationCtx) {
     }
   }
 
-  return admins;
+  return ok(admins);
+}
+
+function isAdminIdentity(identity: Identity): boolean {
+  const email = identityEmail(identity);
+  if (!email) return false;
+  return getAdminEmails().includes(normalizeEmail(email));
 }
 
 export async function getAdminUser(ctx: QueryCtx | MutationCtx) {
   const identity = await getUser(ctx);
-  if (!identity) return null;
-
-  const email = identityEmail(identity);
-  if (!email) return null;
-
-  if (!getAdminEmails().includes(normalizeEmail(email))) {
-    return null;
-  }
-
-  return identity;
+  if (!identity.ok) return fail({ error: identity.error });
+  if (!isAdminIdentity(identity.data)) return fail({ error: ERRORS.ADMIN_REQUIRED });
+  return ok(identity.data);
 }
 
 export async function requireAdmin(ctx: QueryCtx | MutationCtx) {
   const identity = await getAdminUser(ctx);
-  if (!identity) {
-    throw new FormBroError("UNAUTHORIZED", "Admin access required.");
+  if (!identity.ok) {
+    throw new FormBroError(identity.error);
   }
-  return identity;
-}
-
-export async function requireWorkspaceAccess(
-  ctx: QueryCtx | MutationCtx,
-  workspaceId: Id<"workspaces">,
-) {
-  const user = await requireUser(ctx);
-
-  const membership = await ctx.db
-    .query("workspaceMembers")
-    .withIndex("by_workspace_and_user", (q) =>
-      q.eq("workspaceId", workspaceId).eq("userAuthId", user.subject),
-    )
-    .unique();
-
-  if (!membership) {
-    throw new FormBroError("FORBIDDEN", "Workspace access required.");
-  }
-
-  return { user, membership };
+  return ok(identity.data);
 }
 
 export const get = query({
   args: {},
   handler: async (ctx) => {
     const identity = await getUser(ctx);
-    if (!identity) return fail(null);
-
-    return ok(await userProfileFromIdentity(ctx, identity));
+    if (!identity.ok) return fail({ data: null, error: identity.error });
+    return ok(await resolveUserProfile(ctx, identity.data));
   },
 });
 
@@ -153,9 +145,8 @@ export const getAdmin = query({
   args: {},
   handler: async (ctx) => {
     const identity = await getAdminUser(ctx);
-    if (!identity) return fail(null);
-
-    return ok(await userProfileFromIdentity(ctx, identity));
+    if (!identity.ok) return fail({ data: null, error: identity.error });
+    return ok(await resolveUserProfile(ctx, identity.data));
   },
 });
 
@@ -166,11 +157,11 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
   triggers: {
     user: {
       onCreate: async (ctx, doc) => {
-        await ctx.scheduler.runAfter(0, api.resend.audience.add, {
+        await ctx.scheduler.runAfter(0, api.audience.add, {
           email: doc.email,
           name: doc.name,
         });
-        await ctx.scheduler.runAfter(0, api.resend.emails.transactional, {
+        await ctx.scheduler.runAfter(0, api.emails.transactional, {
           email: {
             template: "welcome",
             to: doc.email,
@@ -182,7 +173,7 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
           userAuthId: String(doc._id),
           image: hasString(doc.image) ? doc.image : undefined,
         });
-        await ctx.scheduler.runAfter(0, api.resend.audience.update, {
+        await ctx.scheduler.runAfter(0, api.audience.update, {
           email: doc.email,
           name: doc.name,
         });
