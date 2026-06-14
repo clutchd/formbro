@@ -1,22 +1,20 @@
 "use client";
 
-import { getWorkspaceBillingState } from "@formbro/convex/lib";
-import { getWorkspacePlanLabel } from "@formbro/convex/lib";
+import type { api } from "@formbro/convex/_generated/api";
+import type { FunctionReturnType } from "convex/server";
+import { getWorkspaceBillingState, getWorkspacePlanLabel } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { Card } from "@formbro/ui/card";
 import { tuiFont } from "@formbro/ui/typography";
 import { RiArrowRightLine, RiFileAddLine, RiFileTextLine } from "@remixicon/react";
-import { useConvex } from "convex/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useRoutePrewarmIntent } from "@/lib/convex/use-route-prewarm-intent";
-import type { Workspace } from "./data-provider";
-import { prewarmWorkspace } from "../[workspace]/data-provider";
+import { useWorkspacePrewarmIntent } from "../[workspace]/data-provider";
 import { WorkspaceBillingStateBadge } from "../workspace-billing-state-badge";
 
-const isUnpaid = (workspace: Workspace) =>
-  getWorkspaceBillingState(workspace.billingStatus) != "success";
+const isUnpaid = (
+  workspace: Extract<FunctionReturnType<typeof api.workspace.list>, { ok: true }>["data"][number],
+) => getWorkspaceBillingState(workspace.billingStatus) != "success";
 
 function EmptyWorkspaceContent() {
   return (
@@ -48,19 +46,16 @@ function FormPreviewRow({ name, updatedLabel }: { name: string; updatedLabel: st
   );
 }
 
-export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
-  const convex = useConvex();
-  const router = useRouter();
+export function WorkspaceCard({
+  workspace,
+}: {
+  workspace: Extract<FunctionReturnType<typeof api.workspace.list>, { ok: true }>["data"][number];
+}) {
   const forms: { name: string; updatedLabel: string }[] = [];
   const href = isUnpaid(workspace)
     ? `/dashboard/${workspace.slug}/settings`
     : `/dashboard/${workspace.slug}`;
-  const prewarmIntentHandlers = useRoutePrewarmIntent(() => {
-    router.prefetch(href);
-    prewarmWorkspace(convex, {
-      workspaceSlug: workspace.slug,
-    });
-  });
+  const prewarmIntentHandlers = useWorkspacePrewarmIntent(workspace.slug);
 
   return (
     <Card

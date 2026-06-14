@@ -6,5 +6,9 @@ import { useDashboardData } from "./data-provider";
 
 export function AllWorkspacesHeader() {
   const { workspaces } = useDashboardData();
-  return <DashboardHeader actions={workspaces?.length ? <CreateWorkspace /> : null} />;
+  return (
+    <DashboardHeader
+      actions={workspaces?.ok && workspaces.data.length ? <CreateWorkspace /> : null}
+    />
+  );
 }

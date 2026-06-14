@@ -1,41 +1,34 @@
 "use client";
 
+import type { FunctionReturnType } from "convex/server";
+import type { ReactNode } from "react";
 import { api } from "@formbro/convex/_generated/api";
-import { useConvex, useQuery } from "convex/react";
-import { createContext, useContext, type ReactNode } from "react";
-import { nextUseRoutePrewarmIntent } from "@/lib/convex/next-use-route-prewarm-intent";
-import { makeRouteQuerySpec, prewarmSpecs } from "@/lib/convex/route-data";
+import { useConvex, useQuery, type ConvexReactClient } from "convex/react";
+import {
+  prewarmRoute,
+  useRoutePrewarm,
+  type RoutePrewarmOptions,
+} from "@/lib/convex/route-prewarm";
+import { createSegmentData } from "@/lib/data-segment";
 
-export function useDashboardPrewarmIntent() {
-  const convex = useConvex();
-  return nextUseRoutePrewarmIntent("/dashboard", () => {
-    prewarmSpecs(convex, [makeRouteQuerySpec(api.workspace.list, {})]);
-  });
+const dashboard = createSegmentData<{
+  workspaces: FunctionReturnType<typeof api.workspace.list> | undefined;
+}>("Dashboard");
+
+const DASHBOARD_HREF = "/dashboard";
+
+function dashboardPrewarm(convex: ConvexReactClient) {
+  prewarmRoute(convex, [{ query: api.workspace.list, args: {} }]);
 }
 
-type WorkspacesResult = Awaited<ReturnType<typeof useQuery<typeof api.workspace.list>>>;
-type Workspaces = NonNullable<WorkspacesResult>["data"];
-export type Workspace = NonNullable<Workspaces>[number];
-
-const DashboardDataContext = createContext<{
-  workspaces: Workspaces | undefined;
-} | null>(null);
+export function useDashboardPrewarmIntent(options: RoutePrewarmOptions = {}) {
+  const convex = useConvex();
+  return useRoutePrewarm(DASHBOARD_HREF, () => dashboardPrewarm(convex), options);
+}
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
-  const workspacesQuery = useQuery(api.workspace.list);
-  const workspaces = workspacesQuery?.data;
-
-  return (
-    <DashboardDataContext.Provider value={{ workspaces }}>{children}</DashboardDataContext.Provider>
-  );
+  const workspaces = useQuery(api.workspace.list, {});
+  return <dashboard.Provider value={{ workspaces }}>{children}</dashboard.Provider>;
 }
 
-export function useDashboardData() {
-  const value = useContext(DashboardDataContext);
-
-  if (!value) {
-    throw new Error("useDashboardData must be used within DashboardDataProvider");
-  }
-
-  return value;
-}
+export const useDashboardData = dashboard.useData;

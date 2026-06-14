@@ -12,11 +12,11 @@ import { WorkspaceCard } from "./workspace-card";
 export default function DashboardContent() {
   const { workspaces } = useDashboardData();
 
-  if (!workspaces) {
+  if (!workspaces?.ok) {
     return <Loading title="workspaces" />;
   }
 
-  if (workspaces.length === 0) {
+  if (workspaces.data.length === 0) {
     return (
       <PageState
         icon={<RiTeamLine />}
@@ -33,11 +33,11 @@ export default function DashboardContent() {
       <div className="mb-6">
         <TypographyH1>All Workspaces</TypographyH1>
         <TypographySubheading>
-          {workspaces.length} workspace{workspaces.length === 1 ? "" : "s"}
+          {workspaces.data.length} workspace{workspaces.data.length === 1 ? "" : "s"}
         </TypographySubheading>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {workspaces.map((workspace) => (
+        {workspaces.data.map((workspace) => (
           <WorkspaceCard key={workspace._id} workspace={workspace} />
         ))}
       </div>
