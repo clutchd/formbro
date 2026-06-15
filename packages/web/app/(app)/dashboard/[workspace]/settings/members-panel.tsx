@@ -51,22 +51,25 @@ export function MembersPanel() {
   const members = membersResult?.ok ? membersResult.data : undefined;
 
   return (
-    <Card className="flex flex-col">
-      <TypographySubheading className={twx(tuiFont, "mb-5")}>Members</TypographySubheading>
-
-      {members === undefined ? (
-        <div className="flex flex-1 items-center justify-center py-8">
-          <Spinner />
-        </div>
-      ) : (
-        <ul className="space-y-4">
-          {members.map((member) => (
-            <li key={member._id}>
-              <MemberRow member={member} />
-            </li>
-          ))}
-        </ul>
-      )}
-    </Card>
+    <div className="flex h-full flex-col">
+      <TypographySubheading className={twx(tuiFont, "mb-3")}>
+        Members - {members?.length}
+      </TypographySubheading>
+      <Card className="flex flex-1 flex-col">
+        {members === undefined ? (
+          <div className="flex flex-1 items-center justify-center py-8">
+            <Spinner />
+          </div>
+        ) : (
+          <ul className="space-y-4">
+            {members.map((member) => (
+              <li key={member._id}>
+                <MemberRow member={member} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
+    </div>
   );
 }
