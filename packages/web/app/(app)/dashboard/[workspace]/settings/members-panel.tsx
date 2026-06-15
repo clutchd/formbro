@@ -1,13 +1,13 @@
-import type { FunctionReturnType } from "convex/server";
+import { Loading } from "@/components/loading";
 import { api } from "@formbro/convex/_generated/api";
 import { initials } from "@formbro/shared/names";
 import { twx } from "@formbro/shared/twx";
 import { Avatar, AvatarFallback, AvatarImage } from "@formbro/ui/avatar";
 import { Badge } from "@formbro/ui/badge";
 import { Card } from "@formbro/ui/card";
-import { Spinner } from "@formbro/ui/spinner";
 import { tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { useQuery } from "convex/react";
+import type { FunctionReturnType } from "convex/server";
 import { useRequiredWorkspaceData } from "../data-provider";
 
 type Member = Extract<
@@ -57,9 +57,7 @@ export function MembersPanel() {
       </TypographySubheading>
       <Card className="flex flex-1 flex-col">
         {members === undefined ? (
-          <div className="flex flex-1 items-center justify-center py-8">
-            <Spinner />
-          </div>
+          <Loading title="members" className="text-xs" />
         ) : (
           <ul className="space-y-4">
             {members.map((member) => (
