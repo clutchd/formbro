@@ -3,7 +3,7 @@ import { twx } from "@formbro/shared/twx";
 import { Card } from "@formbro/ui/card";
 import { Progress } from "@formbro/ui/progress";
 import { Separator } from "@formbro/ui/separator";
-import { displayFont, tuiFont } from "@formbro/ui/typography";
+import { displayFont, tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { WorkspaceBillingStateBadge } from "../../workspace-billing-state-badge";
 import { useRequiredWorkspaceData } from "../data-provider";
 
@@ -84,7 +84,7 @@ export function BillingLimits() {
 
   return (
     <Card>
-      <p className={twx(tuiFont, "mb-5")}>Limits</p>
+      <TypographySubheading className={twx(tuiFont, "mb-5")}>Limits</TypographySubheading>
 
       <div className="flex flex-col gap-5 sm:flex-row">
         <Metric label="Plan">
