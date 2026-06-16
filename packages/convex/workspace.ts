@@ -253,12 +253,21 @@ export const list = query({
 
     const workspaces = await Promise.all(
       memberships.map(async (membership) => {
-        const workspace = await ctx.db.get(membership.workspaceId);
-        return workspace ? { ...workspace, role: membership.role } : null;
+        const [workspace, forms] = await Promise.all([
+          ctx.db.get(membership.workspaceId),
+          ctx.db
+            .query("forms")
+            .withIndex("by_workspace", (q) => q.eq("workspaceId", membership.workspaceId))
+            .collect(),
+        ]);
+
+        if (!workspace) return null;
+
+        return { ...workspace, role: membership.role, forms };
       }),
     );
 
-    return ok(workspaces.filter((w): w is NonNullable<typeof w> => Boolean(w)));
+    return ok(workspaces.filter((workspace) => workspace !== null));
   },
 });
 

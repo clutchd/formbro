@@ -27,14 +27,11 @@ const workspaceSegment = createSegmentData<{
 
 export async function prewarmWorkspaceRoute(convex: ConvexReactClient, workspaceSlug: string) {
   prewarmRoute(convex, [{ query: api.workspace.context, args: { workspaceSlug } }]);
-
   try {
     const context = await convex.query(api.workspace.context, { workspaceSlug });
-
     if (!context?.ok || !context.data.workspace._id) {
       return;
     }
-
     prewarmRoute(convex, [
       { query: api.forms.list, args: { workspaceId: context.data.workspace._id } },
     ]);

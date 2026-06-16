@@ -1,5 +1,3 @@
-import type { api } from "@formbro/convex/_generated/api";
-import type { FunctionReturnType } from "convex/server";
 import { getWorkspaceBillingState } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
@@ -12,7 +10,7 @@ export function WorkspaceBillingStateBadge({
 }: {
   className?: string;
   size?: "default" | "sm";
-  workspace: Extract<FunctionReturnType<typeof api.workspace.list>, { ok: true }>["data"][number];
+  workspace: { billingStatus?: string };
   children: React.ReactNode;
 }) {
   return (

@@ -74,6 +74,7 @@ function WorkspaceFormPreview({
     <div className="flex flex-1 flex-col">
       {forms.slice(0, 3).map((form) => (
         <Link
+          key={form._id}
           href={`/dashboard/${workspaceSlug}/${form.slug}`}
           prefetch={false}
           className="group/row flex items-center gap-3 border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-accent"
