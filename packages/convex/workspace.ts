@@ -240,6 +240,39 @@ export const get = query({
   },
 });
 
+export const listMembers = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    const userWithAccess = await getWorkspaceAccess(ctx, args.workspaceId);
+    if (!userWithAccess.ok) {
+      return fail({ data: [], error: userWithAccess.error });
+    }
+
+    const members = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .collect();
+
+    const roleOrder = { owner: 0, admin: 1, member: 2 } as const;
+
+    return ok(
+      members
+        .sort((left, right) => {
+          const roleDiff = roleOrder[left.role] - roleOrder[right.role];
+          if (roleDiff !== 0) return roleDiff;
+          return left.userName.localeCompare(right.userName);
+        })
+        .map((member) => ({
+          _id: member._id,
+          name: member.userName,
+          email: member.userEmail,
+          avatarUrl: member.userAvatarUrl,
+          role: member.role,
+        })),
+    );
+  },
+});
+
 export const list = query({
   args: {},
   handler: async (ctx) => {
