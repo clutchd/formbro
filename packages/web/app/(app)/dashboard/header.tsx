@@ -3,6 +3,7 @@
 import { Logo } from "@formbro/ui/logo";
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
+import type { PrewarmIntentHandlers } from "@/lib/convex/route-prewarm";
 import { useAppData } from "../../data-provider";
 import { useDashboardPrewarmIntent } from "./(dashboard)/data-provider";
 import { AccountMenu } from "./account-menu";
@@ -11,6 +12,7 @@ type DashboardBreadcrumb = {
   href?: string;
   key?: string;
   label: ReactNode;
+  prewarm?: PrewarmIntentHandlers;
 };
 
 export function DashboardHeader({
@@ -44,6 +46,7 @@ export function DashboardHeader({
               <div className="flex min-w-0 flex-row items-center gap-2">
                 {breadcrumb.href ? (
                   <Link
+                    {...breadcrumb.prewarm}
                     href={breadcrumb.href}
                     aria-current={isCurrent ? "page" : undefined}
                     className={`${labelClassName} hover:opacity-80`}

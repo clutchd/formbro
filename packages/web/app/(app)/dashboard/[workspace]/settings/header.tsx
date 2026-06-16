@@ -1,7 +1,7 @@
 "use client";
 
 import { DashboardHeader } from "../../header";
-import { useWorkspaceData } from "../data-provider";
+import { useWorkspaceData, useWorkspacePrewarmIntent } from "../data-provider";
 
 export function WorkspaceSettingsHeader() {
   const { workspace } = useWorkspaceData();
@@ -14,6 +14,7 @@ export function WorkspaceSettingsHeader() {
               {
                 href: `/dashboard/${workspace.slug}`,
                 label: workspace.name,
+                prewarm: useWorkspacePrewarmIntent(workspace.slug),
               },
               {
                 key: "settings",

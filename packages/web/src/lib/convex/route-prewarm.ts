@@ -102,7 +102,7 @@ export type RoutePrewarmOptions = {
 
 type PrewarmFn = () => void | Promise<void>;
 
-type PrewarmIntentHandlers = {
+export type PrewarmIntentHandlers = {
   onMouseEnter: () => void;
   onFocus: () => void;
   onTouchStart: () => void;
