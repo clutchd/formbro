@@ -67,7 +67,6 @@ export function getWorkspaceBillingState(billingStatus?: string) {
     case "active":
     case "trialing":
       return "success";
-    case "not_subscribed":
     case "paused":
       return "warning";
     default:
@@ -95,14 +94,14 @@ export const WORKSPACE_LIMITS: Record<
   },
   basic: {
     members: null,
-    activeForms: null,
-    monthlySubmissions: 10000,
+    activeForms: 10,
+    monthlySubmissions: 1000,
     storageBytes: 100 * GIBIBYTE,
   },
   pro: {
     members: null,
-    activeForms: null,
-    monthlySubmissions: 100000,
+    activeForms: 100,
+    monthlySubmissions: 10000,
     storageBytes: 1024 * GIBIBYTE,
   },
   unlimited: {
