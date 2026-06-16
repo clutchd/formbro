@@ -1,4 +1,4 @@
-import { Loading } from "@/components/loading";
+import type { FunctionReturnType } from "convex/server";
 import { api } from "@formbro/convex/_generated/api";
 import { initials } from "@formbro/shared/names";
 import { twx } from "@formbro/shared/twx";
@@ -7,7 +7,7 @@ import { Badge } from "@formbro/ui/badge";
 import { Card } from "@formbro/ui/card";
 import { tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { useQuery } from "convex/react";
-import type { FunctionReturnType } from "convex/server";
+import { Loading } from "@/components/loading";
 import { useRequiredWorkspaceData } from "../data-provider";
 
 type Member = Extract<
