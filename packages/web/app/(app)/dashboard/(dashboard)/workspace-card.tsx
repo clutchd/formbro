@@ -11,6 +11,7 @@ import { tuiFont } from "@formbro/ui/typography";
 import { RiArrowRightLine, RiFileAddLine, RiFileTextLine } from "@remixicon/react";
 import Link from "next/link";
 import { useWorkspacePrewarmIntent } from "../[workspace]/data-provider";
+import { useWorkspaceSettingsPrewarmIntent } from "../[workspace]/settings/data-provider";
 import { WorkspaceBillingStateBadge } from "../workspace-billing-state-badge";
 
 type Workspace = Extract<
@@ -103,7 +104,9 @@ export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   const href = isUnpaid(workspace)
     ? `/dashboard/${workspace.slug}/settings`
     : `/dashboard/${workspace.slug}`;
-  const prewarmIntentHandlers = useWorkspacePrewarmIntent(workspace.slug);
+  const prewarmIntentHandlers = isUnpaid(workspace)
+    ? useWorkspaceSettingsPrewarmIntent(workspace.slug)
+    : useWorkspacePrewarmIntent(workspace.slug);
 
   return (
     <Card

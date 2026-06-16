@@ -24,7 +24,7 @@ export const PLANS = ["basic", "pro"] as const;
 export type Plan = (typeof PLANS)[number];
 export type WorkspacePlan = "free" | Plan | "unlimited";
 
-function normalizeWorkspacePlan(plan?: WorkspacePlan): WorkspacePlan {
+export function normalizeWorkspacePlan(plan?: WorkspacePlan): WorkspacePlan {
   switch (plan) {
     case "free":
     case "unlimited":
@@ -43,14 +43,19 @@ const WORKSPACE_PLAN_LABELS: Record<WorkspacePlan, string> = {
   unlimited: "Unlimited",
 };
 
-export const PLAN_MONTHLY_PRICE_USD: Record<Plan, number> = {
+const WORKSPACE_PLAN_DESCRIPTIONS: Record<Plan, string> = {
+  basic: "Everything you need to run your forms.",
+  pro: "Higher limits for growing teams and workflows.",
+};
+
+const WORKSPACE_PLAN_MONTHLY_PRICE_USD: Record<Plan, number> = {
   basic: 10,
   pro: 25,
 };
 
-export const PLAN_YEARLY_PRICE_USD_MULTIPLIER = 10;
+const WORKSPACE_PLAN_YEARLY_PRICE_USD_MULTIPLIER = 10;
 
-export const BILLING_STATUSES = [
+const BILLING_STATUSES = [
   "not_subscribed",
   "incomplete",
   "incomplete_expired",
@@ -74,8 +79,8 @@ export function getWorkspaceBillingState(billingStatus?: string) {
   }
 }
 
-export const GIBIBYTE = 1024 ** 3;
-export const MEGABYTE = 1024 ** 2;
+const GIBIBYTE = 1024 ** 3;
+const MEGABYTE = 1024 ** 2;
 
 export const WORKSPACE_LIMITS: Record<
   WorkspacePlan,
@@ -112,20 +117,80 @@ export const WORKSPACE_LIMITS: Record<
   },
 } as const;
 
-export function isWorkspaceBillingActive(billingStatus?: string) {
-  switch (billingStatus) {
-    case "active":
-    case "trialing":
-    case "past_due":
-      return true;
-    default:
-      return false;
-  }
+export function getPlanFeatures(plan: Plan): readonly string[] {
+  const limits = WORKSPACE_LIMITS[plan];
+
+  return [
+    formatLimitFeature(limits.members, "seat", "seats"),
+    formatLimitFeature(limits.activeForms, "active form", "active forms"),
+    formatLimitFeature(limits.monthlySubmissions, "submission", "submissions", " / month"),
+    formatStorageFeature(limits.storageBytes),
+    plan === "pro" ? "Priority support" : "Email support",
+  ];
 }
 
 export function getWorkspacePlanLabel(plan?: WorkspacePlan) {
   return WORKSPACE_PLAN_LABELS[normalizeWorkspacePlan(plan)];
 }
 
-export function getWorkspaceLimits(workspace: { plan?: WorkspacePlan; billingStatus?: string }) {
-  return WORKSPACE_LIMITS[normalizeWorkspacePlan(workspace.plan)];
+export function getPlanDetails(plan: Plan) {
+  const normalizedPlan = normalizeWorkspacePlan(plan) as Plan;
+  const name = WORKSPACE_PLAN_LABELS[normalizedPlan];
+
+  const monthlyPriceId =
+    normalizedPlan === "basic"
+      ? process.env.STRIPE_BASIC_MONTHLY_PRICE_ID
+      : process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
+  const yearlyPriceId =
+    normalizedPlan === "basic"
+      ? process.env.STRIPE_BASIC_YEARLY_PRICE_ID
+      : process.env.STRIPE_PRO_YEARLY_PRICE_ID;
+
+  return {
+    name,
+    description: WORKSPACE_PLAN_DESCRIPTIONS[normalizedPlan],
+    monthlyPriceUsd: WORKSPACE_PLAN_MONTHLY_PRICE_USD[normalizedPlan],
+    monthlyPriceId,
+    yearlyPriceUsd:
+      WORKSPACE_PLAN_MONTHLY_PRICE_USD[normalizedPlan] * WORKSPACE_PLAN_YEARLY_PRICE_USD_MULTIPLIER,
+    yearlyPriceId,
+    features: getPlanFeatures(normalizedPlan),
+  };
+}
+
+export const numberFormatter = new Intl.NumberFormat("en-US");
+
+export function formatUsd(amount: number) {
+  const hasCents = !Number.isInteger(amount);
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: hasCents ? 2 : 0,
+    maximumFractionDigits: hasCents ? 2 : 0,
+  }).format(amount);
+}
+
+export function formatStorageLimit(bytes: number) {
+  if (bytes >= 1024 * GIBIBYTE) {
+    return `${Math.round(bytes / (1024 * GIBIBYTE))} TB`;
+  }
+
+  return `${Math.round(bytes / GIBIBYTE)} GB`;
+}
+
+function formatLimitFeature(value: number | null, singular: string, plural: string, suffix = "") {
+  if (value === null) {
+    return `Unlimited ${plural}${suffix}`;
+  }
+
+  return `${numberFormatter.format(value)} ${value === 1 ? singular : plural}${suffix}`;
+}
+
+function formatStorageFeature(bytes: number | null) {
+  if (bytes === null) {
+    return "Unlimited storage";
+  }
+
+  return `${formatStorageLimit(bytes)} storage`;
+}

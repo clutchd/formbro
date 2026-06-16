@@ -1,4 +1,10 @@
-import { getWorkspaceLimits, GIBIBYTE, MEGABYTE, getWorkspacePlanLabel } from "@formbro/convex/lib";
+import {
+  formatStorageLimit,
+  getWorkspacePlanLabel,
+  normalizeWorkspacePlan,
+  numberFormatter,
+  WORKSPACE_LIMITS,
+} from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Card } from "@formbro/ui/card";
 import { Progress } from "@formbro/ui/progress";
@@ -6,19 +12,6 @@ import { Separator } from "@formbro/ui/separator";
 import { displayFont, tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { WorkspaceBillingStateBadge } from "../../workspace-billing-state-badge";
 import { useRequiredWorkspaceData } from "../data-provider";
-
-const numberFormatter = new Intl.NumberFormat("en-US");
-const storageFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 1,
-});
-
-function formatStorage(value: number) {
-  if (value >= GIBIBYTE) {
-    return `${storageFormatter.format(value / GIBIBYTE)} GB`;
-  }
-
-  return `${storageFormatter.format(value / MEGABYTE)} MB`;
-}
 
 function Metric({
   className,
@@ -77,8 +70,9 @@ function LimitMeter({
 
 export function BillingLimits() {
   const { forms, workspace } = useRequiredWorkspaceData();
-  const limits = getWorkspaceLimits(workspace);
-  const activeForms = forms?.filter((form) => form.status !== "archived").length ?? 0;
+  const limits = WORKSPACE_LIMITS[normalizeWorkspacePlan(workspace.plan)];
+  const activeForms =
+    forms?.filter((form) => form.status !== "archived").length ?? limits.activeForms ?? 0;
   const monthlySubmissions = 0; // TODO: get from workspace
   const storageBytes = 0; // TODO: get from workspace
 
@@ -110,7 +104,7 @@ export function BillingLimits() {
           label="Storage"
           used={storageBytes}
           limit={limits.storageBytes}
-          formatValue={formatStorage}
+          formatValue={formatStorageLimit}
         />
       </div>
     </Card>

@@ -21,9 +21,18 @@ export async function prewarmWorkspaceSettingsRoute(
   convex: ConvexReactClient,
   workspaceSlug: string,
 ) {
-  prewarmRoute(convex, [
-    { query: api.workspace.listMembers, args: { workspaceId: workspaceSlug } },
-  ]);
+  prewarmRoute(convex, [{ query: api.workspace.context, args: { workspaceSlug } }]);
+  try {
+    const context = await convex.query(api.workspace.context, { workspaceSlug });
+    if (!context?.ok || !context.data.workspace._id) {
+      return;
+    }
+    prewarmRoute(convex, [
+      { query: api.workspace.listMembers, args: { workspaceId: context.data.workspace._id } },
+    ]);
+  } catch (error) {
+    console.warn("Workspace settings dependent prewarm failed", error);
+  }
 }
 
 export function useWorkspaceSettingsPrewarmIntent(
