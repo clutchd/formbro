@@ -6,9 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@formbro/ui/avatar";
 import { Badge } from "@formbro/ui/badge";
 import { Card } from "@formbro/ui/card";
 import { tuiFont, TypographySubheading } from "@formbro/ui/typography";
-import { useQuery } from "convex/react";
 import { Loading } from "@/components/loading";
-import { useRequiredWorkspaceData } from "../data-provider";
+import { useWorkspaceSettingsData } from "./data-provider";
 
 type Member = Extract<
   FunctionReturnType<typeof api.workspace.listMembers>,
@@ -46,21 +45,19 @@ function MemberRow({ member }: { member: Member }) {
 }
 
 export function MembersPanel() {
-  const { workspace } = useRequiredWorkspaceData();
-  const membersResult = useQuery(api.workspace.listMembers, { workspaceId: workspace._id });
-  const members = membersResult?.ok ? membersResult.data : undefined;
+  const { members } = useWorkspaceSettingsData();
 
   return (
     <div className="flex h-full flex-col">
       <TypographySubheading className={twx(tuiFont, "mb-3")}>
-        Members - {members?.length}
+        Members - {members?.data?.length}
       </TypographySubheading>
       <Card className="flex flex-1 flex-col">
-        {members === undefined ? (
+        {members?.data === undefined ? (
           <Loading title="members" className="text-xs" />
         ) : (
           <ul className="space-y-4">
-            {members.map((member) => (
+            {members.data.map((member) => (
               <li key={member._id}>
                 <MemberRow member={member} />
               </li>
