@@ -179,12 +179,42 @@ export function hasActiveWorkspaceSubscriptionStatus(status: string | undefined 
   return status === "active" || status === "trialing" || status === "past_due";
 }
 
+export function canDeleteWorkspace(input: {
+  subscriptionStatus?: string | null;
+  subscriptionCancelAtPeriodEnd?: boolean;
+  workspaceBillingStatus?: string | null;
+  workspaceBillingCancelAtPeriodEnd?: boolean;
+  plan?: string;
+}) {
+  if (input.plan === "unlimited") {
+    return true;
+  }
+
+  // User already cancelled — including trial subs that run until period end.
+  if (input.subscriptionCancelAtPeriodEnd || input.workspaceBillingCancelAtPeriodEnd) {
+    return true;
+  }
+
+  if (input.subscriptionStatus === "canceled") {
+    return true;
+  }
+
+  if (input.subscriptionStatus != null) {
+    return !hasActiveWorkspaceSubscriptionStatus(input.subscriptionStatus);
+  }
+
+  if (
+    input.workspaceBillingStatus === "canceled" ||
+    input.workspaceBillingStatus === "not_subscribed"
+  ) {
+    return true;
+  }
+
+  return !hasActiveWorkspaceSubscriptionStatus(input.workspaceBillingStatus);
+}
+
 export function getStripePriceIdForPlan(plan: Plan, interval: "monthly" | "annual") {
   const details = getPlanDetails(plan);
-  console.log("details", details);
   const priceId = interval === "annual" ? details.yearlyPriceId : details.monthlyPriceId;
-
-  console.log("priceId", priceId);
-
   return hasString(priceId) ? priceId : null;
 }

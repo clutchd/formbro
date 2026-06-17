@@ -15,6 +15,7 @@ import {
 import { getUser } from "./auth";
 import {
   billingIntervalValidator,
+  canDeleteWorkspace,
   getStripePriceIdForPlan,
   getWorkspacePlanLabel,
   hasActiveWorkspaceSubscriptionStatus,
@@ -88,6 +89,12 @@ export async function getWorkspaceSubscriptionState(
     hasActiveWorkspaceSubscriptionStatus(subscription?.status) ||
     hasActiveWorkspaceSubscriptionStatus(workspace.billingStatus) ||
     plan === "unlimited";
+  const canDelete = canDeleteWorkspace({
+    subscriptionStatus: subscription?.status,
+    subscriptionCancelAtPeriodEnd: subscription?.cancelAtPeriodEnd,
+    workspaceBillingStatus: workspace.billingStatus,
+    plan,
+  });
   const limits = WORKSPACE_LIMITS[plan];
 
   return ok({
@@ -96,6 +103,7 @@ export async function getWorkspaceSubscriptionState(
     plan,
     planLabel: getWorkspacePlanLabel(plan),
     hasActiveSubscription,
+    canDelete,
     limits,
   });
 }

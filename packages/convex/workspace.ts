@@ -251,7 +251,7 @@ export const deleteWorkspace = mutation({
     }
 
     const subscriptionState = await getWorkspaceSubscriptionState(ctx, args.workspaceId);
-    if (subscriptionState.ok && subscriptionState.data.hasActiveSubscription) {
+    if (subscriptionState.ok && !subscriptionState.data.canDelete) {
       return fail({ data: null, error: ERRORS.DELETE_WORKSPACE_ACTIVE_SUBSCRIPTION });
     }
 
@@ -411,6 +411,7 @@ export const billing = query({
       // currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
       // role: membership.role,
       canManageBilling: userWithAccess.data.membership.role === "owner",
+      canDelete: subscriptionState.data.canDelete,
     });
   },
 });
