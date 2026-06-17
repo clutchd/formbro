@@ -1,5 +1,11 @@
 import { hasString } from "@formbro/core/util";
+import { v } from "convex/values";
 import { formatStorage, GIGABYTE, numberFormatter } from "./lib";
+
+export const WORKSPACE_TRIAL_DAYS = 14;
+
+export const workspacePlanValidator = v.union(v.literal("basic"), v.literal("pro"));
+export const billingIntervalValidator = v.union(v.literal("monthly"), v.literal("annual"));
 
 const BILLING_STATUSES = [
   "not_subscribed",
@@ -167,4 +173,18 @@ export function getWorkspaceBillingStatusColor(billingStatus?: string) {
 
 export function getWorkspacePlanLabel(plan?: WorkspacePlan) {
   return WORKSPACE_PLAN_LABELS[normalizeWorkspacePlan(plan)];
+}
+
+export function hasActiveWorkspaceSubscriptionStatus(status: string | undefined | null) {
+  return status === "active" || status === "trialing" || status === "past_due";
+}
+
+export function getStripePriceIdForPlan(plan: Plan, interval: "monthly" | "annual") {
+  const details = getPlanDetails(plan);
+  console.log("details", details);
+  const priceId = interval === "annual" ? details.yearlyPriceId : details.monthlyPriceId;
+
+  console.log("priceId", priceId);
+
+  return hasString(priceId) ? priceId : null;
 }

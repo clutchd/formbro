@@ -1,13 +1,20 @@
+import { api } from "@formbro/convex/_generated/api";
 import { getPlanDetails, PLANS, type Plan } from "@formbro/convex/billingUtils";
+import { getErrorMessage } from "@formbro/convex/errors";
 import { formatUsd } from "@formbro/convex/lib";
+import { APP_URL } from "@formbro/shared/brand";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
 import { Card } from "@formbro/ui/card";
 import { Separator } from "@formbro/ui/separator";
+import { Spinner } from "@formbro/ui/spinner";
 import { displayFont, tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { RiCheckboxCircleLine } from "@remixicon/react";
-import { useState } from "react";
+import { useAction } from "convex/react";
+import { redirect } from "next/navigation";
+import { useCallback, useState } from "react";
+import { toast } from "sonner";
 import { useRequiredWorkspaceData } from "../data-provider";
 import { useRequiredWorkspaceSettingsData } from "./data-provider";
 
@@ -67,12 +74,16 @@ function PlanCard({
   current,
   disabled,
   interval,
+  isLoading,
+  onSelect,
   plan: planName,
   recommended,
 }: {
   current: boolean;
   disabled: boolean;
   interval: "monthly" | "annual";
+  isLoading: boolean;
+  onSelect: () => void;
   plan: Plan;
   recommended: boolean;
 }) {
@@ -134,9 +145,15 @@ function PlanCard({
         <Button
           size="lg"
           className="w-full"
-          disabled={disabled}
+          disabled={disabled || isLoading}
           variant={current ? "outline" : "default"}
+          onClick={() => {
+            if (!current && !disabled) {
+              onSelect();
+            }
+          }}
         >
+          {isLoading ? <Spinner /> : null}
           {current ? "Current plan" : `Choose ${plan.name}`}
         </Button>
       </div>
@@ -145,9 +162,40 @@ function PlanCard({
 }
 
 export function PlansPanel() {
+  const { workspace } = useRequiredWorkspaceData();
   const { billing } = useRequiredWorkspaceSettingsData();
+  const createSubscriptionCheckout = useAction(api.billing.createSubscriptionCheckout);
   const isUnlimited = billing.plan === "unlimited";
   const [interval, setInterval] = useState<"monthly" | "annual">("monthly");
+  const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
+
+  const settingsUrl = `${APP_URL}/dashboard/${workspace.slug}/settings`;
+
+  const handleSelectPlan = useCallback(
+    async (plan: Plan) => {
+      setLoadingPlan(plan);
+
+      const result = await createSubscriptionCheckout({
+        workspaceId: billing.workspaceId,
+        plan,
+        interval,
+        successUrl: `${settingsUrl}?checkout=success`,
+        cancelUrl: `${settingsUrl}?checkout=cancelled`,
+      });
+
+      if (!result.ok) {
+        setLoadingPlan(null);
+        toast.error("Failed to start checkout", {
+          description: getErrorMessage(result.error),
+        });
+        return;
+      }
+
+      setLoadingPlan(null);
+      redirect(result.data.url);
+    },
+    [billing.workspaceId, createSubscriptionCheckout, interval, settingsUrl],
+  );
 
   return (
     <section className="col-span-2 space-y-5">
@@ -158,6 +206,11 @@ export function PlansPanel() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {PLANS.map((plan) => {
           const current = billing.plan === plan && billing.hasActiveSubscription;
+          const disabled =
+            isUnlimited ||
+            current ||
+            !billing.canManageBilling ||
+            (billing.hasActiveSubscription && !current);
 
           return (
             <PlanCard
@@ -166,7 +219,9 @@ export function PlansPanel() {
               interval={interval}
               current={current}
               recommended={plan === "pro" && !current}
-              disabled={isUnlimited || current}
+              disabled={disabled}
+              isLoading={loadingPlan === plan}
+              onSelect={() => void handleSelectPlan(plan)}
             />
           );
         })}

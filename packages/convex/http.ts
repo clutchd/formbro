@@ -14,7 +14,7 @@ const http = httpRouter();
 authComponent.registerRoutes(http, createAuth, { cors: true });
 
 function getSubscriptionMetadata(subscription: Stripe.Subscription) {
-  const workspaceId = subscription.metadata?.workspaceId;
+  const workspaceId = subscription.metadata?.orgId;
   return {
     workspaceId: hasString(workspaceId) ? workspaceId : undefined,
     stripeCustomerId: hasString(subscription.customer)

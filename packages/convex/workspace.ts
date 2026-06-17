@@ -369,3 +369,48 @@ export const linkStripeCustomer = internalMutation({
     return ok({ workspaceId: args.workspaceId, stripeCustomerId: args.stripeCustomerId });
   },
 });
+
+export const billing = query({
+  args: {
+    workspaceId: v.id("workspaces"),
+  },
+  handler: async (ctx, args) => {
+    const userWithAccess = await getWorkspaceAccess(ctx, args.workspaceId);
+    if (!userWithAccess.ok) {
+      return fail({ data: undefined, error: userWithAccess.error });
+    }
+
+    const subscriptionState = await getWorkspaceSubscriptionState(ctx, args.workspaceId);
+    if (!subscriptionState.ok) {
+      return fail({ data: undefined, error: subscriptionState.error });
+    }
+
+    // const storageUsedBytes = await getTeamStorageUsedBytes(ctx, args.teamId);
+    // const subscription = subscriptionState.subscription;
+
+    return ok({
+      workspaceId: subscriptionState.data.workspace._id,
+      plan: subscriptionState.data.plan,
+      planLabel: subscriptionState.data.planLabel,
+      limits: subscriptionState.data.limits,
+      // monthlyPriceUsd: TEAM_PLAN_MONTHLY_PRICE_USD[subscriptionState.plan],
+      // storageLimitBytes: TEAM_PLAN_STORAGE_LIMIT_BYTES[subscriptionState.plan],
+      // storageUsedBytes,
+      hasActiveSubscription: subscriptionState.data.hasActiveSubscription,
+      // subscriptionStatus:
+      //   subscription?.status ?? subscriptionState.team.billingStatus ?? null,
+      // stripeCustomerId:
+      //   subscriptionState.team.stripeCustomerId ??
+      //   subscription?.stripeCustomerId ??
+      //   null,
+      // stripeSubscriptionId:
+      //   subscription?.stripeSubscriptionId ??
+      //   subscriptionState.team.stripeSubscriptionId ??
+      //   null,
+      // stripePriceId: subscription?.priceId ?? subscriptionState.team.stripePriceId ?? null,
+      // currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
+      // role: membership.role,
+      canManageBilling: userWithAccess.data.membership.role === "owner",
+    });
+  },
+});

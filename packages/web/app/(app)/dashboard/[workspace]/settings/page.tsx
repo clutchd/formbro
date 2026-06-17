@@ -68,8 +68,8 @@ export default function BillingSettingsPage() {
               <TypographySubheading className="text-foreground">
                 Delete Workspace
               </TypographySubheading>
-              <TypographyP className="text-sm">
-                Permanently delete this workspace, all forms, and submissions.
+              <TypographyP className="text-foreground-muted text-sm">
+                Permanently delete this workspace, all forms, and all submissions.
               </TypographyP>
             </div>
             <Dialog

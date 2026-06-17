@@ -14,10 +14,15 @@ import {
 } from "./_generated/server";
 import { getUser } from "./auth";
 import {
+  billingIntervalValidator,
+  getStripePriceIdForPlan,
   getWorkspacePlanLabel,
+  hasActiveWorkspaceSubscriptionStatus,
   normalizeWorkspacePlan,
   resolvePlanFromStripePriceId,
   WORKSPACE_LIMITS,
+  WORKSPACE_TRIAL_DAYS,
+  workspacePlanValidator,
 } from "./billingUtils";
 import { defineErrors } from "./errors";
 import { ERRORS as WORKSPACE_ERRORS } from "./workspace";
@@ -33,6 +38,19 @@ export const ERRORS = defineErrors({
   },
   CUSTOMER_PORTAL_SESSION_NOT_CREATED: {
     message: "Customer portal session could not be created. Please try again.",
+    status: "INTERNAL_SERVER_ERROR",
+  },
+  ACTIVE_SUBSCRIPTION_EXISTS: {
+    message:
+      "This workspace already has an active subscription. Use the billing portal to manage it.",
+    status: "CONFLICT",
+  },
+  CHECKOUT_SESSION_NOT_CREATED: {
+    message: "Checkout session could not be created. Please try again.",
+    status: "INTERNAL_SERVER_ERROR",
+  },
+  STRIPE_PRICE_NOT_CONFIGURED: {
+    message: "This plan is not available for checkout yet. Please contact support.",
     status: "INTERNAL_SERVER_ERROR",
   },
   SUBSCRIPTION_SYNC_FAILED: {
@@ -63,12 +81,12 @@ export async function getWorkspaceSubscriptionState(
   }
 
   const subscription = await getSubsctionByWorkspaceId(ctx, workspaceId);
+
   const subscriptionPlan = resolvePlanFromStripePriceId(subscription?.priceId);
   const plan = subscriptionPlan ?? normalizeWorkspacePlan(workspace.plan);
   const hasActiveSubscription =
-    subscription?.status === "active" ||
-    subscription?.status === "trialing" ||
-    subscription?.status === "past_due" ||
+    hasActiveWorkspaceSubscriptionStatus(subscription?.status) ||
+    hasActiveWorkspaceSubscriptionStatus(workspace.billingStatus) ||
     plan === "unlimited";
   const limits = WORKSPACE_LIMITS[plan];
 
@@ -105,9 +123,9 @@ export const createWorkspaceCustomer = internalAction({
       email,
       name: args.workspace.name,
       metadata: {
-        workspaceId: args.workspace._id,
+        orgId: args.workspace._id,
         userId: identity.data.subject,
-        workspaceSlug: args.workspace.slug,
+        slug: args.workspace.slug,
       },
       idempotencyKey: args.workspace._id,
     });
@@ -230,5 +248,98 @@ export const createPortalSession = action({
     }
 
     return ok({ url: session.url });
+  },
+});
+
+export const createSubscriptionCheckout = action({
+  args: {
+    workspaceId: v.id("workspaces"),
+    plan: workspacePlanValidator,
+    interval: billingIntervalValidator,
+    successUrl: v.string(),
+    cancelUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const workspace = (await ctx.runQuery(api.workspace.get, {
+      workspaceId: args.workspaceId,
+    })) as QueryResult<(Doc<"workspaces"> & { role: "owner" | "admin" | "member" }) | null>;
+
+    if (!workspace.ok) {
+      return fail({ data: undefined, error: workspace.error });
+    }
+
+    if (!workspace.data) {
+      return fail({ data: undefined, error: WORKSPACE_ERRORS.WORKSPACE_NOT_FOUND });
+    }
+
+    if (workspace.data.role !== "owner") {
+      return fail({ data: undefined, error: ERRORS.BILLING_OWNER_ONLY });
+    }
+
+    const existingSubscription = await ctx.runQuery(
+      components.stripe.public.getSubscriptionByOrgId,
+      { orgId: args.workspaceId },
+    );
+
+    if (existingSubscription && hasActiveWorkspaceSubscriptionStatus(existingSubscription.status)) {
+      return fail({ data: undefined, error: ERRORS.ACTIVE_SUBSCRIPTION_EXISTS });
+    }
+
+    let stripeCustomerId: string | undefined =
+      workspace.data.stripeCustomerId ?? existingSubscription?.stripeCustomerId;
+
+    if (!stripeCustomerId) {
+      const result = await ctx.runAction(internal.billing.createWorkspaceCustomer, {
+        workspace: {
+          _id: args.workspaceId,
+          name: workspace.data.name,
+          slug: workspace.data.slug,
+        },
+      });
+
+      if (!result.ok || !result.data?.stripeCustomerId) {
+        return fail({ data: undefined, error: ERRORS.CUSTOMER_NOT_FOUND });
+      }
+
+      stripeCustomerId = result.data.stripeCustomerId;
+    }
+
+    const stripePriceId = getStripePriceIdForPlan(args.plan, args.interval);
+    if (!stripePriceId) {
+      return fail({ data: undefined, error: ERRORS.STRIPE_PRICE_NOT_CONFIGURED });
+    }
+
+    const shouldStartTrial = !existingSubscription && !workspace.data.stripeSubscriptionId;
+
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
+      mode: "subscription",
+      customer: stripeCustomerId,
+      line_items: [{ price: stripePriceId, quantity: 1 }],
+      success_url: args.successUrl,
+      cancel_url: args.cancelUrl,
+      metadata: {
+        orgId: workspace.data._id,
+        plan: args.plan,
+        interval: args.interval,
+        slug: workspace.data.slug,
+      },
+      subscription_data: {
+        metadata: {
+          orgId: workspace.data._id,
+          plan: args.plan,
+          interval: args.interval,
+          slug: workspace.data.slug,
+        },
+        ...(shouldStartTrial ? { trial_period_days: WORKSPACE_TRIAL_DAYS } : {}),
+      },
+    };
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    if (!session.url) {
+      return fail({ data: undefined, error: ERRORS.CHECKOUT_SESSION_NOT_CREATED });
+    }
+
+    return ok({ sessionId: session.id, url: session.url });
   },
 });
