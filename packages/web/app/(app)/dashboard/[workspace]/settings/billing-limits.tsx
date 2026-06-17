@@ -1,10 +1,4 @@
-import {
-  formatStorageLimit,
-  getWorkspacePlanLabel,
-  normalizeWorkspacePlan,
-  numberFormatter,
-  WORKSPACE_LIMITS,
-} from "@formbro/convex/lib";
+import { formatStorage, numberFormatter } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Card } from "@formbro/ui/card";
 import { Progress } from "@formbro/ui/progress";
@@ -12,6 +6,7 @@ import { Separator } from "@formbro/ui/separator";
 import { displayFont, tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { WorkspaceBillingStateBadge } from "../../workspace-billing-state-badge";
 import { useRequiredWorkspaceData } from "../data-provider";
+import { useRequiredWorkspaceSettingsData } from "./data-provider";
 
 function Metric({
   className,
@@ -70,9 +65,9 @@ function LimitMeter({
 
 export function BillingLimits() {
   const { forms, workspace } = useRequiredWorkspaceData();
-  const limits = WORKSPACE_LIMITS[normalizeWorkspacePlan(workspace.plan)];
+  const { billing } = useRequiredWorkspaceSettingsData();
   const activeForms =
-    forms?.filter((form) => form.status !== "archived").length ?? limits.activeForms ?? 0;
+    forms?.filter((form) => form.status !== "archived").length ?? billing.limits.activeForms ?? 0;
   const monthlySubmissions = 0; // TODO: get from workspace
   const storageBytes = 0; // TODO: get from workspace
 
@@ -82,7 +77,7 @@ export function BillingLimits() {
 
       <div className="flex flex-col gap-5 sm:flex-row">
         <Metric label="Plan">
-          {getWorkspacePlanLabel(workspace.plan)}
+          {billing.planLabel}
           <WorkspaceBillingStateBadge workspace={workspace}>
             {workspace.billingStatus}
           </WorkspaceBillingStateBadge>
@@ -93,18 +88,22 @@ export function BillingLimits() {
       <Separator className="my-6" />
 
       <div className="flex flex-col gap-5">
-        <LimitMeter label="Active forms" used={activeForms} limit={limits.activeForms} />
+        <LimitMeter
+          label="Active forms"
+          used={activeForms}
+          limit={billing.limits.activeForms ?? null}
+        />
         <LimitMeter
           label="Submissions"
           used={monthlySubmissions}
-          limit={limits.monthlySubmissions}
+          limit={billing.limits.monthlySubmissions ?? null}
           detail="Resets monthly"
         />
         <LimitMeter
           label="Storage"
           used={storageBytes}
-          limit={limits.storageBytes}
-          formatValue={formatStorageLimit}
+          limit={billing.limits.storageBytes ?? null}
+          formatValue={formatStorage}
         />
       </div>
     </Card>

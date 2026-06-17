@@ -1,10 +1,5 @@
-import {
-  formatUsd,
-  getPlanDetails,
-  getWorkspaceBillingState,
-  PLANS,
-  type Plan,
-} from "@formbro/convex/lib";
+import { getPlanDetails, PLANS, type Plan } from "@formbro/convex/billingUtils";
+import { formatUsd } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
@@ -14,6 +9,7 @@ import { displayFont, tuiFont, TypographySubheading } from "@formbro/ui/typograp
 import { RiCheckboxCircleLine } from "@remixicon/react";
 import { useState } from "react";
 import { useRequiredWorkspaceData } from "../data-provider";
+import { useRequiredWorkspaceSettingsData } from "./data-provider";
 
 function BillingIntervalToggle({
   interval,
@@ -149,9 +145,8 @@ function PlanCard({
 }
 
 export function PlansPanel() {
-  const { workspace } = useRequiredWorkspaceData();
-  const billingState = getWorkspaceBillingState(workspace.billingStatus);
-  const isUnlimited = workspace.plan === "unlimited";
+  const { billing } = useRequiredWorkspaceSettingsData();
+  const isUnlimited = billing.plan === "unlimited";
   const [interval, setInterval] = useState<"monthly" | "annual">("monthly");
 
   return (
@@ -162,7 +157,7 @@ export function PlansPanel() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {PLANS.map((plan) => {
-          const current = workspace.plan === plan && billingState === "success";
+          const current = billing.plan === plan && billing.hasActiveSubscription;
 
           return (
             <PlanCard

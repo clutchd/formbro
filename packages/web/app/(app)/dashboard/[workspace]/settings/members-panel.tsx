@@ -1,5 +1,3 @@
-import type { FunctionReturnType } from "convex/server";
-import { api } from "@formbro/convex/_generated/api";
 import { initials } from "@formbro/shared/names";
 import { twx } from "@formbro/shared/twx";
 import { Avatar, AvatarFallback, AvatarImage } from "@formbro/ui/avatar";
@@ -7,12 +5,11 @@ import { Badge } from "@formbro/ui/badge";
 import { Card } from "@formbro/ui/card";
 import { tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { Loading } from "@/components/loading";
-import { useWorkspaceSettingsData } from "./data-provider";
+import { useRequiredWorkspaceSettingsData } from "./data-provider";
 
-type Member = Extract<
-  FunctionReturnType<typeof api.workspace.listMembers>,
-  { ok: true }
->["data"][number];
+type Member = NonNullable<
+  NonNullable<ReturnType<typeof useRequiredWorkspaceSettingsData>>["members"]
+>[number];
 
 function MemberRoleBadge({ role }: { role: Member["role"] }) {
   const status = role === "owner" ? "success" : role === "admin" ? "info" : "neutral";
@@ -45,19 +42,19 @@ function MemberRow({ member }: { member: Member }) {
 }
 
 export function MembersPanel() {
-  const { members } = useWorkspaceSettingsData();
+  const { members } = useRequiredWorkspaceSettingsData();
 
   return (
     <div className="flex h-full flex-col">
       <TypographySubheading className={twx(tuiFont, "mb-3")}>
-        Members - {members?.data?.length}
+        Members - {members.length}
       </TypographySubheading>
       <Card className="flex flex-1 flex-col">
-        {members?.data === undefined ? (
+        {members === undefined ? (
           <Loading title="members" className="text-xs" />
         ) : (
           <ul className="space-y-4">
-            {members.data.map((member) => (
+            {members.map((member) => (
               <li key={member._id}>
                 <MemberRow member={member} />
               </li>

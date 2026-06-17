@@ -1,4 +1,4 @@
-import { getWorkspaceBillingState } from "@formbro/convex/lib";
+import { getWorkspaceBillingStatusColor } from "@formbro/convex/billingUtils";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
 
@@ -16,7 +16,7 @@ export function WorkspaceBillingStateBadge({
   return (
     <Badge
       variant="outline"
-      status={getWorkspaceBillingState(workspace.billingStatus)}
+      status={getWorkspaceBillingStatusColor(workspace.billingStatus)}
       className={twx(
         "uppercase",
         size === "sm" && "px-1.5 py-0 text-[10px] leading-4 tracking-normal",

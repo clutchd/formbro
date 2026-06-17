@@ -2,7 +2,10 @@
 
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@formbro/convex/_generated/api";
-import { getWorkspaceBillingState, getWorkspacePlanLabel } from "@formbro/convex/lib";
+import {
+  getWorkspaceBillingStatusColor,
+  getWorkspacePlanLabel,
+} from "@formbro/convex/billingUtils";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
@@ -20,7 +23,7 @@ type Workspace = Extract<
 >["data"][number];
 
 const isUnpaid = (workspace: Workspace) =>
-  getWorkspaceBillingState(workspace.billingStatus) != "success";
+  getWorkspaceBillingStatusColor(workspace.billingStatus) != "success";
 
 function FormStatusBadge({ status }: { status: Workspace["forms"][number]["status"] }) {
   let badgeStatus: "neutral" | "success" | "error" = "neutral";

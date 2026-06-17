@@ -12,6 +12,7 @@ import type * as access from "../access.js";
 import type * as audience from "../audience.js";
 import type * as auth from "../auth.js";
 import type * as billing from "../billing.js";
+import type * as billingUtils from "../billingUtils.js";
 import type * as emails from "../emails.js";
 import type * as errors from "../errors.js";
 import type * as forms from "../forms.js";
@@ -34,6 +35,7 @@ declare const fullApi: ApiFromModules<{
   audience: typeof audience;
   auth: typeof auth;
   billing: typeof billing;
+  billingUtils: typeof billingUtils;
   emails: typeof emails;
   errors: typeof errors;
   forms: typeof forms;

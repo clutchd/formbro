@@ -34,7 +34,7 @@ registerRoutes(http, components.stripe, {
       event: Stripe.Event,
     ) => {
       await ctx.runMutation(
-        internal.billing.syncWorkspaceSubscription,
+        internal.billing.syncSubscription,
         getSubscriptionMetadata(event.data.object as Stripe.Subscription),
       );
     },
@@ -43,7 +43,7 @@ registerRoutes(http, components.stripe, {
       event: Stripe.Event,
     ) => {
       await ctx.runMutation(
-        internal.billing.syncWorkspaceSubscription,
+        internal.billing.syncSubscription,
         getSubscriptionMetadata(event.data.object as Stripe.Subscription),
       );
     },
@@ -52,7 +52,7 @@ registerRoutes(http, components.stripe, {
       event: Stripe.Event,
     ) => {
       await ctx.runMutation(
-        internal.billing.syncWorkspaceSubscription,
+        internal.billing.syncSubscription,
         getSubscriptionMetadata(event.data.object as Stripe.Subscription),
       );
     },

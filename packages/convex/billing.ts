@@ -5,8 +5,20 @@ import { v } from "convex/values";
 import Stripe from "stripe";
 import type { Doc, Id } from "./_generated/dataModel";
 import { api, components, internal } from "./_generated/api";
-import { action, internalAction, internalMutation } from "./_generated/server";
+import {
+  action,
+  internalAction,
+  internalMutation,
+  type MutationCtx,
+  type QueryCtx,
+} from "./_generated/server";
 import { getUser } from "./auth";
+import {
+  getWorkspacePlanLabel,
+  normalizeWorkspacePlan,
+  resolvePlanFromStripePriceId,
+  WORKSPACE_LIMITS,
+} from "./billingUtils";
 import { defineErrors } from "./errors";
 import { ERRORS as WORKSPACE_ERRORS } from "./workspace";
 
@@ -29,24 +41,46 @@ export const ERRORS = defineErrors({
   },
 });
 
-function resolvePlanFromPriceId(priceId?: string) {
-  if (!hasString(priceId)) return null;
-
-  const basicMonthlyPriceId = process.env.STRIPE_BASIC_MONTHLY_PRICE_ID;
-  const basicYearlyPriceId = process.env.STRIPE_BASIC_YEARLY_PRICE_ID;
-  const proMonthlyPriceId = process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
-  const proYearlyPriceId = process.env.STRIPE_PRO_YEARLY_PRICE_ID;
-
-  if (hasString(basicMonthlyPriceId) && priceId === basicMonthlyPriceId) return "basic";
-  if (hasString(basicYearlyPriceId) && priceId === basicYearlyPriceId) return "basic";
-  if (hasString(proMonthlyPriceId) && priceId === proMonthlyPriceId) return "pro";
-  if (hasString(proYearlyPriceId) && priceId === proYearlyPriceId) return "pro";
-
-  return null;
-}
-
 const client = new StripeSubscriptions(components.stripe, {});
 const stripe = new Stripe(client.apiKey);
+
+async function getSubsctionByWorkspaceId(
+  ctx: QueryCtx | MutationCtx,
+  workspaceId: Id<"workspaces">,
+) {
+  return await ctx.runQuery(components.stripe.public.getSubscriptionByOrgId, {
+    orgId: workspaceId,
+  });
+}
+
+export async function getWorkspaceSubscriptionState(
+  ctx: QueryCtx | MutationCtx,
+  workspaceId: Id<"workspaces">,
+) {
+  const workspace = await ctx.db.get(workspaceId);
+  if (!workspace) {
+    return fail({ data: null, error: WORKSPACE_ERRORS.WORKSPACE_NOT_FOUND });
+  }
+
+  const subscription = await getSubsctionByWorkspaceId(ctx, workspaceId);
+  const subscriptionPlan = resolvePlanFromStripePriceId(subscription?.priceId);
+  const plan = subscriptionPlan ?? normalizeWorkspacePlan(workspace.plan);
+  const hasActiveSubscription =
+    subscription?.status === "active" ||
+    subscription?.status === "trialing" ||
+    subscription?.status === "past_due" ||
+    plan === "unlimited";
+  const limits = WORKSPACE_LIMITS[plan];
+
+  return ok({
+    workspace,
+    subscription,
+    plan,
+    planLabel: getWorkspacePlanLabel(plan),
+    hasActiveSubscription,
+    limits,
+  });
+}
 
 export const createWorkspaceCustomer = internalAction({
   args: {
@@ -85,7 +119,7 @@ export const createWorkspaceCustomer = internalAction({
   },
 });
 
-export const syncWorkspaceSubscription = internalMutation({
+export const syncSubscription = internalMutation({
   args: {
     workspaceId: v.optional(v.string()),
     stripeCustomerId: v.optional(v.string()),
@@ -117,7 +151,7 @@ export const syncWorkspaceSubscription = internalMutation({
     }
 
     const subscription = {
-      plan: resolvePlanFromPriceId(args.stripePriceId) ?? workspace?.plan,
+      plan: resolvePlanFromStripePriceId(args.stripePriceId) ?? workspace?.plan,
       stripeCustomerId: args.stripeCustomerId ?? workspace?.stripeCustomerId,
       stripeSubscriptionId: args.stripeSubscriptionId,
       stripePriceId: args.stripePriceId ?? workspace?.stripePriceId,
@@ -140,7 +174,7 @@ export const syncWorkspaceSubscription = internalMutation({
   },
 });
 
-export const createCustomerPortalSession = action({
+export const createPortalSession = action({
   args: {
     workspaceId: v.id("workspaces"),
     returnUrl: v.string(),

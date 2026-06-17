@@ -10,12 +10,14 @@ import { useAction } from "convex/react";
 import { redirect } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { useRequiredWorkspaceData, useWorkspaceData } from "../data-provider";
+import { useRequiredWorkspaceData } from "../data-provider";
+import { useRequiredWorkspaceSettingsData } from "./data-provider";
 
 function ManageBillingButton() {
-  const { workspace } = useWorkspaceData();
+  const { workspace } = useRequiredWorkspaceData();
+  const { billing } = useRequiredWorkspaceSettingsData();
   const [isLoading, setIsLoading] = useState(false);
-  const createPortalSession = useAction(api.billing.createCustomerPortalSession);
+  const createPortalSession = useAction(api.billing.createPortalSession);
 
   const handleManageBilling = useCallback(async () => {
     if (!workspace) return;
@@ -39,11 +41,13 @@ function ManageBillingButton() {
     redirect(result.data.url);
   }, [workspace, createPortalSession]);
 
+  if (!billing.canManageBilling) return null;
+
   return (
     <Button
       variant="outline"
       className="group/button"
-      disabled={!workspace}
+      disabled={!workspace || !billing.hasActiveSubscription}
       onClick={() => void handleManageBilling()}
     >
       Manage Billing {isLoading ? <Spinner /> : <RiExternalLinkLine className="size-4" />}

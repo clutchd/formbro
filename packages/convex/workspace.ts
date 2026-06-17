@@ -2,20 +2,30 @@ import { fail, ok } from "@formbro/core/result";
 import { hasString, normalizeEmail } from "@formbro/core/util";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
+import type { Plan } from "./billingUtils";
 import { internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
 import { ERRORS as ACCESS_ERRORS, getWorkspaceAccess } from "./access";
 import { getUser, resolveUserProfile } from "./auth";
+import { getWorkspaceSubscriptionState } from "./billing";
 import { defineErrors } from "./errors";
 import { ERRORS as FORM_ERRORS } from "./forms";
-import { type Plan } from "./lib";
 
 export const ERRORS = defineErrors({
+  DELETE_WORKSPACE_PERMISSION_DENIED: {
+    message: "You do not have permission to delete this workspace.",
+    status: "FORBIDDEN",
+  },
   WORKSPACE_NOT_FOUND: {
     message: "Workspace not found.",
     status: "NOT_FOUND",
   },
   UNPAID_WORKSPACE_LIMIT: {
     message: "Unpaid workspace limit reached.",
+    status: "FORBIDDEN",
+  },
+  DELETE_WORKSPACE_ACTIVE_SUBSCRIPTION: {
+    message:
+      "Cannot delete a workspace with an active subscription. Cancel billing first in workspace settings.",
     status: "FORBIDDEN",
   },
 });
@@ -223,6 +233,51 @@ export const create = mutation({
         },
       }),
     );
+  },
+});
+
+export const deleteWorkspace = mutation({
+  args: {
+    workspaceId: v.id("workspaces"),
+  },
+  handler: async (ctx, args) => {
+    const userWithAccess = await getWorkspaceAccess(ctx, args.workspaceId);
+    if (!userWithAccess.ok) {
+      return fail({ data: null, error: userWithAccess.error });
+    }
+
+    if (userWithAccess.data.membership.role !== "owner") {
+      return fail({ data: null, error: ERRORS.DELETE_WORKSPACE_PERMISSION_DENIED });
+    }
+
+    const subscriptionState = await getWorkspaceSubscriptionState(ctx, args.workspaceId);
+    if (subscriptionState.ok && subscriptionState.data.hasActiveSubscription) {
+      return fail({ data: null, error: ERRORS.DELETE_WORKSPACE_ACTIVE_SUBSCRIPTION });
+    }
+
+    // Delete all workspace members
+    const members = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .collect();
+
+    for (const member of members) {
+      await ctx.db.delete(member._id);
+    }
+
+    // Delete all workspace forms
+    const forms = await ctx.db
+      .query("forms")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .collect();
+
+    for (const form of forms) {
+      await ctx.db.delete(form._id);
+    }
+
+    await ctx.db.delete(args.workspaceId);
+
+    return ok({ workspaceId: args.workspaceId });
   },
 });
 
