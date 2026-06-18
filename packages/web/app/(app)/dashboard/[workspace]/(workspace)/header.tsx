@@ -4,11 +4,12 @@ import { getWorkspacePlanLabel } from "@formbro/convex/billingUtils";
 import { Button } from "@formbro/ui/button";
 import { RiBankCardLine } from "@remixicon/react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { DashboardHeader } from "../../header";
 import { WorkspaceBillingStateBadge } from "../../workspace-billing-state-badge";
+import { useWorkspaceData } from "../_data-provider";
 import { CreateForm } from "../create-form-form";
-import { useWorkspaceData } from "../data-provider";
-import { useWorkspaceSettingsPrewarmIntent } from "../settings/data-provider";
+import { useWorkspaceSettingsPrewarmIntent } from "../settings/_data-provider";
 
 type Workspace = NonNullable<ReturnType<typeof useWorkspaceData>["workspace"]>;
 
@@ -24,7 +25,9 @@ function WorkspaceBreadcrumbLabel({ workspace }: { workspace: Workspace }) {
 }
 
 export function WorkspaceHomeHeader() {
+  const { workspace: workspaceSlug } = useParams<{ workspace: string }>();
   const { forms, workspace } = useWorkspaceData();
+  const settingsPrewarm = useWorkspaceSettingsPrewarmIntent(workspaceSlug);
 
   return (
     <DashboardHeader
@@ -42,7 +45,7 @@ export function WorkspaceHomeHeader() {
         workspace ? (
           <div className="flex items-center gap-2">
             <Button asChild variant="outline">
-              <Link {...useWorkspaceSettingsPrewarmIntent(workspace.slug)}>
+              <Link {...settingsPrewarm}>
                 <RiBankCardLine className="size-4" />
                 Billing
               </Link>

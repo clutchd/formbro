@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, type Context } from "react";
+import { createContext, use, type Context } from "react";
 
 type SegmentData<T> = {
   Context: Context<T | undefined>;
@@ -12,7 +12,7 @@ export function createSegmentData<T>(name: string): SegmentData<T> {
   const Context = createContext<T | undefined>(undefined);
 
   function useData(): T {
-    const value = useContext(Context);
+    const value = use(Context);
 
     if (!value) {
       throw new Error(`use${name}Data must be used within ${name}DataProvider`);

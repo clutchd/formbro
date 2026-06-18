@@ -10,8 +10,8 @@ import { useAction } from "convex/react";
 import { redirect } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { useRequiredWorkspaceData } from "../data-provider";
-import { useRequiredWorkspaceSettingsData } from "./data-provider";
+import { useRequiredWorkspaceData } from "../_data-provider";
+import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
 function ManageBillingButton() {
   const { workspace } = useRequiredWorkspaceData();

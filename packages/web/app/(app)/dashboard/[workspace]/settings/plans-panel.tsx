@@ -15,8 +15,8 @@ import { useAction } from "convex/react";
 import { redirect } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { useRequiredWorkspaceData } from "../data-provider";
-import { useRequiredWorkspaceSettingsData } from "./data-provider";
+import { useRequiredWorkspaceData } from "../_data-provider";
+import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
 function BillingIntervalToggle({
   interval,
@@ -90,27 +90,31 @@ function PlanCard({
   const plan = getPlanDetails(planName);
 
   return (
-    <Card className={twx("flex h-full flex-col")}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-3">
-            <h2 className={twx(displayFont, "text-xl")}>{plan.name}</h2>
-            {current ? (
-              <Badge variant="outline" status="success" className="shrink-0 uppercase">
-                Current
-              </Badge>
-            ) : recommended ? (
-              <Badge variant="outline" status="neutral" className="shrink-0 uppercase">
+    <Card className="row-span-4 grid h-full grid-rows-subgrid gap-y-5">
+      <div>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className={twx(displayFont, "text-xl")}>{plan.name}</h2>
+          {current ? (
+            <Badge variant="outline" status="success" className="shrink-0 uppercase">
+              Current
+            </Badge>
+          ) : recommended ? (
+            <Badge variant="outline" status="neutral" className="shrink-0 uppercase">
+              Recommended
+            </Badge>
+          ) : (
+            <span className="invisible shrink-0" aria-hidden="true">
+              <Badge variant="outline" status="neutral" className="uppercase">
                 Recommended
               </Badge>
-            ) : null}
-          </div>
-
-          <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{plan.description}</p>
+            </span>
+          )}
         </div>
+
+        <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{plan.description}</p>
       </div>
 
-      <div className="mt-5">
+      <div>
         <div className="flex items-end gap-2">
           <p className={twx(displayFont, "text-3xl")}>
             {interval === "annual"
@@ -130,18 +134,20 @@ function PlanCard({
         )}
       </div>
 
-      <Separator className="my-5" />
+      <div className="flex min-h-0 flex-col">
+        <Separator className="mb-5" />
 
-      <ul className="flex flex-1 flex-col gap-2.5 text-sm">
-        {plan.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2.5">
-            <RiCheckboxCircleLine className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-            <span>{feature}</span>
-          </li>
-        ))}
-      </ul>
+        <ul className="flex flex-1 flex-col gap-2.5 text-sm">
+          {plan.features.map((feature) => (
+            <li key={feature} className="flex items-start gap-2.5">
+              <RiCheckboxCircleLine className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <span>{feature}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-      <div className="mt-6">
+      <div>
         <Button
           size="lg"
           className="w-full"
@@ -198,12 +204,12 @@ export function PlansPanel() {
   );
 
   return (
-    <section className="col-span-2 space-y-5">
+    <section className="space-y-5 lg:col-span-2">
       <TypographySubheading className={twx(tuiFont, "mb-3")}>Plans</TypographySubheading>
 
       <BillingIntervalToggle interval={interval} onChange={setInterval} />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:grid-rows-[auto_auto_1fr_auto]">
         {PLANS.map((plan) => {
           const current = billing.plan === plan && billing.hasActiveSubscription;
           const disabled =

@@ -1,6 +1,6 @@
 "use client";
 
-import { useAppData } from "app/data-provider";
+import { useAppData } from "app/_data-provider";
 import { redirect } from "next/navigation";
 import { Loading } from "@/components/loading";
 

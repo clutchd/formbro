@@ -1,7 +1,7 @@
 import type { PropsWithChildren } from "react";
 import { api } from "@formbro/convex/_generated/api";
 import { fonts } from "@formbro/ui/typography";
-import { AppDataProvider } from "app/data-provider";
+import { AppDataProvider } from "app/_data-provider";
 import Script from "next/script";
 import { DevTools } from "@/components/dev-tools";
 import { Toaster } from "@/components/sonner";

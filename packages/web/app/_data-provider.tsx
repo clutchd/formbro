@@ -5,6 +5,7 @@ import type { Preloaded } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import type { ReactNode } from "react";
 import { usePreloadedAuthQuery } from "@convex-dev/better-auth/nextjs/client";
+import { useMemo } from "react";
 import { createSegmentData } from "@/lib/data-segment";
 
 const app = createSegmentData<{
@@ -19,7 +20,8 @@ export function AppDataProvider({
   children: ReactNode;
 }) {
   const authUser = usePreloadedAuthQuery(preloadedAuthUser);
-  return <app.Provider value={{ authUser }}>{children}</app.Provider>;
+  const value = useMemo(() => ({ authUser }), [authUser]);
+  return <app.Provider value={value}>{children}</app.Provider>;
 }
 
 export const useAppData = app.useData;

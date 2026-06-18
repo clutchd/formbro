@@ -4,8 +4,8 @@ import { Logo } from "@formbro/ui/logo";
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import type { PrewarmIntentHandlers } from "@/lib/convex/route-prewarm";
-import { useAppData } from "../../data-provider";
-import { useDashboardPrewarmIntent } from "./(dashboard)/data-provider";
+import { useAppData } from "../../_data-provider";
+import { useDashboardPrewarmIntent } from "./(dashboard)/_data-provider";
 import { AccountMenu } from "./account-menu";
 
 type DashboardBreadcrumb = {
@@ -15,9 +15,11 @@ type DashboardBreadcrumb = {
   prewarm?: PrewarmIntentHandlers;
 };
 
+const EMPTY_BREADCRUMBS: DashboardBreadcrumb[] = [];
+
 export function DashboardHeader({
   actions = null,
-  breadcrumbs = [],
+  breadcrumbs = EMPTY_BREADCRUMBS,
 }: {
   actions?: ReactNode;
   breadcrumbs?: DashboardBreadcrumb[];

@@ -5,8 +5,8 @@ import { Progress } from "@formbro/ui/progress";
 import { Separator } from "@formbro/ui/separator";
 import { displayFont, tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { WorkspaceBillingStateBadge } from "../../workspace-billing-state-badge";
-import { useRequiredWorkspaceData } from "../data-provider";
-import { useRequiredWorkspaceSettingsData } from "./data-provider";
+import { useRequiredWorkspaceData } from "../_data-provider";
+import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
 function Metric({
   className,

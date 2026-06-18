@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { DashboardHeader } from "../../header";
-import { useWorkspaceData, useWorkspacePrewarmIntent } from "../data-provider";
+import { useWorkspaceData, useWorkspacePrewarmIntent } from "../_data-provider";
 
 export function WorkspaceSettingsHeader() {
   const { workspace: workspaceSlug } = useParams<{ workspace: string }>();

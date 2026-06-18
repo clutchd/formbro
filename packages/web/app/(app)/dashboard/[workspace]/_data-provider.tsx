@@ -1,21 +1,17 @@
 "use client";
 
-import type { ConvexReactClient } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import type { ReactNode } from "react";
 import { api } from "@formbro/convex/_generated/api";
 import { RiErrorWarningLine } from "@remixicon/react";
 import { useConvex, useQuery } from "convex/react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useMemo } from "react";
 import { Loading } from "@/components/loading";
 import { PageState } from "@/components/page-state";
-import {
-  prewarmRoute,
-  useRoutePrewarm,
-  type RoutePrewarmOptions,
-} from "@/lib/convex/route-prewarm";
+import { useRoutePrewarm, type RoutePrewarmOptions } from "@/lib/convex/route-prewarm";
 import { createSegmentData } from "@/lib/data-segment";
+import { prewarmWorkspaceRoute } from "./_prewarm";
 
 const workspaceSegment = createSegmentData<{
   context: FunctionReturnType<typeof api.workspace.context> | undefined;
@@ -24,21 +20,6 @@ const workspaceSegment = createSegmentData<{
     | undefined;
   forms: Extract<FunctionReturnType<typeof api.forms.list>, { ok: true }>["data"] | undefined;
 }>("Workspace");
-
-export async function prewarmWorkspaceRoute(convex: ConvexReactClient, workspaceSlug: string) {
-  prewarmRoute(convex, [{ query: api.workspace.context, args: { workspaceSlug } }]);
-  try {
-    const context = await convex.query(api.workspace.context, { workspaceSlug });
-    if (!context?.ok || !context.data.workspace._id) {
-      return;
-    }
-    prewarmRoute(convex, [
-      { query: api.forms.list, args: { workspaceId: context.data.workspace._id } },
-    ]);
-  } catch (error) {
-    console.warn("Workspace dependent prewarm failed", error);
-  }
-}
 
 export function useWorkspacePrewarmIntent(
   workspaceSlug: string,
@@ -64,20 +45,19 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
     workspaceData ? { workspaceId: workspaceData._id } : "skip",
   );
   const forms = formsResult?.ok ? formsResult.data : undefined;
-
-  useEffect(() => {
-    if (!contextData || contextData.isCanonical || pathname === contextData.canonicalPath) {
-      return;
-    }
-
-    router.replace(contextData.canonicalPath);
-  }, [contextData, pathname, router]);
-
-  return (
-    <workspaceSegment.Provider value={{ context, workspace: workspaceData, forms }}>
-      {children}
-    </workspaceSegment.Provider>
+  const value = useMemo(
+    () => ({ context, workspace: workspaceData, forms }),
+    [context, workspaceData, forms],
   );
+  const shouldRedirect =
+    contextData !== null && !contextData.isCanonical && pathname !== contextData.canonicalPath;
+
+  if (shouldRedirect) {
+    router.replace(contextData.canonicalPath);
+    return <Loading title="workspace" />;
+  }
+
+  return <workspaceSegment.Provider value={value}>{children}</workspaceSegment.Provider>;
 }
 
 export function WorkspaceContentBoundary({ children }: { children: ReactNode }) {

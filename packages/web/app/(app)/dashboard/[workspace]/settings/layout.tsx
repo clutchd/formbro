@@ -1,5 +1,5 @@
-import { WorkspaceContentBoundary } from "../data-provider";
-import { WorkspaceSettingsContentBoundary, WorkspaceSettingsDataProvider } from "./data-provider";
+import { WorkspaceContentBoundary } from "../_data-provider";
+import { WorkspaceSettingsContentBoundary, WorkspaceSettingsDataProvider } from "./_data-provider";
 import { WorkspaceSettingsHeader } from "./header";
 
 export default function WorkspaceSettingsLayout({ children }: { children: React.ReactNode }) {

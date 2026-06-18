@@ -4,6 +4,7 @@ import type { FunctionReturnType } from "convex/server";
 import type { ReactNode } from "react";
 import { api } from "@formbro/convex/_generated/api";
 import { useConvex, useQuery, type ConvexReactClient } from "convex/react";
+import { useMemo } from "react";
 import {
   prewarmRoute,
   useRoutePrewarm,
@@ -28,7 +29,8 @@ export function useDashboardPrewarmIntent(options: RoutePrewarmOptions = {}) {
 
 export function DashboardDataProvider({ children }: { children: ReactNode }) {
   const workspaces = useQuery(api.workspace.list, {});
-  return <dashboard.Provider value={{ workspaces }}>{children}</dashboard.Provider>;
+  const value = useMemo(() => ({ workspaces }), [workspaces]);
+  return <dashboard.Provider value={value}>{children}</dashboard.Provider>;
 }
 
 export const useDashboardData = dashboard.useData;

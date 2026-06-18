@@ -1,6 +1,6 @@
 import type { ConvexReactClient } from "convex/react";
 import { api } from "@formbro/convex/_generated/api";
-import { prewarmWorkspaceRoute } from "app/(app)/dashboard/[workspace]/data-provider";
+import { prewarmWorkspaceRoute } from "app/(app)/dashboard/[workspace]/_prewarm";
 import { describe, it } from "bun:test";
 import { getFunctionName } from "convex/server";
 import assert from "node:assert/strict";

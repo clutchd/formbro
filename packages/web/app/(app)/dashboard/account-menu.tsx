@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThemeIcon, useToggleTheme } from "@/components/theme";
 import { signOut } from "@/lib/auth/client";
-import { useDashboardPrewarmIntent } from "./(dashboard)/data-provider";
+import { useDashboardPrewarmIntent } from "./(dashboard)/_data-provider";
 
 type User =
   | {

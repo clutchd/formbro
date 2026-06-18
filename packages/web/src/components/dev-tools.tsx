@@ -3,7 +3,36 @@
 import { Badge } from "@formbro/ui/badge";
 import { Switch } from "@formbro/ui/switch";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useSyncExternalStore } from "react";
+
+type Dimensions = {
+  width: number;
+  height: number;
+};
+
+function subscribeToWindowResize(onStoreChange: () => void) {
+  window.addEventListener("resize", onStoreChange);
+  return () => window.removeEventListener("resize", onStoreChange);
+}
+
+function getWindowDimensions(): Dimensions {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  if (width === cachedWidth && height === cachedHeight) {
+    return cachedDimensions;
+  }
+
+  cachedWidth = width;
+  cachedHeight = height;
+  cachedDimensions = { width, height };
+  return cachedDimensions;
+}
+
+const serverDimensions: Dimensions = { width: 0, height: 0 };
+let cachedDimensions = serverDimensions;
+let cachedWidth = 0;
+let cachedHeight = 0;
 
 function InternalCurrentRoute() {
   const pathname = usePathname();
@@ -16,10 +45,10 @@ function InternalCurrentRoute() {
     );
   }, [pathname, searchParams]);
 
-  return <Badge>{url}</Badge>;
+  return <Badge className="pointer-events-auto!">{url}</Badge>;
 }
 
-export function CurrentRoute() {
+function CurrentRoute() {
   return (
     <Suspense>
       <InternalCurrentRoute />
@@ -28,25 +57,15 @@ export function CurrentRoute() {
 }
 
 function ScreenSize() {
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
-
-  useEffect(() => {
-    function updateDimensions() {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    }
-
-    updateDimensions();
-    window.addEventListener("resize", updateDimensions);
-    return () => window.removeEventListener("resize", updateDimensions);
-  }, []);
-
+  const dimensions = useSyncExternalStore(
+    subscribeToWindowResize,
+    getWindowDimensions,
+    () => serverDimensions,
+  );
   const { width, height } = dimensions;
 
   return (
-    <Badge className="gap-2">
+    <Badge className="pointer-events-auto! gap-2">
       <span>
         {width.toLocaleString()} x {height.toLocaleString()}
       </span>
@@ -66,15 +85,15 @@ function ScreenSize() {
 export function DevTools() {
   const [isOpen, setIsOpen] = useState(true);
   return (
-    <div className="fixed right-1 bottom-16 z-50 flex flex-col items-end gap-1">
+    <div className="pointer-events-none fixed right-1 bottom-16 z-50 flex flex-col items-end gap-1">
       {isOpen && <CurrentRoute />}
       {isOpen && <ScreenSize />}
-      <Badge className="gap-2">
+      <Badge className="pointer-events-auto! gap-2">
         Dev Tools
         <Switch
           checked={isOpen}
           onCheckedChange={setIsOpen}
-          className="border-primary-foreground/50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-primary-foreground/50"
+          className="cursor-pointer border-primary-foreground/50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-primary-foreground/50"
         />
       </Badge>
     </div>

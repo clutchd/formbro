@@ -1,4 +1,4 @@
-import { DashboardDataProvider } from "./data-provider";
+import { DashboardDataProvider } from "./_data-provider";
 import { AllWorkspacesHeader } from "./header";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

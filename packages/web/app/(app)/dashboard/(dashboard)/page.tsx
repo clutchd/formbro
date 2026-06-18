@@ -5,8 +5,8 @@ import { RiTeamLine } from "@remixicon/react";
 import { Loading } from "@/components/loading";
 import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
+import { useDashboardData } from "./_data-provider";
 import { CreateWorkspace } from "./create-workspace-form";
-import { useDashboardData } from "./data-provider";
 import { WorkspaceCard } from "./workspace-card";
 
 export default function DashboardContent() {

@@ -1,7 +1,6 @@
 "use client";
 
 import type * as React from "react";
-import { Button } from "@formbro/ui/button";
 import { RiMoonLine, RiSunLine } from "@remixicon/react";
 import { ThemeProvider as NextThemesProvider, useTheme } from "next-themes";
 
@@ -28,13 +27,4 @@ export function useToggleTheme() {
 export function ThemeIcon() {
   const { isDark } = useToggleTheme();
   return isDark ? <RiSunLine /> : <RiMoonLine />;
-}
-
-export function ThemeToggle() {
-  const { toggle } = useToggleTheme();
-  return (
-    <Button variant="outline" size="icon" onClick={toggle}>
-      <ThemeIcon />
-    </Button>
-  );
 }

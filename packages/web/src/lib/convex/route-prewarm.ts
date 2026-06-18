@@ -154,7 +154,7 @@ export function useRoutePrewarm(
   prewarmFn: PrewarmFn,
   options: RoutePrewarmOptions = {},
 ): PrewarmIntentHandlers & { href: string; prefetch: false } {
-  const { eager = false } = options;
+  const { eager = false, debounceMs } = options;
   const router = useRouter();
   const prewarmRef = useRef(prewarmFn);
   prewarmRef.current = prewarmFn;
@@ -166,8 +166,8 @@ export function useRoutePrewarm(
   }, [href, router]);
 
   const controller = useMemo(
-    () => createRoutePrewarmIntent(prewarm, options),
-    [options.debounceMs, prewarm],
+    () => createRoutePrewarmIntent(prewarm, { debounceMs }),
+    [debounceMs, prewarm],
   );
 
   useEffect(() => {

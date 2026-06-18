@@ -7,7 +7,7 @@ import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { InternalDialogForm } from "@/components/internal-dialog-form";
-import { useRequiredWorkspaceData } from "./data-provider";
+import { useRequiredWorkspaceData } from "./_data-provider";
 
 export function CreateForm({ children }: { children?: React.ReactNode }) {
   const router = useRouter();

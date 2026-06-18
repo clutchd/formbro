@@ -5,7 +5,7 @@ import { Badge } from "@formbro/ui/badge";
 import { Card } from "@formbro/ui/card";
 import { tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { Loading } from "@/components/loading";
-import { useRequiredWorkspaceSettingsData } from "./data-provider";
+import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
 type Member = NonNullable<
   NonNullable<ReturnType<typeof useRequiredWorkspaceSettingsData>>["members"]
