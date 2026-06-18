@@ -1,7 +1,9 @@
 import { z } from "zod";
 import { ElementRegistry, RegistryKeys } from "../registry";
+import { IdSchema } from "./id";
 
 export const BaseElementSchema = z.object({
+  id: IdSchema,
   name: z.string().min(1),
   type: z.enum(RegistryKeys),
 });

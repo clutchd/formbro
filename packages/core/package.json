@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@formbro/core",
-  "version": "0.1.0",
-  "description": "FormBro's framework-agnostic form schema and compile pipeline.",
+  "version": "0.1.0-alpha.0",
+  "description": "Early alpha of FormBro's framework-agnostic form schema and compile pipeline.",
   "keywords": [
     "form-builder",
     "forms",
@@ -29,6 +29,10 @@
       "import": "./dist/*.js",
       "default": "./dist/*.js"
     }
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",

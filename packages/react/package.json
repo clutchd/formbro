@@ -1,10 +1,26 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@formbro/react",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.0",
+  "description": "Early alpha React renderer and hooks for FormBro forms.",
+  "keywords": [
+    "form-builder",
+    "forms",
+    "react",
+    "schema",
+    "validation"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clutchd/formbro",
+    "directory": "packages/react"
+  },
   "type": "module",
+  "sideEffects": false,
   "exports": {
     "./package.json": "./package.json",
+    ".": "./src/index.ts",
     "./*": "./src/*.tsx"
   },
   "dependencies": {

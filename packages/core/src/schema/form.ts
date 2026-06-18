@@ -1,10 +1,10 @@
 import { z } from "zod";
 import type { CompiledField } from "../compile";
-import type { MutationResult } from "../result";
 import type { ExtractFormData } from "./extract";
 // import type { TanStackForm } from "@/forms/hooks/tanstack";
 import { ElementSchema } from "./element";
 import { FieldSchema } from "./field";
+import { IdSchema } from "./id";
 import { ListenerSchema } from "./listener";
 import { VersionSchema } from "./version";
 
@@ -27,27 +27,58 @@ const FormToastsSchema = z
   ])
   .optional();
 
-export const FormSchema = z.object({
-  version: VersionSchema,
-  name: z.string().min(1),
-  elements: z.array(z.union([ElementSchema, FieldSchema])),
-  listeners: z.array(ListenerSchema).optional(),
-  submit: FormSubmitSchema,
-  toasts: FormToastsSchema,
-  variables: z.record(z.string(), z.string()).optional(),
-});
+export const FormSchema = z
+  .object({
+    id: IdSchema,
+    version: VersionSchema,
+    name: z.string().min(1),
+    elements: z.array(z.union([ElementSchema, FieldSchema])),
+    listeners: z.array(ListenerSchema).optional(),
+    submit: FormSubmitSchema,
+    toasts: FormToastsSchema,
+    variables: z.record(z.string(), z.string()).optional(),
+  })
+  .superRefine((form, ctx) => {
+    const seen = new Map<string, number>();
+
+    form.elements.forEach((element, index) => {
+      const firstIndex = seen.get(element.id);
+      if (firstIndex !== undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Element id must be unique: ${element.id}`,
+          path: ["elements", index, "id"],
+        });
+        ctx.addIssue({
+          code: "custom",
+          message: `Element id must be unique: ${element.id}`,
+          path: ["elements", firstIndex, "id"],
+        });
+        return;
+      }
+
+      seen.set(element.id, index);
+    });
+  });
 
 export type FormInput = z.input<typeof FormSchema>;
 export type FormValues<T extends FormInput = FormInput> = ExtractFormData<T> &
   Record<string, string>;
+export type FormActionResult<TData = undefined, TError = unknown> =
+  | { ok: true; data: TData }
+  | {
+      ok: false;
+      data?: unknown;
+      error?: TError;
+    };
 
-export type FormAction<T extends FormInput = FormInput, TData = void> = ({
+export type FormAction<T extends FormInput = FormInput, TData = undefined> = ({
   values,
   //tanstack,
 }: {
   values: FormValues<T>;
   //tanstack?: TanStackForm;
-}) => MutationResult<TData> | Promise<MutationResult<TData>>;
+}) => FormActionResult<TData> | Promise<FormActionResult<TData>>;
 
 export type FormOnMutate<T extends FormInput = FormInput> = ({
   values,
@@ -57,7 +88,7 @@ export type FormOnMutate<T extends FormInput = FormInput> = ({
   //tanstack?: TanStackForm;
 }) => FormValues<T>;
 
-export type FormOnSuccess<T extends FormInput = FormInput, TData = void> = ({
+export type FormOnSuccess<T extends FormInput = FormInput, TData = undefined> = ({
   result,
   data,
   //tanstack,

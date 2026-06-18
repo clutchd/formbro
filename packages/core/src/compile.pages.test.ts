@@ -4,6 +4,7 @@ import { type FormInput, FormSchema } from "./schema/form";
 
 const parseElements = (elements: FormInput["elements"]) =>
   FormSchema.parse({
+    id: "test",
     name: "Test",
     elements,
   }).elements;
@@ -14,8 +15,8 @@ const compilePages = (elements: FormInput["elements"]) =>
 describe("compile:pages", () => {
   it("returns single page for form without page breaks", () => {
     const pages = compilePages([
-      { name: "Email", type: "short_text" },
-      { name: "Name", type: "short_text" },
+      { id: "email", name: "Email", type: "short_text" },
+      { id: "name", name: "Name", type: "short_text" },
     ]);
 
     expect(pages).toHaveLength(1);
@@ -24,9 +25,9 @@ describe("compile:pages", () => {
 
   it("should split form at page_break elements", () => {
     const pages = compilePages([
-      { name: "Email", type: "short_text" },
-      { name: "Break", type: "page_break" },
-      { name: "Name", type: "short_text" },
+      { id: "email", name: "Email", type: "short_text" },
+      { id: "break", name: "Break", type: "page_break" },
+      { id: "name", name: "Name", type: "short_text" },
     ]);
 
     expect(pages).toHaveLength(2);
@@ -36,11 +37,11 @@ describe("compile:pages", () => {
 
   it("should handle multiple page breaks", () => {
     const pages = compilePages([
-      { name: "Field1", type: "short_text" },
-      { name: "Break1", type: "page_break" },
-      { name: "Field2", type: "short_text" },
-      { name: "Break2", type: "page_break" },
-      { name: "Field3", type: "short_text" },
+      { id: "field1", name: "Field1", type: "short_text" },
+      { id: "break1", name: "Break1", type: "page_break" },
+      { id: "field2", name: "Field2", type: "short_text" },
+      { id: "break2", name: "Break2", type: "page_break" },
+      { id: "field3", name: "Field3", type: "short_text" },
     ]);
 
     expect(pages).toHaveLength(3);
@@ -51,9 +52,9 @@ describe("compile:pages", () => {
 
   it("should not include page_break in page elements", () => {
     const pages = compilePages([
-      { name: "Email", type: "short_text" },
-      { name: "Break", type: "page_break" },
-      { name: "Name", type: "short_text" },
+      { id: "email", name: "Email", type: "short_text" },
+      { id: "break", name: "Break", type: "page_break" },
+      { id: "name", name: "Name", type: "short_text" },
     ]);
 
     for (const page of pages) {
@@ -65,13 +66,14 @@ describe("compile:pages", () => {
 
   it("should preserve page_break label as page label", () => {
     const pages = compilePages([
-      { name: "Email", type: "short_text" },
+      { id: "email", name: "Email", type: "short_text" },
       {
+        id: "contactinfo",
         name: "Contact Info",
         type: "page_break",
         label: "Contact Info",
       },
-      { name: "Name", type: "short_text" },
+      { id: "name", name: "Name", type: "short_text" },
     ]);
 
     expect(pages[0]?.label).toBe("Contact Info");
@@ -86,8 +88,8 @@ describe("compile:pages", () => {
 
   it("should handle page_break at start", () => {
     const pages = compilePages([
-      { name: "Break", type: "page_break" },
-      { name: "Email", type: "short_text" },
+      { id: "break", name: "Break", type: "page_break" },
+      { id: "email", name: "Email", type: "short_text" },
     ]);
 
     expect(pages).toHaveLength(1);
@@ -96,8 +98,8 @@ describe("compile:pages", () => {
 
   it("should handle page_break at end", () => {
     const pages = compilePages([
-      { name: "Email", type: "short_text" },
-      { name: "Break", type: "page_break" },
+      { id: "email", name: "Email", type: "short_text" },
+      { id: "break", name: "Break", type: "page_break" },
     ]);
 
     expect(pages).toHaveLength(1);
@@ -106,18 +108,18 @@ describe("compile:pages", () => {
 
   it("should handle consecutive page breaks", () => {
     const pages = compilePages([
-      { name: "Field1", type: "short_text" },
-      { name: "Break1", type: "page_break" },
-      { name: "Break2", type: "page_break" },
-      { name: "Field2", type: "short_text" },
+      { id: "field1", name: "Field1", type: "short_text" },
+      { id: "break1", name: "Break1", type: "page_break" },
+      { id: "break2", name: "Break2", type: "page_break" },
+      { id: "field2", name: "Field2", type: "short_text" },
     ]);
     expect(pages).toHaveLength(2);
   });
 
   it("should return original elements when only page_break elements exist", () => {
     const pages = compilePages([
-      { name: "Break1", type: "page_break" },
-      { name: "Break2", type: "page_break" },
+      { id: "break1", name: "Break1", type: "page_break" },
+      { id: "break2", name: "Break2", type: "page_break" },
     ]);
 
     expect(pages).toHaveLength(1);
@@ -127,6 +129,7 @@ describe("compile:pages", () => {
   it("should preserve all element properties", () => {
     const pages = compilePages([
       {
+        id: "email",
         name: "Email",
         type: "short_text",
         label: "Your Email",
@@ -143,11 +146,12 @@ describe("compile:pages", () => {
   it("should group headings into section headers", () => {
     const pages = compilePages([
       {
+        id: "intro",
         name: "Intro",
         type: "heading",
         label: "Intro",
       },
-      { name: "Email", type: "short_text" },
+      { id: "email", name: "Email", type: "short_text" },
     ]);
 
     expect(pages[0]?.sections).toHaveLength(1);
@@ -159,13 +163,14 @@ describe("compile:pages", () => {
 
   it("should start a new section when description follows fields", () => {
     const pages = compilePages([
-      { name: "Email", type: "short_text" },
+      { id: "email", name: "Email", type: "short_text" },
       {
+        id: "help",
         name: "Help",
         type: "description",
         label: "Helpful copy",
       },
-      { name: "Name", type: "short_text" },
+      { id: "name", name: "Name", type: "short_text" },
     ]);
 
     expect(pages[0]?.sections).toHaveLength(2);
@@ -178,9 +183,9 @@ describe("compile:pages", () => {
 
   it("should attach dividers as section separators", () => {
     const pages = compilePages([
-      { name: "Email", type: "short_text" },
-      { name: "Divider", type: "divider" },
-      { name: "Name", type: "short_text" },
+      { id: "email", name: "Email", type: "short_text" },
+      { id: "divider", name: "Divider", type: "divider" },
+      { id: "name", name: "Name", type: "short_text" },
     ]);
 
     expect(pages[0]?.sections).toHaveLength(2);

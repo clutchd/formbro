@@ -3,32 +3,25 @@ import { _private } from "./compile";
 
 describe("compile:listeners", () => {
   it("returns an empty map when listeners are undefined or empty", () => {
-    const fieldNameToId = new Map([
-      ["Title", "title"],
-      ["Slug", "slug"],
-    ]);
+    const fieldIds = new Set(["title", "slug"]);
 
-    expect(_private.compileListeners(fieldNameToId)).toEqual(new Map());
-    expect(_private.compileListeners(fieldNameToId, [])).toEqual(new Map());
+    expect(_private.compileListeners(fieldIds)).toEqual(new Map());
+    expect(_private.compileListeners(fieldIds, [])).toEqual(new Map());
   });
 
   it("compiles listeners keyed by source field id", () => {
-    const fieldNameToId = new Map([
-      ["Title", "title"],
-      ["Slug", "slug"],
-      ["Display Title", "displaytitle"],
-    ]);
+    const fieldIds = new Set(["title", "slug", "display_title"]);
 
     expect(
-      _private.compileListeners(fieldNameToId, [
+      _private.compileListeners(fieldIds, [
         {
-          source: "Title",
-          target: "Slug",
+          source: "title",
+          target: "slug",
           type: "slugify",
         },
         {
-          source: "Title",
-          target: "Display Title",
+          source: "title",
+          target: "display_title",
           type: "uppercase",
         },
       ]),
@@ -44,7 +37,7 @@ describe("compile:listeners", () => {
             },
             {
               event: "onChange",
-              targetId: "displaytitle",
+              targetId: "display_title",
               type: "uppercase",
             },
           ],
@@ -54,23 +47,18 @@ describe("compile:listeners", () => {
   });
 
   it("builds independent listener pipelines for multiple source fields", () => {
-    const fieldNameToId = new Map([
-      ["Title", "title"],
-      ["Slug", "slug"],
-      ["Name", "name"],
-      ["Shout Name", "shoutname"],
-    ]);
+    const fieldIds = new Set(["title", "slug", "name", "shout_name"]);
 
     expect(
-      _private.compileListeners(fieldNameToId, [
+      _private.compileListeners(fieldIds, [
         {
-          source: "Title",
-          target: "Slug",
+          source: "title",
+          target: "slug",
           type: "slugify",
         },
         {
-          source: "Name",
-          target: "Shout Name",
+          source: "name",
+          target: "shout_name",
           type: "uppercase",
         },
       ]),
@@ -91,7 +79,7 @@ describe("compile:listeners", () => {
           [
             {
               event: "onChange",
-              targetId: "shoutname",
+              targetId: "shout_name",
               type: "uppercase",
             },
           ],
@@ -102,37 +90,37 @@ describe("compile:listeners", () => {
 
   it("throws when the source field cannot be resolved", () => {
     expect(() =>
-      _private.compileListeners(new Map([["Slug", "slug"]]), [
+      _private.compileListeners(new Set(["slug"]), [
         {
-          source: "Missing",
-          target: "Slug",
+          source: "missing",
+          target: "slug",
           type: "slugify",
         },
       ]),
-    ).toThrow("Listener source not found: Missing");
+    ).toThrow("Listener source not found: missing");
   });
 
   it("throws when the target field cannot be resolved", () => {
     expect(() =>
-      _private.compileListeners(new Map([["Title", "title"]]), [
+      _private.compileListeners(new Set(["title"]), [
         {
-          source: "Title",
-          target: "Missing",
+          source: "title",
+          target: "missing",
           type: "uppercase",
         },
       ]),
-    ).toThrow("Listener target not found: Missing");
+    ).toThrow("Listener target not found: missing");
   });
 
   it("throws when the source and target resolve to the same field", () => {
     expect(() =>
-      _private.compileListeners(new Map([["Title", "title"]]), [
+      _private.compileListeners(new Set(["title"]), [
         {
-          source: "Title",
-          target: "Title",
+          source: "title",
+          target: "title",
           type: "slugify",
         },
       ]),
-    ).toThrow("Listener source and target cannot be the same: Title");
+    ).toThrow("Listener source and target cannot be the same: title");
   });
 });

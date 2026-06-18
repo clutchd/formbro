@@ -5,6 +5,7 @@ import { FORMBRO_SCHEMA_VERSION } from "./schema/version";
 describe("compile", () => {
   it("interpolates the schema and compiles runtime state", () => {
     const compiled = compile({
+      id: "intake",
       name: "{{company}} Intake",
       version: 2,
       variables: {
@@ -21,19 +22,21 @@ describe("compile", () => {
       },
       listeners: [
         {
-          source: "Title",
-          target: "Slug",
+          source: "title",
+          target: "slug",
           type: "slugify",
         },
       ],
       elements: [
         {
+          id: "intro",
           name: "Intro",
           type: "heading",
           label: "Welcome to {{company}}",
           level: 2,
         },
         {
+          id: "title",
           name: "Title",
           type: "short_text",
           label: true,
@@ -47,21 +50,25 @@ describe("compile", () => {
           ],
         },
         {
+          id: "slug",
           name: "Slug",
           type: "short_text",
           label: true,
         },
         {
+          id: "nextstep",
           name: "Next Step",
           type: "page_break",
           label: "Next step",
         },
         {
+          id: "details",
           name: "Details",
           type: "description",
           label: "Tell us more about {{company}}",
         },
         {
+          id: "email",
           name: "Email",
           type: "short_text",
           label: true,
@@ -71,7 +78,7 @@ describe("compile", () => {
     });
 
     expect(compiled).toMatchObject({
-      id: "form_acmeintake",
+      id: "intake",
       version: "2.0.0",
       name: "Acme Intake",
       defaults: {
@@ -176,73 +183,81 @@ describe("compile", () => {
   it("throws when a listener source cannot be resolved", () => {
     expect(() =>
       compile({
+        id: "test",
         name: "Test",
         listeners: [
           {
-            source: "Missing",
-            target: "Slug",
+            source: "missing",
+            target: "slug",
             type: "slugify",
           },
         ],
         elements: [
           {
+            id: "slug",
             name: "Slug",
             type: "short_text",
             label: true,
           },
         ],
       }),
-    ).toThrow("Listener source not found: Missing");
+    ).toThrow("Listener source not found: missing");
   });
 
   it("throws when a listener target cannot be resolved", () => {
     expect(() =>
       compile({
+        id: "test",
         name: "Test",
         listeners: [
           {
-            source: "Title",
-            target: "Missing",
+            source: "title",
+            target: "missing",
             type: "uppercase",
           },
         ],
         elements: [
           {
+            id: "title",
             name: "Title",
             type: "short_text",
             label: true,
           },
         ],
       }),
-    ).toThrow("Listener target not found: Missing");
+    ).toThrow("Listener target not found: missing");
   });
 
   it("throws when a listener source and target resolve to the same field", () => {
     expect(() =>
       compile({
+        id: "test",
         name: "Test",
         listeners: [
           {
-            source: "Title",
-            target: "Title",
+            source: "title",
+            target: "title",
             type: "slugify",
           },
         ],
         elements: [
           {
+            id: "title",
             name: "Title",
             type: "short_text",
             label: true,
           },
         ],
       }),
-    ).toThrow("Listener source and target cannot be the same: Title");
+    ).toThrow("Listener source and target cannot be the same: title");
   });
 });
 
 describe("compile:helpers", () => {
   it("normalizes schema versions", () => {
-    expect(compile({ name: "Test", elements: [] }).version).toBe(FORMBRO_SCHEMA_VERSION);
+    expect(compile({ id: "test", name: "Test", elements: [] }).version).toBe(
+      FORMBRO_SCHEMA_VERSION,
+    );
     expect(_private.compileVersion("")).toBe(FORMBRO_SCHEMA_VERSION);
     expect(_private.compileVersion(3)).toBe("3.0.0");
     expect(_private.compileVersion("3.2")).toBe("3.2.0");

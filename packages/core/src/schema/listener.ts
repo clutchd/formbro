@@ -1,14 +1,15 @@
 import { z } from "zod";
+import { IdSchema } from "./id";
 
 export const ListenerSchema = z.discriminatedUnion("type", [
   z.object({
-    source: z.string().min(1),
-    target: z.string().min(1),
+    source: IdSchema,
+    target: IdSchema,
     type: z.literal("slugify"),
   }),
   z.object({
-    source: z.string().min(1),
-    target: z.string().min(1),
+    source: IdSchema,
+    target: IdSchema,
     type: z.literal("uppercase"),
   }),
 ]);

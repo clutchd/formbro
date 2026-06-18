@@ -128,6 +128,7 @@ describe("compile:interpolate", () => {
         name: "Contact {{companyName}}",
         elements: [
           {
+            id: "email",
             name: "Email",
             type: "short_text",
             label: "Email for {{companyName}}",

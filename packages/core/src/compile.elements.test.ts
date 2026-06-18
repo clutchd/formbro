@@ -4,6 +4,7 @@ import { type FormInput, FormSchema } from "./schema/form";
 
 const parseElements = (elements: FormInput["elements"]) =>
   FormSchema.parse({
+    id: "test",
     name: "Test",
     elements,
   }).elements;
@@ -12,6 +13,7 @@ describe("compile:elements", () => {
   it("returns compiled elements, defaults, events, and field ids", () => {
     const elements = parseElements([
       {
+        id: "emailaddress",
         name: "Email Address",
         type: "short_text",
         label: true,
@@ -30,11 +32,13 @@ describe("compile:elements", () => {
         ],
       },
       {
+        id: "fullname",
         name: "Full Name",
         type: "short_text",
         label: false,
       },
       {
+        id: "nextstep",
         name: "Next Step",
         type: "page_break",
         label: "Next Step",
@@ -54,12 +58,7 @@ describe("compile:elements", () => {
       ]),
     );
 
-    expect(compiled.fieldNameToId).toEqual(
-      new Map([
-        ["Email Address", "emailaddress"],
-        ["Full Name", "fullname"],
-      ]),
-    );
+    expect(compiled.fieldIds).toEqual(new Set(["emailaddress", "fullname"]));
 
     expect(compiled.validators).toEqual(
       new Map([
@@ -92,8 +91,8 @@ describe("compile:elements", () => {
 
     expect(compiled.elements).toMatchObject([
       {
-        id: "emailaddress",
         index: 0,
+        id: "emailaddress",
         name: "Email Address",
         type: "short_text",
         category: "field",
@@ -103,8 +102,8 @@ describe("compile:elements", () => {
         required: true,
       },
       {
-        id: "fullname",
         index: 1,
+        id: "fullname",
         name: "Full Name",
         type: "short_text",
         category: "field",
@@ -114,8 +113,8 @@ describe("compile:elements", () => {
         required: false,
       },
       {
-        id: "nextstep",
         index: 2,
+        id: "nextstep",
         name: "Next Step",
         type: "page_break",
         category: "element",
@@ -127,6 +126,7 @@ describe("compile:elements", () => {
   it("only marks fields as required when the required rule is enabled", () => {
     const elements = parseElements([
       {
+        id: "optionalnickname",
         name: "Optional Nickname",
         type: "short_text",
         label: true,
@@ -139,6 +139,7 @@ describe("compile:elements", () => {
         ],
       },
       {
+        id: "legalname",
         name: "Legal Name",
         type: "short_text",
         label: true,
@@ -169,6 +170,7 @@ describe("compile:elements", () => {
   it("builds validator plans by event and omits fields without rules", () => {
     const elements = parseElements([
       {
+        id: "title",
         name: "Title",
         type: "short_text",
         label: false,
@@ -190,6 +192,7 @@ describe("compile:elements", () => {
         ],
       },
       {
+        id: "age",
         name: "Age",
         type: "number",
         label: true,
@@ -207,6 +210,7 @@ describe("compile:elements", () => {
         ],
       },
       {
+        id: "notes",
         name: "Notes",
         type: "long_text",
         label: true,
@@ -282,6 +286,7 @@ describe("compile:elements", () => {
   it("dedupes field events when multiple rules share the same event", () => {
     const elements = parseElements([
       {
+        id: "slug",
         name: "Slug",
         type: "short_text",
         label: true,
@@ -313,56 +318,35 @@ describe("compile:elements", () => {
     });
   });
 
-  it("adds deterministic suffixes when field ids collide", () => {
-    const elements = parseElements([
-      {
-        name: "Name",
-        type: "short_text",
-        label: true,
-      },
-      {
-        name: "Name",
-        type: "short_text",
-        label: true,
-      },
-      {
-        name: "Name!!!",
-        type: "short_text",
-        label: true,
-      },
-    ]);
-    const compiled = _private.compileElements(elements);
-
-    expect(compiled.defaults).toEqual({
-      name: "",
-      name_2: "",
-      name_3: "",
-    });
-
-    expect(compiled.events).toEqual(
-      new Map([
-        ["name", ["submit"]],
-        ["name_2", ["submit"]],
-        ["name_3", ["submit"]],
+  it("rejects duplicate element ids", () => {
+    expect(() =>
+      parseElements([
+        {
+          id: "name",
+          name: "Name",
+          type: "short_text",
+          label: true,
+        },
+        {
+          id: "name",
+          name: "Display Name",
+          type: "short_text",
+          label: true,
+        },
       ]),
-    );
-
-    expect(compiled.elements).toMatchObject([
-      { id: "name", name: "Name" },
-      { id: "name_2", name: "Name" },
-      { id: "name_3", name: "Name!!!" },
-    ]);
+    ).toThrow("Element id must be unique: name");
   });
 
-  it("throws when an element name cannot produce a valid id", () => {
-    const elements = parseElements([
-      {
-        name: "   ",
-        type: "short_text",
-        label: "Blank",
-      },
-    ]);
-
-    expect(() => _private.compileElements(elements)).toThrow("ID generation failed for:    ");
+  it("rejects invalid element ids", () => {
+    expect(() =>
+      parseElements([
+        {
+          id: "Invalid ID",
+          name: "Field",
+          type: "short_text",
+          label: "Field",
+        },
+      ]),
+    ).toThrow("ID must start with a lowercase letter");
   });
 });

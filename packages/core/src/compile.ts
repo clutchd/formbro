@@ -7,41 +7,16 @@ import { type FormInput, FormSchema } from "./schema/form";
 import { FORMBRO_SCHEMA_VERSION } from "./schema/version";
 
 export function compile(schema: FormInput) {
-  console.time("compile");
-
-  console.time("compile:parse");
   const parsed = FormSchema.parse(schema);
-  console.timeEnd("compile:parse");
-
-  console.time("compile:interpolate");
   const interpolated = interpolate(parsed, parsed.variables);
-  console.timeEnd("compile:interpolate");
-
-  console.time("compile:formId");
-  const formId = id({ prefix: "form", name: interpolated.name });
-  console.timeEnd("compile:formId");
-
-  console.time("compile:version");
+  const formId = interpolated.id;
   const version = compileVersion(interpolated.version);
-  console.timeEnd("compile:version");
-
-  console.time("compile:elements");
-  const { defaults, events, elements, fieldNameToId, validators } = compileElements(
+  const { defaults, events, elements, fieldIds, validators } = compileElements(
     interpolated.elements,
   );
-  console.timeEnd("compile:elements");
-
-  console.time("compile:listeners");
-  const listeners = compileListeners(fieldNameToId, interpolated.listeners);
-  console.timeEnd("compile:listeners");
-
-  console.time("compile:pages");
+  const listeners = compileListeners(fieldIds, interpolated.listeners);
   const pages = compilePages(elements);
-  console.timeEnd("compile:pages");
-
-  console.time("compile:toasts");
   const toasts = compileToasts(interpolated.toasts);
-  console.timeEnd("compile:toasts");
 
   const result = {
     id: formId,
@@ -56,7 +31,6 @@ export function compile(schema: FormInput) {
     submit: interpolated.submit,
   };
 
-  console.timeEnd("compile");
   return result;
 }
 
@@ -76,6 +50,7 @@ export type CompiledValidator = {
 };
 export type CompiledValidators = Map<string, CompiledValidator>;
 
+/** @internal */
 export const _private = {
   compileLabel,
   compileElements,
@@ -84,8 +59,6 @@ export const _private = {
   compileToasts,
   compileVersion,
   interpolate,
-  id,
-  slugify,
 };
 
 function compileLabel(label: FormLabel, fallback?: string): string | undefined {
@@ -149,14 +122,12 @@ function compileElement(element: z.output<typeof FormSchema>["elements"][number]
     const { label, ...rest } = element;
     return {
       ...rest,
-      id: id({ name: element.name }),
       index,
       label: compileLabel(label, element.name),
     };
   }
   return {
     ...element,
-    id: id({ name: element.name }),
     index,
   };
 }
@@ -164,24 +135,16 @@ function compileElement(element: z.output<typeof FormSchema>["elements"][number]
 function compileElements(elements: z.output<typeof FormSchema>["elements"]) {
   const defaults: Record<string, unknown> = {};
   const events = new Map<string, Array<"change" | "blur" | "submit" | "mount">>();
-  const fieldNameToId = new Map<string, string>();
+  const fieldIds = new Set<string>();
   const validators: CompiledValidators = new Map();
-  const fieldIdCounts = new Map<string, number>();
 
   const compiled = elements.map((element, index) => {
     const compiled = compileElement(element, index);
 
     if (compiled.category === "field") {
-      const nextCount = (fieldIdCounts.get(compiled.id) ?? 0) + 1;
-      fieldIdCounts.set(compiled.id, nextCount);
-
-      const fieldId = nextCount === 1 ? compiled.id : `${compiled.id}_${nextCount}`;
       const compiledValidators = compileValidators(compiled);
-      const field = {
-        ...compileField(compiled),
-        id: fieldId,
-      };
-      fieldNameToId.set(field.name, field.id);
+      const field = compileField(compiled);
+      fieldIds.add(field.id);
       events.set(field.id, field.events);
       defaults[field.id] = field.default;
       if (Object.keys(compiledValidators.rules).length > 0) {
@@ -197,13 +160,13 @@ function compileElements(elements: z.output<typeof FormSchema>["elements"]) {
     defaults,
     elements: compiled,
     events,
-    fieldNameToId,
+    fieldIds,
     validators,
   };
 }
 
 function compileListeners(
-  fieldNameToId: Map<string, string>,
+  fieldIds: Set<string>,
   sourceListeners?: z.output<typeof FormSchema>["listeners"],
 ) {
   const listeners = new Map<
@@ -220,14 +183,14 @@ function compileListeners(
   }
 
   for (const listener of sourceListeners) {
-    const sourceId = fieldNameToId.get(listener.source);
-    const targetId = fieldNameToId.get(listener.target);
+    const sourceId = listener.source;
+    const targetId = listener.target;
 
-    if (!sourceId) {
+    if (!fieldIds.has(sourceId)) {
       throw new Error(`Listener source not found: ${listener.source}`);
     }
 
-    if (!targetId) {
+    if (!fieldIds.has(targetId)) {
       throw new Error(`Listener target not found: ${listener.target}`);
     }
 
@@ -394,22 +357,10 @@ function interpolate<T>(schema: T, variables: Record<string, string> = {}): T {
     return Object.fromEntries(
       Object.entries(schema).map(([key, value]) => [
         key,
-        key === "variables" ? value : interpolate(value, variables),
+        key === "variables" || key === "id" ? value : interpolate(value, variables),
       ]),
     ) as T;
   }
 
   return schema;
-}
-
-function id({ prefix, name }: { prefix?: string; name: string }): string {
-  const slug = slugify(name);
-  if (slug.length === 0) {
-    throw new Error(`ID generation failed for: ${prefix ? `${prefix}_` : ""}${name}`);
-  }
-  return `${prefix ? `${prefix}_` : ""}${slug}`;
-}
-
-function slugify(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }

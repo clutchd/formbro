@@ -1,26 +1,75 @@
 import { describe, expect, it } from "bun:test";
-import { _private } from "./compile";
+import { compile, _private } from "./compile";
 
 describe("compile:id", () => {
-  it("slugify lowercases and strips non-alphanumeric characters", () => {
-    expect(_private.slugify("Hello World")).toBe("helloworld");
-    expect(_private.slugify("My_Form-Name 123")).toBe("myformname123");
-    expect(_private.slugify("AlreadyClean")).toBe("alreadyclean");
+  it("uses authored form and element ids without deriving them from names", () => {
+    const compiled = compile({
+      id: "contact_form",
+      name: "Contact Form",
+      elements: [
+        {
+          id: "email",
+          name: "Email Address",
+          type: "short_text",
+        },
+      ],
+    });
+
+    expect(compiled.id).toBe("contact_form");
+    expect(compiled.defaults).toEqual({
+      email: "",
+    });
   });
 
-  it("prefixes the slugified name when building ids", () => {
-    expect(_private.id({ prefix: "form", name: "Contact Form" })).toBe("form_contactform");
-    expect(_private.id({ prefix: "field", name: "Email Address" })).toBe("field_emailaddress");
+  it("keeps ids stable when display properties change", () => {
+    const base = compile({
+      id: "contact_form",
+      name: "Contact Form",
+      elements: [
+        {
+          id: "email",
+          name: "Email Address",
+          type: "short_text",
+          label: "Email",
+        },
+      ],
+    });
+    const renamed = compile({
+      id: "contact_form",
+      name: "Renamed Form",
+      elements: [
+        {
+          id: "email",
+          name: "Work Email",
+          type: "short_text",
+          label: "Work email address",
+        },
+      ],
+    });
+
+    expect(renamed.id).toBe(base.id);
+    expect(renamed.defaults).toEqual(base.defaults);
+    expect(renamed.pages[0]?.fieldIds).toEqual(base.pages[0]?.fieldIds);
   });
 
-  it("does not prefix the name when no prefix is provided", () => {
-    expect(_private.id({ name: "Contact Form" })).toBe("contactform");
-    expect(_private.id({ name: "Email Address" })).toBe("emailaddress");
-  });
-
-  it("throws when the slugified name is empty", () => {
-    expect(() => _private.id({ prefix: "form", name: "!!!" })).toThrow(
-      "ID generation failed for: form_!!!",
+  it("does not interpolate ids", () => {
+    const interpolated = _private.interpolate(
+      {
+        id: "{{company}}_form",
+        name: "{{company}} Form",
+        elements: [
+          {
+            id: "{{company}}_email",
+            name: "{{company}} Email",
+          },
+        ],
+      },
+      { company: "acme" },
     );
+
+    expect(interpolated.id).toBe("{{company}}_form");
+    expect(interpolated.name).toBe("acme Form");
+    expect(interpolated.elements[0]?.id).toBe("{{company}}_email");
+    expect(interpolated.elements[0]?.name).toBe("acme Email");
   });
 });
