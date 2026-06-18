@@ -1,5 +1,5 @@
-import { ok } from "@formbro/core/result";
 import { APP_NAME } from "@formbro/shared/brand";
+import { ok } from "@formbro/shared/result";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { getAdminAccounts } from "../auth";
 import { defineErrors, FormBroError } from "../errors";

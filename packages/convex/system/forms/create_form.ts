@@ -3,10 +3,12 @@ import { FORMBRO_SCHEMA_VERSION } from "@formbro/core/schema/version";
 import { initForm } from "./_init";
 
 export const CREATE_FORM = initForm("create-form", {
+  id: "create_form",
   version: FORMBRO_SCHEMA_VERSION,
   name: "Create Form",
   elements: [
     {
+      id: "name",
       name: "Name",
       type: "short_text",
       description: "The name of this form.",

@@ -1,4 +1,4 @@
-import { hasString } from "@formbro/core/util";
+import { hasString } from "@formbro/shared/util";
 import { v } from "convex/values";
 import { formatStorage, GIGABYTE, numberFormatter } from "./lib";
 

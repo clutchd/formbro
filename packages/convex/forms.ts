@@ -1,5 +1,5 @@
-import { nano } from "@formbro/core/nanoid";
-import { fail, ok } from "@formbro/core/result";
+import { nano } from "@formbro/shared/nanoid";
+import { fail, ok } from "@formbro/shared/result";
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getWorkspaceAccess } from "./access";

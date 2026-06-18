@@ -1,6 +1,6 @@
 import { StripeSubscriptions } from "@convex-dev/stripe";
-import { fail, type MutationResult, ok, type QueryResult } from "@formbro/core/result";
-import { hasString } from "@formbro/core/util";
+import { fail, type MutationResult, ok, type QueryResult } from "@formbro/shared/result";
+import { hasString } from "@formbro/shared/util";
 import { v } from "convex/values";
 import Stripe from "stripe";
 import type { Doc, Id } from "./_generated/dataModel";

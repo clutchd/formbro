@@ -1,4 +1,4 @@
-import { fail, ok } from "@formbro/core/result";
+import { fail, ok } from "@formbro/shared/result";
 import { type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getUser, resolveUserProfile } from "./auth";

@@ -1,9 +1,9 @@
 import type { FunctionArgs, PaginationResult } from "convex/server";
 import { createClient, type AuthFunctions, type GenericCtx } from "@convex-dev/better-auth";
 import { convex } from "@convex-dev/better-auth/plugins";
-import { fail, ok } from "@formbro/core/result";
-import { hasString, normalizeEmail } from "@formbro/core/util";
 import { APP_URL } from "@formbro/shared/brand";
+import { fail, ok } from "@formbro/shared/result";
+import { hasString, normalizeEmail } from "@formbro/shared/util";
 import { betterAuth } from "better-auth/minimal";
 import type { DataModel } from "./_generated/dataModel";
 import type { Doc as BetterAuthDoc } from "./node_modules/@convex-dev/better-auth/src/component/_generated/dataModel";

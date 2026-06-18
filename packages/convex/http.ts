@@ -1,7 +1,7 @@
 import type { GenericActionCtx, GenericDataModel } from "convex/server";
 import { registerRoutes } from "@convex-dev/stripe";
-import { ok } from "@formbro/core/result";
-import { hasString } from "@formbro/core/util";
+import { ok } from "@formbro/shared/result";
+import { hasString } from "@formbro/shared/util";
 import { httpRouter } from "convex/server";
 import Stripe from "stripe";
 import { components, internal } from "./_generated/api";

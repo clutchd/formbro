@@ -1,4 +1,4 @@
-import { codes } from "@formbro/core/result";
+import { codes } from "@formbro/shared/result";
 import { v, type Validator } from "convex/values";
 
 export const TERABYTE = 1024 ** 4;

@@ -3,10 +3,12 @@ import { FORMBRO_SCHEMA_VERSION } from "@formbro/core/schema/version";
 import { initForm } from "./_init";
 
 export const CREATE_WORKSPACE = initForm("create-workspace", {
+  id: "create_workspace",
   version: FORMBRO_SCHEMA_VERSION,
   name: "Create Workspace",
   elements: [
     {
+      id: "name",
       name: "Name",
       type: "short_text",
       description: "The name of this workspace.",

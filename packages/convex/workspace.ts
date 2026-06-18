@@ -1,5 +1,5 @@
-import { fail, ok } from "@formbro/core/result";
-import { hasString, normalizeEmail } from "@formbro/core/util";
+import { fail, ok } from "@formbro/shared/result";
+import { hasString, normalizeEmail } from "@formbro/shared/util";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { Plan } from "./billingUtils";

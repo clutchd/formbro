@@ -1,6 +1,6 @@
-import { ok } from "@formbro/core/result";
-import { hasString } from "@formbro/core/util";
 import { split } from "@formbro/shared/names";
+import { ok } from "@formbro/shared/result";
+import { hasString } from "@formbro/shared/util";
 import { v } from "convex/values";
 import {
   type CreateContactOptions,

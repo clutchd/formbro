@@ -4,7 +4,7 @@ import {
   type StatusCode,
   type Status,
   type Error,
-} from "@formbro/core/result";
+} from "@formbro/shared/result";
 import { ConvexError, type Value } from "convex/values";
 
 function isResultError(
