@@ -1,6 +1,9 @@
 "use client";
 
-import { getWorkspacePlanLabel } from "@formbro/convex/billingUtils";
+import {
+  getWorkspacePlanLabel,
+  hasActiveWorkspaceSubscriptionStatus,
+} from "@formbro/convex/billingUtils";
 import { Button } from "@formbro/ui/button";
 import { RiBankCardLine } from "@remixicon/react";
 import Link from "next/link";
@@ -50,7 +53,9 @@ export function WorkspaceHomeHeader() {
                 Billing
               </Link>
             </Button>
-            {forms && forms.length > 0 ? <CreateForm /> : null}
+            {forms && !forms.length && hasActiveWorkspaceSubscriptionStatus(workspace) ? (
+              <CreateForm />
+            ) : null}
           </div>
         ) : null
       }

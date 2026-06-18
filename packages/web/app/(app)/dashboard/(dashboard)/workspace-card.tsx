@@ -3,8 +3,8 @@
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@formbro/convex/_generated/api";
 import {
-  getWorkspaceBillingStatusColor,
   getWorkspacePlanLabel,
+  hasActiveWorkspaceSubscriptionStatus,
 } from "@formbro/convex/billingUtils";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
@@ -21,9 +21,6 @@ type Workspace = Extract<
   FunctionReturnType<typeof api.workspace.list>,
   { ok: true }
 >["data"][number];
-
-const isUnpaid = (workspace: Workspace) =>
-  getWorkspaceBillingStatusColor(workspace.billingStatus) != "success";
 
 function FormStatusBadge({ status }: { status: Workspace["forms"][number]["status"] }) {
   let badgeStatus: "neutral" | "success" | "error" = "neutral";
@@ -106,10 +103,11 @@ function WorkspaceFormPreview({
 export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   const settingsPrewarm = useWorkspaceSettingsPrewarmIntent(workspace.slug);
   const workspacePrewarm = useWorkspacePrewarmIntent(workspace.slug);
-  const href = isUnpaid(workspace)
+  const needsSubscription = !hasActiveWorkspaceSubscriptionStatus(workspace);
+  const href = needsSubscription
     ? `/dashboard/${workspace.slug}/settings`
     : `/dashboard/${workspace.slug}`;
-  const prewarmIntentHandlers = isUnpaid(workspace) ? settingsPrewarm : workspacePrewarm;
+  const prewarmIntentHandlers = needsSubscription ? settingsPrewarm : workspacePrewarm;
 
   return (
     <Card
@@ -136,7 +134,7 @@ export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
           onBlur={prewarmIntentHandlers.onBlur}
           onTouchStart={prewarmIntentHandlers.onTouchStart}
         >
-          {isUnpaid(workspace) ? "Manage Billing" : "Open Workspace"}
+          {needsSubscription ? "Manage Billing" : "Open Workspace"}
           <RiArrowRightLine className="size-3 transition-transform group-hover/button:translate-x-1" />
         </Link>
       </Button>

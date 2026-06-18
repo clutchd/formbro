@@ -5,6 +5,7 @@
     "": {
       "name": "turborep",
       "devDependencies": {
+        "@types/bun": "catalog:",
         "oxfmt": "0.53.0",
         "oxlint": "1.68.0",
         "turbo": "2.9.14",

@@ -175,7 +175,16 @@ export function getWorkspacePlanLabel(plan?: WorkspacePlan) {
   return WORKSPACE_PLAN_LABELS[normalizeWorkspacePlan(plan)];
 }
 
-export function hasActiveWorkspaceSubscriptionStatus(status: string | undefined | null) {
+export function hasActiveWorkspaceSubscriptionStatus(
+  status: string | undefined | null | { plan?: WorkspacePlan; billingStatus?: string },
+): boolean {
+  if (typeof status === "object") {
+    return (
+      hasActiveWorkspaceSubscriptionStatus(status?.billingStatus) ||
+      normalizeWorkspacePlan(status?.plan) === "unlimited"
+    );
+  }
+
   return status === "active" || status === "trialing" || status === "past_due";
 }
 
