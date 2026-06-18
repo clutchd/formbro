@@ -36,7 +36,7 @@
     },
     "packages/core": {
       "name": "@formbro/core",
-      "version": "0.1.0",
+      "version": "0.1.0-alpha.0",
       "devDependencies": {
         "@tsconfig/node22": "catalog:",
         "@types/bun": "catalog:",
@@ -67,7 +67,7 @@
     },
     "packages/react": {
       "name": "@formbro/react",
-      "version": "0.0.0",
+      "version": "0.1.0-alpha.0",
       "dependencies": {
         "@formbro/core": "workspace:*",
         "@formbro/shared": "workspace:*",
