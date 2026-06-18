@@ -1,6 +1,6 @@
 import type { Preview } from "@storybook/nextjs-vite";
-import { useEffect } from "react";
 import { fonts } from "@formbro/ui/typography";
+import { useEffect } from "react";
 import "../../web/app/globals.css";
 
 const preview: Preview = {

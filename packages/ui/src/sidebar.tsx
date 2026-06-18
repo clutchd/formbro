@@ -7,6 +7,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { RiSideBarLine } from "@remixicon/react";
 import { cva, type VariantProps } from "class-variance-authority";
 import * as React from "react";
+import { use } from "react";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -41,7 +42,7 @@ type SidebarContextProps = {
 const SidebarContext = React.createContext<SidebarContextProps | null>(null);
 
 function useSidebar() {
-  const context = React.useContext(SidebarContext);
+  const context = use(SidebarContext);
   if (!context) {
     throw new Error("useSidebar must be used within a SidebarProvider.");
   }
@@ -207,6 +208,7 @@ export function SidebarRail({ className, ...props }: React.ComponentProps<"butto
 
   return (
     <button
+      type="button"
       data-sidebar="rail"
       data-slot="sidebar-rail"
       aria-label="Toggle Sidebar"
