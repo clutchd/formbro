@@ -1,18 +1,47 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@formbro/core",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "FormBro's framework-agnostic form schema and compile pipeline.",
+  "keywords": [
+    "form-builder",
+    "forms",
+    "schema",
+    "validation",
+    "zod"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/clutchd/formbro",
+    "directory": "packages/core"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "type": "module",
+  "sideEffects": false,
   "exports": {
     "./package.json": "./package.json",
-    "./*": "./src/*.ts"
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    }
   },
-  "scripts": {},
-  "dependencies": {
-    "nanoid": "5.1.11",
-    "zod": "catalog:"
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "bench": "bun run bench/compile.bench.ts",
+    "test": "bun test",
+    "prepublishOnly": "bun run build"
   },
   "devDependencies": {
-    "typescript": "catalog:"
+    "@tsconfig/node22": "catalog:",
+    "typescript": "catalog:",
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "zod": "^4.3.0"
   }
 }
