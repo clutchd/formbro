@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@tsconfig/node22": "catalog:",
+    "@types/bun": "catalog:",
     "typescript": "catalog:",
     "zod": "catalog:"
   },

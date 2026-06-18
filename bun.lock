@@ -39,6 +39,7 @@
       "version": "0.1.0",
       "devDependencies": {
         "@tsconfig/node22": "catalog:",
+        "@types/bun": "catalog:",
         "typescript": "catalog:",
         "zod": "catalog:",
       },
@@ -80,6 +81,7 @@
         "zod": "catalog:",
       },
       "devDependencies": {
+        "@types/bun": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "typescript": "catalog:",

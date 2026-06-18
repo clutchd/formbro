@@ -51,7 +51,6 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
   instrumentation,
   disabled = false,
   preview = false,
-  debug = false,
 }: {
   schema: T;
   action?: FormAction<T, TData>;
@@ -61,12 +60,7 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
   instrumentation?: UseFormInstrumentation<T, TData>;
   disabled?: boolean;
   preview?: boolean;
-  debug?: boolean;
 }) {
-  if (debug) {
-    console.time("useForm");
-  }
-
   const compiled = useMemo(() => compile(schema), [schema]);
 
   const tanstack = useAppForm({
@@ -99,12 +93,14 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
           return;
         }
 
+        const data = result.data;
+
         instrumentation?.onSubmitSuccess?.({
           form: compiled,
           values: stringValues,
-          data: result.data,
+          data,
         });
-        onSuccess?.({ result: stringValues, data: result.data });
+        onSuccess?.({ result: stringValues, data });
       } catch (error) {
         instrumentation?.onSubmitError?.({
           form: compiled,
@@ -137,13 +133,8 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
     [compiled.events, tanstack],
   );
 
-  if (debug) {
-    console.timeEnd("useForm");
-  }
-
   const validatePage = useCallback(
     async (pageIndex: number) => {
-      console.time("validatePage");
       const page = compiled.pages[pageIndex];
       if (!page) {
         return false;
@@ -153,19 +144,16 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
         const fieldMeta = tanstack.state.fieldMeta[fieldId];
         return !fieldMeta?.errors || fieldMeta.errors.length === 0;
       });
-      console.timeEnd("validatePage");
       return valid;
     },
     [compiled.pages, validateField, tanstack.state.fieldMeta],
   );
 
   const validate = useCallback(async () => {
-    console.time("validate");
     const results = await Promise.all(
       compiled.pages.map((_, pageIndex) => validatePage(pageIndex)),
     );
     const valid = results.every(Boolean);
-    console.timeEnd("validate");
     return valid;
   }, [validatePage, compiled.pages]);
 

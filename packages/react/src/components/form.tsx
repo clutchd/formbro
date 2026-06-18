@@ -55,7 +55,6 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
     instrumentation,
     disabled,
     preview,
-    debug,
   });
 
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
