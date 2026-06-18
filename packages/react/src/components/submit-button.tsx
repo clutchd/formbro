@@ -3,7 +3,7 @@ import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { Spinner } from "@formbro/ui/spinner";
 import { cva } from "class-variance-authority";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useSyncExternalStore } from "react";
 import * as React from "react";
 import { useFormContext } from "../hooks/tanstack-context";
 
@@ -42,13 +42,13 @@ export function SubmitButton({
   disabled?: boolean;
   tanstack?: FormWithSubscribe;
 }) {
-  const [isHydrated, setIsHydrated] = useState(false);
+  const isHydrated = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   const contextForm = useFormContext() as FormWithSubscribe;
   const form = tanstack ?? contextForm;
-
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
 
   return (
     <form.Subscribe

@@ -12,7 +12,7 @@ import { Button } from "@formbro/ui/button";
 import { Progress } from "@formbro/ui/progress";
 import { RiArrowLeftLine, RiArrowRightLine } from "@remixicon/react";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { type UseFormInstrumentation, useForm } from "../hooks/use-form";
 import { Page } from "./page";
 
@@ -64,14 +64,16 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   const currentPage = state.schema.pages[currentPageIndex];
   const isFirstPage = currentPageIndex === 0;
   const isLastPage = currentPageIndex === state.schema.pages.length - 1;
-  const percent =
+  const computePercent = (pageIndex: number) =>
     state.schema.pages.length > 1
-      ? Math.round((currentPageIndex / (state.schema.pages.length - 1)) * 100)
+      ? Math.round((pageIndex / (state.schema.pages.length - 1)) * 100)
       : 0;
+  const percent = computePercent(currentPageIndex);
 
-  useEffect(() => {
-    onPercentChange?.(percent);
-  }, [percent, onPercentChange]);
+  const setPageIndex = (next: number) => {
+    setCurrentPageIndex(next);
+    onPercentChange?.(computePercent(next));
+  };
 
   if (!schema) {
     throw new Error("Form schema is required");
@@ -83,19 +85,19 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
 
   const handleNext = async () => {
     if (disabled || preview) {
-      if (!isLastPage) setCurrentPageIndex((prev) => prev + 1);
+      if (!isLastPage) setPageIndex(currentPageIndex + 1);
       return;
     }
 
     const valid = await state.validatePage(currentPageIndex);
 
     if (valid && !isLastPage) {
-      setCurrentPageIndex((prev) => prev + 1);
+      setPageIndex(currentPageIndex + 1);
     }
   };
 
   const handlePrev = () => {
-    if (!isFirstPage) setCurrentPageIndex((prev) => prev - 1);
+    if (!isFirstPage) setPageIndex(currentPageIndex - 1);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

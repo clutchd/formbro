@@ -161,15 +161,12 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
 
   const validate = useCallback(async () => {
     console.time("validate");
-    for (let i = 0; i < compiled.pages.length; i++) {
-      const valid = await validatePage(i);
-      if (!valid) {
-        console.timeEnd("validate");
-        return false;
-      }
-    }
+    const results = await Promise.all(
+      compiled.pages.map((_, pageIndex) => validatePage(pageIndex)),
+    );
+    const valid = results.every(Boolean);
     console.timeEnd("validate");
-    return true;
+    return valid;
   }, [validatePage, compiled.pages]);
 
   return {

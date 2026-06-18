@@ -4,10 +4,10 @@ import { FieldLegend } from "@formbro/ui/field";
 import { RiHeading } from "@remixicon/react";
 import * as React from "react";
 
-const HeadingIcon = RiHeading;
-const HeadingColor = "bg-purple-100 text-purple-600";
+export const icon = RiHeading;
+export const color = "bg-purple-100 text-purple-600";
 
-function Heading({ level = 2, label }: { level?: 1 | 2 | 3; label?: FormLabel }) {
+export function component({ level = 2, label }: { level?: 1 | 2 | 3; label?: FormLabel }) {
   if (!label) return null;
 
   let fontSize: string;
@@ -29,5 +29,3 @@ function Heading({ level = 2, label }: { level?: 1 | 2 | 3; label?: FormLabel })
     </FieldLegend>
   );
 }
-
-export { HeadingColor as color, Heading as component, HeadingIcon as icon };

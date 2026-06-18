@@ -5,6 +5,18 @@ import type { TanStackFieldProps, TanStackForm } from "../hooks/tanstack";
 import { ElementComponents } from "../registry";
 import { Field } from "./field";
 
+type PageElement = CompiledPage["sections"][number]["header"][number];
+
+function renderElement(element: PageElement) {
+  const Component = ElementComponents[element.type as keyof typeof ElementComponents]?.component;
+
+  if (!Component) {
+    return null;
+  }
+
+  return <Component key={element.id} {...element} />;
+}
+
 export function Page({
   tanstack,
   listeners,
@@ -16,16 +28,6 @@ export function Page({
   validators: Map<string, TanStackFieldProps["validators"]>;
   page: CompiledPage;
 }) {
-  const renderElement = (element: CompiledPage["sections"][number]["header"][number]) => {
-    const Component = ElementComponents[element.type as keyof typeof ElementComponents]?.component;
-
-    if (!Component) {
-      return null;
-    }
-
-    return <Component key={element.id} {...element} />;
-  };
-
   return (
     <>
       {page.label && (

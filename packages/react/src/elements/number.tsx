@@ -4,10 +4,10 @@ import { RiHashtag } from "@remixicon/react";
 import * as React from "react";
 import { useFieldContext } from "../hooks/tanstack-context";
 
-const NumberIcon = RiHashtag;
-const NumberColor = "bg-blue-100 text-blue-600";
+export const icon = RiHashtag;
+export const color = "bg-blue-100 text-blue-600";
 
-export function NumberField({ schema, ariaInvalid }: IFieldProps) {
+export function component({ schema, ariaInvalid }: IFieldProps) {
   const field = useFieldContext<number | "">();
 
   return (
@@ -24,5 +24,3 @@ export function NumberField({ schema, ariaInvalid }: IFieldProps) {
     />
   );
 }
-
-export { NumberField as component, NumberIcon as icon, NumberColor as color };

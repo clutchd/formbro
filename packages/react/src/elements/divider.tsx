@@ -3,12 +3,10 @@ import { FieldSeparator } from "@formbro/ui/field";
 import { RiSeparator } from "@remixicon/react";
 import * as React from "react";
 
-const DividerIcon = RiSeparator;
-const DividerColor = "bg-gray-100 text-gray-600";
+export const icon = RiSeparator;
+export const color = "bg-gray-100 text-gray-600";
 
-function Divider({ label }: { label?: FormLabel }) {
+export function component({ label }: { label?: FormLabel }) {
   if (!label) return <FieldSeparator />;
   return <FieldSeparator>{label}</FieldSeparator>;
 }
-
-export { DividerColor as color, Divider as component, DividerIcon as icon };

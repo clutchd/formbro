@@ -4,10 +4,10 @@ import { RiListCheck } from "@remixicon/react";
 import * as React from "react";
 import { useFieldContext } from "../hooks/tanstack-context";
 
-const SingleSelectIcon = RiListCheck;
-const SingleSelectColor = "bg-emerald-100 text-emerald-600";
+export const icon = RiListCheck;
+export const color = "bg-emerald-100 text-emerald-600";
 
-function SingleSelect({ schema, ariaInvalid }: IFieldProps) {
+export function component({ schema, ariaInvalid }: IFieldProps) {
   const field = useFieldContext<string>();
   const options =
     Array.isArray(schema.options) && schema.options.length > 0
@@ -36,5 +36,3 @@ function SingleSelect({ schema, ariaInvalid }: IFieldProps) {
     </Select>
   );
 }
-
-export { SingleSelect as component, SingleSelectIcon as icon, SingleSelectColor as color };

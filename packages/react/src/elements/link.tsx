@@ -6,10 +6,10 @@ import { RiLinkM } from "@remixicon/react";
 import * as React from "react";
 import { useFieldContext } from "../hooks/tanstack-context";
 
-const LinkIcon = RiLinkM;
-const LinkColor = "bg-cyan-100 text-cyan-600";
+export const icon = RiLinkM;
+export const color = "bg-cyan-100 text-cyan-600";
 
-function Link({ schema, ariaInvalid }: IFieldProps) {
+export function component({ schema, ariaInvalid }: IFieldProps) {
   const field = useFieldContext<string>();
 
   return (
@@ -26,5 +26,3 @@ function Link({ schema, ariaInvalid }: IFieldProps) {
     />
   );
 }
-
-export { LinkColor as color, Link as component, LinkIcon as icon };

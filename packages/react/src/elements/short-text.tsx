@@ -4,10 +4,10 @@ import { RiInputField } from "@remixicon/react";
 import * as React from "react";
 import { useFieldContext } from "../hooks/tanstack-context";
 
-const ShortTextIcon = RiInputField;
-const ShortTextColor = "bg-rose-100 text-rose-600";
+export const icon = RiInputField;
+export const color = "bg-rose-100 text-rose-600";
 
-function ShortText({ schema, ariaInvalid }: IFieldProps) {
+export function component({ schema, ariaInvalid }: IFieldProps) {
   const field = useFieldContext<string>();
 
   return (
@@ -24,5 +24,3 @@ function ShortText({ schema, ariaInvalid }: IFieldProps) {
     />
   );
 }
-
-export { ShortText as component, ShortTextIcon as icon, ShortTextColor as color };

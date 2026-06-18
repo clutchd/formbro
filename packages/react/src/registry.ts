@@ -24,8 +24,3 @@ export const FieldComponents = {
   single_select: single_select,
   short_text: short_text,
 } as const;
-
-export const ClientRegistryComponents = {
-  ...ElementComponents,
-  ...FieldComponents,
-} as const;

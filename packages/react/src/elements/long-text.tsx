@@ -4,10 +4,10 @@ import { RiText } from "@remixicon/react";
 import * as React from "react";
 import { useFieldContext } from "../hooks/tanstack-context";
 
-const LongTextIcon = RiText;
-const LongTextColor = "bg-orange-100 text-orange-600";
+export const icon = RiText;
+export const color = "bg-orange-100 text-orange-600";
 
-function LongText({ schema, ariaInvalid }: IFieldProps) {
+export function component({ schema, ariaInvalid }: IFieldProps) {
   const field = useFieldContext<string>();
 
   return (
@@ -23,5 +23,3 @@ function LongText({ schema, ariaInvalid }: IFieldProps) {
     />
   );
 }
-
-export { LongTextColor as color, LongText as component, LongTextIcon as icon };

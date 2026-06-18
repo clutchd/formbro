@@ -4,10 +4,10 @@ import { RiMailLine } from "@remixicon/react";
 import * as React from "react";
 import { useFieldContext } from "../hooks/tanstack-context";
 
-const EmailIcon = RiMailLine;
-const EmailColor = "bg-blue-100 text-blue-600";
+export const icon = RiMailLine;
+export const color = "bg-blue-100 text-blue-600";
 
-function Email({ schema, ariaInvalid }: IFieldProps) {
+export function component({ schema, ariaInvalid }: IFieldProps) {
   const field = useFieldContext<string>();
 
   return (
@@ -24,5 +24,3 @@ function Email({ schema, ariaInvalid }: IFieldProps) {
     />
   );
 }
-
-export { EmailColor as color, Email as component, EmailIcon as icon };
