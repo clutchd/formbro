@@ -2,7 +2,7 @@ import { hasString } from "@formbro/shared/util";
 import { v } from "convex/values";
 import { formatStorage, GIGABYTE, numberFormatter } from "./lib";
 
-export const WORKSPACE_TRIAL_DAYS = 14;
+export const WORKSPACE_TRIAL_DAYS = 7;
 
 export const workspacePlanValidator = v.union(v.literal("basic"), v.literal("pro"));
 export const billingIntervalValidator = v.union(v.literal("monthly"), v.literal("annual"));
