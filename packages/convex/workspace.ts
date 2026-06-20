@@ -209,16 +209,20 @@ export const create = mutation({
 
     const profile = await resolveUserProfile(ctx, identity.data);
 
-    const unpaidWorkspaces = await ctx.db
+    const ownedWorkspaces = await ctx.db
       .query("workspaces")
       .withIndex("by_owner", (q) => q.eq("ownerAuthId", identity.data.subject))
-      .filter(
-        (q) => q.eq(q.field("billingStatus"), "not_subscribed") || q.eq(q.field("plan"), undefined),
-      )
       .collect();
 
-    if (unpaidWorkspaces.length > 0) {
-      return fail({ data: undefined, error: ERRORS.UNPAID_WORKSPACE_LIMIT });
+    for (const workspace of ownedWorkspaces) {
+      const subscriptionState = await getWorkspaceSubscriptionState(ctx, workspace._id);
+      if (!subscriptionState.ok) {
+        return fail({ data: undefined, error: subscriptionState.error });
+      }
+
+      if (!subscriptionState.data.hasActiveSubscription) {
+        return fail({ data: undefined, error: ERRORS.UNPAID_WORKSPACE_LIMIT });
+      }
     }
 
     return ok(

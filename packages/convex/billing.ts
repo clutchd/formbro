@@ -46,6 +46,10 @@ export const ERRORS = defineErrors({
       "This workspace already has an active subscription. Use the billing portal to manage it.",
     status: "CONFLICT",
   },
+  ACTIVE_SUBSCRIPTION_REQUIRED: {
+    message: "This workspace requires an active subscription to perform this action.",
+    status: "FORBIDDEN",
+  },
   CHECKOUT_SESSION_NOT_CREATED: {
     message: "Checkout session could not be created. Please try again.",
     status: "INTERNAL_SERVER_ERROR",
@@ -106,6 +110,20 @@ export async function getWorkspaceSubscriptionState(
     canDelete,
     limits,
   });
+}
+
+export async function requireWorkspaceSubscription(
+  ctx: QueryCtx | MutationCtx,
+  workspaceId: Id<"workspaces">,
+) {
+  const subscriptionState = await getWorkspaceSubscriptionState(ctx, workspaceId);
+  if (!subscriptionState.ok) return fail({ data: null, error: subscriptionState.error });
+
+  if (!subscriptionState.data.hasActiveSubscription) {
+    return fail({ data: null, error: ERRORS.ACTIVE_SUBSCRIPTION_REQUIRED });
+  }
+
+  return ok(subscriptionState.data);
 }
 
 export const createWorkspaceCustomer = internalAction({

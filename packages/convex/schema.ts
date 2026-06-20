@@ -35,6 +35,8 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(),
     workspaceId: v.id("workspaces"),
+    draftSchemaId: v.optional(v.id("formSchemas")),
+    publishedSchemaId: v.optional(v.id("formSchemas")),
     status: v.union(
       v.literal("draft"),
       v.literal("open"),
