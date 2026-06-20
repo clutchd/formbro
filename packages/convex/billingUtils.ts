@@ -227,3 +227,27 @@ export function getStripePriceIdForPlan(plan: Plan, interval: "monthly" | "annua
   const priceId = interval === "annual" ? details.yearlyPriceId : details.monthlyPriceId;
   return hasString(priceId) ? priceId : null;
 }
+export function isLimitReached(used: number, limit: number | null) {
+  return limit !== null && used >= limit;
+}
+
+export async function isWorkspaceLimitReached(
+  limit: number | null,
+  getUsed: (takeLimit: number) => Promise<number>,
+) {
+  if (limit === null) return false;
+  return isLimitReached(await getUsed(limit), limit);
+}
+
+export async function getWorkspaceFormsUsed(
+  ctx: BillingCtx,
+  workspaceId: Id<"workspaces">,
+  limit?: number,
+) {
+  const query = ctx.db
+    .query("forms")
+    .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId));
+
+  return limit === undefined ? (await query.collect()).length : (await query.take(limit)).length;
+}
+

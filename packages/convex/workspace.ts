@@ -2,13 +2,19 @@ import { fail, ok } from "@formbro/shared/result";
 import { hasString, normalizeEmail } from "@formbro/shared/util";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import type { Plan } from "./billingUtils";
 import { internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
 import { ERRORS as ACCESS_ERRORS, getWorkspaceAccess } from "./access";
 import { getUser, resolveUserProfile } from "./auth";
 import { getWorkspaceSubscriptionState } from "./billing";
+import {
+  getWorkspaceFormsUsed,
+  getWorkspaceMonthlySubmissionPeriod,
+  getWorkspaceMonthlySubmissionsUsed,
+  getWorkspaceStorageUsedBytes,
+  type Plan,
+} from "./billingUtils";
 import { defineErrors } from "./errors";
-import { ERRORS as FORM_ERRORS } from "./forms";
+import { _deleteForm, ERRORS as FORM_ERRORS } from "./forms";
 
 export const ERRORS = defineErrors({
   DELETE_WORKSPACE_PERMISSION_DENIED: {
@@ -291,7 +297,7 @@ export const deleteWorkspace = mutation({
       .collect();
 
     for (const form of forms) {
-      await ctx.db.delete(form._id);
+      await _deleteForm(ctx, form._id);
     }
 
     await ctx.db.delete(args.workspaceId);
