@@ -1,6 +1,6 @@
 import { twx } from "@formbro/shared/twx";
-import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Slot } from "radix-ui";
 import * as React from "react";
 
 const buttonVariants = cva(
@@ -33,7 +33,7 @@ type ButtonProps = React.ComponentProps<"button"> &
   VariantProps<typeof buttonVariants> & { asChild?: boolean };
 
 export function Button({ className, variant, size, asChild = false, ref, ...props }: ButtonProps) {
-  const Comp = asChild ? Slot : "button";
+  const Comp = asChild ? Slot.Root : "button";
   return (
     <Comp
       ref={ref}

@@ -1,8 +1,8 @@
 "use client";
 
 import { twx } from "@formbro/shared/twx";
-import * as SelectPrimitive from "@radix-ui/react-select";
 import { RiArrowDownSLine, RiArrowUpSLine, RiCheckLine } from "@remixicon/react";
+import { Select as SelectPrimitive } from "radix-ui";
 import * as React from "react";
 
 export function Select({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {

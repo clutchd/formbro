@@ -1,7 +1,7 @@
 "use client";
 
 import { twx } from "@formbro/shared/twx";
-import * as ProgressPrimitive from "@radix-ui/react-progress";
+import { Progress as ProgressPrimitive } from "radix-ui";
 import * as React from "react";
 
 export function Progress({

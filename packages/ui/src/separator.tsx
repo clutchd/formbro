@@ -1,7 +1,7 @@
 "use client";
 
 import { twx } from "@formbro/shared/twx";
-import * as SeparatorPrimitive from "@radix-ui/react-separator";
+import { Separator as SeparatorPrimitive } from "radix-ui";
 import * as React from "react";
 
 export function Separator({

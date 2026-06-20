@@ -1,7 +1,7 @@
 "use client";
 
 import { twx } from "@formbro/shared/twx";
-import * as LabelPrimitive from "@radix-ui/react-label";
+import { Label as LabelPrimitive } from "radix-ui";
 import * as React from "react";
 
 export function Label({ className, ...props }: React.ComponentProps<typeof LabelPrimitive.Root>) {

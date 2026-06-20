@@ -1,8 +1,8 @@
 "use client";
 
 import { twx } from "@formbro/shared/twx";
-import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { RiCloseLine } from "@remixicon/react";
+import { Dialog as DialogPrimitive } from "radix-ui";
 import * as React from "react";
 
 export function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {

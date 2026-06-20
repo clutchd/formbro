@@ -2,7 +2,7 @@
 
 import { twx } from "@formbro/shared/twx";
 import { tuiFont } from "@formbro/ui/typography";
-import * as AvatarPrimitive from "@radix-ui/react-avatar";
+import { Avatar as AvatarPrimitive } from "radix-ui";
 import * as React from "react";
 
 export function Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Root>) {

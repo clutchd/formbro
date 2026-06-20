@@ -1,6 +1,6 @@
 import { twx } from "@formbro/shared/twx";
-import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Slot } from "radix-ui";
 import * as React from "react";
 
 export const badgeVariants = cva(
@@ -39,7 +39,7 @@ export function Badge({
   asChild = false,
   ...props
 }: React.ComponentProps<"span"> & VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : "span";
+  const Comp = asChild ? Slot.Root : "span";
 
   return (
     <Comp

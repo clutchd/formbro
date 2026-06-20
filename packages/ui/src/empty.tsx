@@ -1,6 +1,6 @@
 import { twx } from "@formbro/shared/twx";
-import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Slot } from "radix-ui";
 import * as React from "react";
 
 export function Empty({
@@ -8,7 +8,7 @@ export function Empty({
   asChild,
   ...props
 }: React.ComponentProps<"div"> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : "span";
+  const Comp = asChild ? Slot.Root : "span";
 
   return (
     <Comp

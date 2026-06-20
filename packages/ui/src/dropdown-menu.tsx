@@ -1,8 +1,8 @@
 "use client";
 
 import { twx } from "@formbro/shared/twx";
-import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { RiArrowRightSLine, RiCheckLine, RiCircleLine } from "@remixicon/react";
+import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import * as React from "react";
 
 export function DropdownMenu({

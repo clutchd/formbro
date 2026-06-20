@@ -58,13 +58,7 @@ function FormMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function FormListRow({
-  form,
-  workspaceSlug,
-}: {
-  form: Form;
-  workspaceSlug: string;
-}) {
+function FormListRow({ form, workspaceSlug }: { form: Form; workspaceSlug: string }) {
   const formPrewarm = useWorkspaceFormPrewarmIntent(workspaceSlug, form.slug);
 
   return (
