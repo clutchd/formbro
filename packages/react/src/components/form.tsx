@@ -126,6 +126,7 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
           <div className="flex items-center gap-3 pt-2">
             <Button
               type="button"
+              size="form"
               variant="outline"
               onClick={handlePrev}
               disabled={isFirstPage}
@@ -139,7 +140,7 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
             </Button>
             <div className="flex-1" />
             {!isLastPage ? (
-              <Button type="button" onClick={handleNext} className="cursor-pointer">
+              <Button type="button" size="form" onClick={handleNext} className="cursor-pointer">
                 <span>Continue</span>
                 <RiArrowRightLine className="size-4" />
               </Button>
