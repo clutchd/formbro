@@ -21,12 +21,6 @@ export function FormStatusBadge({ status }: { status: Doc<"forms">["status"] }) 
           Closed
         </Badge>
       );
-    case "archived":
-      return (
-        <Badge variant="outline" status="warning">
-          Archived
-        </Badge>
-      );
     default: {
       const exhaustiveStatus: never = status;
       return exhaustiveStatus;

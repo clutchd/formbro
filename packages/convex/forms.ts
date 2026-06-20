@@ -34,18 +34,17 @@ export const create = mutation({
         return fail({ data: null, error: ERRORS.ACTIVE_FORM_LIMIT });
       }
 
-      const activeForms = await ctx.db
+      const forms = await ctx.db
         .query("forms")
         .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
-        .filter((q) => q.neq(q.field("status"), "archived"))
         .take(subscriptionState.data.limits.activeForms);
 
-      if (activeForms.length >= subscriptionState.data.limits.activeForms) {
+      if (forms.length >= subscriptionState.data.limits.activeForms) {
         return fail({ data: null, error: ERRORS.ACTIVE_FORM_LIMIT });
       }
     }
 
-    let slug = nano();
+    const slug = nano();
 
     await ctx.db.insert("forms", {
       status: "draft",

@@ -15,13 +15,15 @@ authComponent.registerRoutes(http, createAuth, { cors: true });
 
 function getSubscriptionMetadata(subscription: Stripe.Subscription) {
   const workspaceId = subscription.metadata?.orgId;
+  const subscriptionItem = subscription.items.data[0];
+
   return {
     workspaceId: hasString(workspaceId) ? workspaceId : undefined,
     stripeCustomerId: hasString(subscription.customer)
       ? subscription.customer
       : subscription.customer.id,
     stripeSubscriptionId: subscription.id,
-    stripePriceId: subscription.items.data[0]?.price?.id,
+    stripePriceId: subscriptionItem?.price?.id,
     status: subscription.status,
   };
 }

@@ -3,6 +3,7 @@ import { type Id } from "./_generated/dataModel";
 import { type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getUser, resolveUserProfile } from "./auth";
 import { defineErrors } from "./errors";
+import { ERRORS as FORM_ERRORS } from "./forms";
 
 export const ERRORS = defineErrors({
   WORKSPACE_ACCESS_REQUIRED: {
@@ -33,4 +34,14 @@ export async function getWorkspaceAccess(
   }
 
   return ok({ user: profile, membership });
+}
+
+export async function getFormAccess(ctx: QueryCtx | MutationCtx, formId: Id<"forms">) {
+  const form = await ctx.db.get(formId);
+  if (!form) return fail({ error: FORM_ERRORS.FORM_NOT_FOUND });
+
+  const access = await getWorkspaceAccess(ctx, form.workspaceId);
+  if (!access.ok) return fail({ error: access.error });
+
+  return ok({ form, access: access.data });
 }

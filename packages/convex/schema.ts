@@ -37,12 +37,7 @@ export default defineSchema({
     workspaceId: v.id("workspaces"),
     draftSchemaId: v.optional(v.id("formSchemas")),
     publishedSchemaId: v.optional(v.id("formSchemas")),
-    status: v.union(
-      v.literal("draft"),
-      v.literal("open"),
-      v.literal("closed"),
-      v.literal("archived"),
-    ),
+    status: v.union(v.literal("draft"), v.literal("open"), v.literal("closed")),
   })
     .index("by_workspace_and_slug", ["workspaceId", "slug"])
     .index("by_workspace", ["workspaceId"])
