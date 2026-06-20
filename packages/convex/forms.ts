@@ -58,6 +58,18 @@ export const create = mutation({
   },
 });
 
+export const get = query({
+  args: { workspaceId: v.id("workspaces"), formId: v.id("forms") },
+  handler: async (ctx, args) => {
+    const access = await getWorkspaceAccess(ctx, args.workspaceId);
+    if (!access.ok) return fail({ data: [], error: access.error });
+
+    const form = await ctx.db.get(args.formId);
+    if (!form) return fail({ data: null, error: ERRORS.FORM_NOT_FOUND });
+    return ok(form);
+  },
+});
+
 export const list = query({
   args: {
     workspaceId: v.id("workspaces"),

@@ -1,8 +1,5 @@
 "use client";
 
-import { Loading } from "@/components/loading";
-import { Page } from "@/components/page";
-import { PageState } from "@/components/page-state";
 import { hasActiveWorkspaceSubscriptionStatus } from "@formbro/convex/billingUtils";
 import { formatStorage, MEGABYTE, numberFormatter } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
@@ -12,6 +9,10 @@ import { tuiFont, TypographyH1, TypographySubheading } from "@formbro/ui/typogra
 import { RiArrowRightLine, RiBankCardLine, RiFileAiLine, RiFileTextLine } from "@remixicon/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { Loading } from "@/components/loading";
+import { Page } from "@/components/page";
+import { PageState } from "@/components/page-state";
+import { useWorkspaceFormPrewarmIntent } from "../[form]/_data-provider";
 import { useWorkspaceData } from "../_data-provider";
 import { CreateForm } from "../create-form-form";
 import { useWorkspaceSettingsPrewarmIntent } from "../settings/_data-provider";
@@ -87,11 +88,11 @@ function FormListRow({
   workspaceSlug: string;
 }) {
   const metrics = getStubFormMetrics(form, index);
+  const formPrewarm = useWorkspaceFormPrewarmIntent(workspaceSlug, form.slug);
 
   return (
     <Link
-      href={`/dashboard/${workspaceSlug}/${form.slug}`}
-      prefetch={false}
+      {...formPrewarm}
       className="group/row grid gap-4 border border-b-0 px-5 py-4 transition-colors last:border-b hover:bg-accent md:grid-cols-[minmax(0,1.35fr)_repeat(3,minmax(7rem,0.5fr))_auto] md:items-center"
     >
       <div className="flex min-w-0 items-center gap-3">

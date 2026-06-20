@@ -30,9 +30,9 @@ export const ERRORS = defineErrors({
   },
 });
 
-function buildCanonicalPath(input: { workspaceSlug: string; formId?: string }) {
-  if (input.formId) {
-    return `/dashboard/${input.workspaceSlug}/${input.formId}`;
+function buildCanonicalPath(input: { workspaceSlug: string; formSlug?: string }) {
+  if (input.formSlug) {
+    return `/dashboard/${input.workspaceSlug}/${input.formSlug}`;
   }
 
   return `/dashboard/${input.workspaceSlug}`;
@@ -41,7 +41,7 @@ function buildCanonicalPath(input: { workspaceSlug: string; formId?: string }) {
 export const context = query({
   args: {
     workspaceSlug: v.optional(v.string()),
-    formId: v.optional(v.id("forms")),
+    formSlug: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await getUser(ctx);
@@ -50,8 +50,12 @@ export const context = query({
     let workspace: Doc<"workspaces"> | null = null;
     let form: Doc<"forms"> | null = null;
 
-    if (args.formId) {
-      form = await ctx.db.get(args.formId);
+    if (args.formSlug) {
+      const formSlug = args.formSlug;
+      form = await ctx.db
+        .query("forms")
+        .withIndex("by_slug", (q) => q.eq("slug", formSlug))
+        .unique();
       if (!form) return fail({ data: null, error: FORM_ERRORS.FORM_NOT_FOUND });
 
       workspace = await ctx.db.get(form.workspaceId);
@@ -77,12 +81,12 @@ export const context = query({
 
     const canonicalPath = buildCanonicalPath({
       workspaceSlug: workspace.slug,
-      formId: form?._id,
+      formSlug: form?.slug,
     });
 
     const sameWorkspaceSlug =
       args.workspaceSlug === undefined || args.workspaceSlug === workspace.slug;
-    const sameFormId = args.formId === undefined || args.formId === form?._id;
+    const sameFormSlug = args.formSlug === undefined || args.formSlug === form?.slug;
 
     return ok({
       workspace: {
@@ -91,7 +95,7 @@ export const context = query({
       },
       form: form ?? undefined,
       canonicalPath,
-      isCanonical: sameWorkspaceSlug && sameFormId,
+      isCanonical: sameWorkspaceSlug && sameFormSlug,
     });
   },
 });

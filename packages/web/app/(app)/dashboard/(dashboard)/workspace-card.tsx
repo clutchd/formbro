@@ -13,6 +13,7 @@ import { Card } from "@formbro/ui/card";
 import { tuiFont } from "@formbro/ui/typography";
 import { RiArrowRightLine, RiFileAddLine, RiFileTextLine } from "@remixicon/react";
 import Link from "next/link";
+import { useWorkspaceFormPrewarmIntent } from "../[workspace]/[form]/_data-provider";
 import { useWorkspacePrewarmIntent } from "../[workspace]/_data-provider";
 import { useWorkspaceSettingsPrewarmIntent } from "../[workspace]/settings/_data-provider";
 import { WorkspaceBillingStateBadge } from "../workspace-billing-state-badge";
@@ -58,6 +59,31 @@ function EmptyWorkspaceContent() {
   );
 }
 
+function WorkspaceFormPreviewLink({
+  workspaceSlug,
+  form,
+}: {
+  workspaceSlug: string;
+  form: Workspace["forms"][number];
+}) {
+  const formPrewarm = useWorkspaceFormPrewarmIntent(workspaceSlug, form.slug);
+
+  return (
+    <Link
+      {...formPrewarm}
+      className="group/row flex items-center gap-3 border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-accent"
+    >
+      <div className="flex size-7 shrink-0 items-center justify-center border">
+        <RiFileTextLine className="size-3.5 text-muted-foreground" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium group-hover/row:text-foreground">{form.name}</p>
+      </div>
+      <FormStatusBadge status={form.status} />
+    </Link>
+  );
+}
+
 function WorkspaceFormPreview({
   workspaceSlug,
   forms,
@@ -74,22 +100,7 @@ function WorkspaceFormPreview({
   return (
     <div className="flex flex-1 flex-col">
       {forms.slice(0, 3).map((form) => (
-        <Link
-          key={form._id}
-          href={`/dashboard/${workspaceSlug}/${form.slug}`}
-          prefetch={false}
-          className="group/row flex items-center gap-3 border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-accent"
-        >
-          <div className="flex size-7 shrink-0 items-center justify-center border">
-            <RiFileTextLine className="size-3.5 text-muted-foreground" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium group-hover/row:text-foreground">
-              {form.name}
-            </p>
-          </div>
-          <FormStatusBadge status={form.status} />
-        </Link>
+        <WorkspaceFormPreviewLink key={form._id} workspaceSlug={workspaceSlug} form={form} />
       ))}
       {overflowCount > 0 ? (
         <p className={twx(tuiFont, "mt-auto px-5 py-3 text-[10px] text-muted-foreground")}>
