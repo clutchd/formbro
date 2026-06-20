@@ -20,7 +20,7 @@ function WorkspaceBreadcrumbLabel({ workspace }: { workspace: Workspace }) {
   return (
     <span className="flex min-w-0 items-center gap-2">
       <span className="truncate">{workspace.name}</span>
-      <WorkspaceBillingStateBadge workspace={workspace} size="sm">
+      <WorkspaceBillingStateBadge workspace={workspace}>
         {getWorkspacePlanLabel(workspace.plan)}
       </WorkspaceBillingStateBadge>
     </span>

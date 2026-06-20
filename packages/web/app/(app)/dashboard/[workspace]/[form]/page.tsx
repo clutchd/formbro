@@ -6,41 +6,6 @@ import { TypographyH1, TypographyP, TypographySubheading } from "@formbro/ui/typ
 import { Page } from "@/components/page";
 import { useRequiredWorkspaceFormData } from "./_data-provider";
 
-type FormStatus = ReturnType<typeof useRequiredWorkspaceFormData>["form"]["status"];
-
-function FormStatusBadge({ status }: { status: FormStatus }) {
-  switch (status) {
-    case "draft":
-      return (
-        <Badge variant="outline" status="neutral">
-          Draft
-        </Badge>
-      );
-    case "open":
-      return (
-        <Badge variant="outline" status="success">
-          Open
-        </Badge>
-      );
-    case "closed":
-      return (
-        <Badge variant="outline" status="error">
-          Closed
-        </Badge>
-      );
-    case "archived":
-      return (
-        <Badge variant="outline" status="warning">
-          Archived
-        </Badge>
-      );
-    default: {
-      const exhaustiveStatus: never = status;
-      return exhaustiveStatus;
-    }
-  }
-}
-
 export default function WorkspaceFormPage() {
   const { form, workspace } = useRequiredWorkspaceFormData();
 

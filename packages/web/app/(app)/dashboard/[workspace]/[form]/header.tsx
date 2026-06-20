@@ -1,9 +1,20 @@
 "use client";
 
+import type { Doc } from "@formbro/convex/_generated/dataModel";
 import { useParams } from "next/navigation";
 import { DashboardHeader } from "../../header";
 import { useWorkspaceData, useWorkspacePrewarmIntent } from "../_data-provider";
 import { useWorkspaceFormData, useWorkspaceFormPrewarmIntent } from "./_data-provider";
+import { FormStatusBadge } from "./form-status-badge";
+
+function FormBreadcrumbLabel({ form }: { form: Doc<"forms"> }) {
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <span className="truncate">{form.name}</span>
+      <FormStatusBadge status={form.status} />
+    </span>
+  );
+}
 
 export function WorkspaceFormHeader() {
   const { workspace: workspaceSlug, form: formSlug } = useParams<{
@@ -29,7 +40,7 @@ export function WorkspaceFormHeader() {
                 ? [
                     {
                       href: `/dashboard/${workspace.slug}/${form.slug}`,
-                      label: form.name,
+                      label: <FormBreadcrumbLabel form={form} />,
                       prewarm: formPrewarm,
                     },
                   ]

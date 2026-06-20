@@ -57,7 +57,7 @@ export function ManageBilling() {
   const { workspace } = useRequiredWorkspaceSettingsData();
 
   return (
-    <Card className="flex-row items-center justify-between">
+    <div className="flex flex-row items-center justify-between">
       <div>
         <TypographyH1>{workspace.name}</TypographyH1>
         <TypographySubheading className="lowercase">
@@ -67,6 +67,6 @@ export function ManageBilling() {
       <div>
         <ManageBillingButton />
       </div>
-    </Card>
+    </div>
   );
 }

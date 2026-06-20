@@ -12,6 +12,7 @@ import { Loading } from "@/components/loading";
 import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
 import { useWorkspaceFormPrewarmIntent } from "../[form]/_data-provider";
+import { FormStatusBadge } from "../[form]/form-status-badge";
 import { useWorkspaceData } from "../_data-provider";
 import { CreateForm } from "../create-form-form";
 import { useWorkspaceSettingsPrewarmIntent } from "../settings/_data-provider";
@@ -23,31 +24,6 @@ const createdDateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   year: "numeric",
 });
-
-function FormStatusBadge({ status }: { status: Form["status"] }) {
-  let badgeStatus: "neutral" | "success" | "warning" | "error" = "neutral";
-  switch (status) {
-    case "open":
-      badgeStatus = "success";
-      break;
-    case "closed":
-      badgeStatus = "error";
-      break;
-    case "archived":
-      badgeStatus = "warning";
-      break;
-  }
-
-  return (
-    <Badge
-      variant="outline"
-      status={badgeStatus}
-      className="px-1.5 py-0 text-[10px] leading-4 tracking-normal uppercase"
-    >
-      {status}
-    </Badge>
-  );
-}
 
 function FormMetric({ label, value }: { label: string; value: string }) {
   return (
