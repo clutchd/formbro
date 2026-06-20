@@ -65,7 +65,6 @@ export function SubmitButton({
           <div className="flex justify-end pt-2">
             <Button
               type="submit"
-              size="form"
               disabled={isDisabled}
               aria-disabled={isDisabled}
               aria-busy={isSubmitting}

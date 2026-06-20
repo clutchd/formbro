@@ -29,7 +29,7 @@ type User =
 
 function UserAvatar({ user }: { user?: User }) {
   return (
-    <Avatar className={`size-8 text-sm font-medium ${user?.image ? "border-0" : "border"}`}>
+    <Avatar className={`size-9 text-sm font-medium ${user?.image ? "border-0" : "border"}`}>
       {user?.image && <AvatarImage src={user.image} alt={user.name} />}
       <AvatarFallback>{user ? initials(user.name ?? "Unknown") : null}</AvatarFallback>
     </Avatar>

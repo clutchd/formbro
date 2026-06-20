@@ -22,8 +22,6 @@ function getShareMessage(status: Doc<"forms">["status"]) {
       return "Your form is not quite ready to share. Publish it to start collecting responses!";
     case "closed":
       return "Your form is closed to new submissions, but the link still works if you need to share it.";
-    case "archived":
-      return "Unarchive your form before sharing it again.";
     default: {
       const exhaustiveStatus: never = status;
       return exhaustiveStatus;
@@ -64,11 +62,11 @@ export default function ShareFormPage() {
           </div>
           <div className="flex flex-row items-center gap-2">
             <Input id={shareId} value={shareUrl} readOnly className="font-mono text-xs" />
-            <Button size="form" onClick={copyToClipboard}>
+            <Button onClick={copyToClipboard}>
               <RiClipboardLine className="size-4" />
               {copied ? "Copied" : "Copy"}
             </Button>
-            <Button asChild variant="outline" size="form">
+            <Button asChild variant="outline">
               <a href={shareUrl} target="_blank" rel="noreferrer">
                 <RiExternalLinkLine className="size-4" />
                 Open

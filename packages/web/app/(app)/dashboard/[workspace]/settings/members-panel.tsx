@@ -24,7 +24,7 @@ function MemberRow({ member }: { member: Member }) {
   return (
     <div className="flex items-center gap-3">
       <Avatar
-        className={`size-8 shrink-0 text-sm font-medium ${member.avatarUrl ? "border-0" : "border"}`}
+        className={`size-9 shrink-0 text-sm font-medium ${member.avatarUrl ? "border-0" : "border"}`}
       >
         {member.avatarUrl ? <AvatarImage src={member.avatarUrl} alt={member.name} /> : null}
         <AvatarFallback>{initials(member.name)}</AvatarFallback>

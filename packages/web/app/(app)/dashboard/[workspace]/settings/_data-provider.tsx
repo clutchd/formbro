@@ -81,7 +81,6 @@ export function useRequiredWorkspaceSettingsData() {
   return {
     workspace,
     forms,
-    activeForms: forms.filter((form) => form.status !== "archived").length,
     billing: billing.data,
     members: members.data,
   };

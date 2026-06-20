@@ -47,32 +47,32 @@ export const WORKSPACE_LIMITS: Record<
   WorkspacePlan,
   {
     members: number | null;
-    activeForms: number | null;
+    forms: number | null;
     monthlySubmissions: number | null;
     storageBytes: number | null;
   }
 > = {
   free: {
     members: 1,
-    activeForms: 0,
+    forms: 0,
     monthlySubmissions: 0,
     storageBytes: 0,
   },
   basic: {
     members: null,
-    activeForms: 10,
+    forms: 10,
     monthlySubmissions: 1000,
     storageBytes: 100 * GIGABYTE,
   },
   pro: {
     members: null,
-    activeForms: 100,
+    forms: 100,
     monthlySubmissions: 10000,
     storageBytes: 1024 * GIGABYTE,
   },
   unlimited: {
     members: null,
-    activeForms: null,
+    forms: null,
     monthlySubmissions: null,
     storageBytes: null,
   },
@@ -109,7 +109,7 @@ export function getPlanFeatures(plan: Plan): readonly string[] {
 
   return [
     formatLimitFeature(limits.members, "seat", "seats"),
-    formatLimitFeature(limits.activeForms, "active form", "active forms"),
+    formatLimitFeature(limits.forms, "form", "forms"),
     formatLimitFeature(limits.monthlySubmissions, "submission", "submissions", " / month"),
     formatStorageFeature(limits.storageBytes),
     plan === "pro" ? "Priority support" : "Email support",

@@ -10,7 +10,7 @@ export function Avatar({ className, ...props }: React.ComponentProps<typeof Avat
     <AvatarPrimitive.Root
       data-slot="avatar"
       className={twx(
-        "group/avatar relative flex size-8 shrink-0 overflow-hidden rounded-md border select-none data-[size=lg]:size-10 data-[size=sm]:size-6",
+        "group/avatar relative flex size-9 shrink-0 overflow-hidden rounded-md border select-none data-[size=lg]:size-10 data-[size=sm]:size-6",
         className,
       )}
       {...props}

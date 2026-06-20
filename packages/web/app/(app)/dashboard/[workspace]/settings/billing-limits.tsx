@@ -63,7 +63,7 @@ function LimitMeter({
 }
 
 export function BillingLimits() {
-  const { activeForms, billing, workspace } = useRequiredWorkspaceSettingsData();
+  const { billing, workspace } = useRequiredWorkspaceSettingsData();
 
   return (
     <Card>
@@ -82,11 +82,7 @@ export function BillingLimits() {
       <Separator className="my-6" />
 
       <div className="flex flex-col gap-5">
-        <LimitMeter
-          label="Active forms"
-          used={activeForms}
-          limit={billing.limits.activeForms ?? null}
-        />
+        <LimitMeter label="Forms" used={billing.usage.forms} limit={billing.limits.forms ?? null} />
         <LimitMeter
           label="Submissions"
           used={billing.usage.monthlySubmissions}
