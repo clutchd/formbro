@@ -5,7 +5,6 @@ import { Progress } from "@formbro/ui/progress";
 import { Separator } from "@formbro/ui/separator";
 import { displayFont, tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { WorkspaceBillingStateBadge } from "../../workspace-billing-state-badge";
-import { useRequiredWorkspaceData } from "../_data-provider";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
 function Metric({
@@ -64,10 +63,7 @@ function LimitMeter({
 }
 
 export function BillingLimits() {
-  const { forms, workspace } = useRequiredWorkspaceData();
-  const { billing } = useRequiredWorkspaceSettingsData();
-  const activeForms =
-    forms?.filter((form) => form.status !== "archived").length ?? billing.limits.activeForms ?? 0;
+  const { activeForms, billing, workspace } = useRequiredWorkspaceSettingsData();
   const monthlySubmissions = 0; // TODO: get from workspace
   const storageBytes = 0; // TODO: get from workspace
 

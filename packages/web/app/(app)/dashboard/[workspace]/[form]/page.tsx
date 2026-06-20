@@ -57,10 +57,9 @@ export default function WorkspaceFormPage() {
       </div>
 
       <Card>
-        <TypographySubheading className="text-foreground">Form Overview</TypographySubheading>
+        <TypographySubheading className="text-foreground">Builder</TypographySubheading>
         <TypographyP className="mt-2 text-sm text-muted-foreground">
-          This route is now backed by resolved workspace/form context and is ready for form builder,
-          schema, and submission data providers.
+          Form editing tools will appear here.
         </TypographyP>
       </Card>
     </Page>

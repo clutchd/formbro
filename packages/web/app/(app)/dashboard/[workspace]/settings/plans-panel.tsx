@@ -15,7 +15,6 @@ import { useAction } from "convex/react";
 import { redirect } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { useRequiredWorkspaceData } from "../_data-provider";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
 function BillingIntervalToggle({
@@ -168,8 +167,7 @@ function PlanCard({
 }
 
 export function PlansPanel() {
-  const { workspace } = useRequiredWorkspaceData();
-  const { billing } = useRequiredWorkspaceSettingsData();
+  const { billing, workspace } = useRequiredWorkspaceSettingsData();
   const createSubscriptionCheckout = useAction(api.billing.createSubscriptionCheckout);
   const isUnlimited = billing.plan === "unlimited";
   const [interval, setInterval] = useState<"monthly" | "annual">("monthly");

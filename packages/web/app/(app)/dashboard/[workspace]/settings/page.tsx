@@ -22,7 +22,6 @@ import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
-import { useRequiredWorkspaceData } from "../_data-provider";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 import { BillingLimits } from "./billing-limits";
 import { ManageBilling } from "./manage-billing";
@@ -31,8 +30,7 @@ import { PlansPanel } from "./plans-panel";
 
 export default function BillingSettingsPage() {
   const router = useRouter();
-  const { workspace } = useRequiredWorkspaceData();
-  const { billing } = useRequiredWorkspaceSettingsData();
+  const { billing, workspace } = useRequiredWorkspaceSettingsData();
   const deleteWorkspace = useMutation(api.workspace.deleteWorkspace);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);

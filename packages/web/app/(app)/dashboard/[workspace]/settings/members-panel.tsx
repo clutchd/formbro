@@ -4,7 +4,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@formbro/ui/avatar";
 import { Badge } from "@formbro/ui/badge";
 import { Card } from "@formbro/ui/card";
 import { tuiFont, TypographySubheading } from "@formbro/ui/typography";
-import { Loading } from "@/components/loading";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
 type Member = NonNullable<
@@ -50,17 +49,13 @@ export function MembersPanel() {
         Members - {members.length}
       </TypographySubheading>
       <Card className="flex flex-1 flex-col">
-        {members === undefined ? (
-          <Loading title="members" className="text-xs" />
-        ) : (
-          <ul className="space-y-4">
-            {members.map((member) => (
-              <li key={member._id}>
-                <MemberRow member={member} />
-              </li>
-            ))}
-          </ul>
-        )}
+        <ul className="space-y-4">
+          {members.map((member) => (
+            <li key={member._id}>
+              <MemberRow member={member} />
+            </li>
+          ))}
+        </ul>
       </Card>
     </div>
   );

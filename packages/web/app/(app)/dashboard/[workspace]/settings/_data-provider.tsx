@@ -49,9 +49,10 @@ export function WorkspaceSettingsDataProvider({ children }: { children: ReactNod
 const useWorkspaceSettingsData = workspaceSettingsSegment.useData;
 
 export function WorkspaceSettingsContentBoundary({ children }: { children: ReactNode }) {
+  const { forms } = useWorkspaceData();
   const { billing, members } = useWorkspaceSettingsData();
 
-  if (billing === undefined || members === undefined) {
+  if (forms === undefined || billing === undefined || members === undefined) {
     return <Loading title="settings" />;
   }
 
@@ -71,11 +72,16 @@ export function WorkspaceSettingsContentBoundary({ children }: { children: React
 }
 
 export function useRequiredWorkspaceSettingsData() {
+  const { forms, workspace } = useWorkspaceData();
   const { billing, members } = useWorkspaceSettingsData();
-  if (!billing?.ok || !members?.ok) {
+  if (!workspace || forms === undefined || !billing?.ok || !members?.ok) {
     throw new Error("useRequiredWorkspaceSettingsData requires loaded settings data");
   }
+
   return {
+    workspace,
+    forms,
+    activeForms: forms.filter((form) => form.status !== "archived").length,
     billing: billing.data,
     members: members.data,
   };

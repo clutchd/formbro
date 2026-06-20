@@ -13,6 +13,7 @@ export async function prewarmWorkspaceSettingsRoute(
       return;
     }
     prewarmRoute(convex, [
+      { query: api.forms.list, args: { workspaceId: context.data.workspace._id } },
       { query: api.workspace.listMembers, args: { workspaceId: context.data.workspace._id } },
       { query: api.workspace.billing, args: { workspaceId: context.data.workspace._id } },
     ]);

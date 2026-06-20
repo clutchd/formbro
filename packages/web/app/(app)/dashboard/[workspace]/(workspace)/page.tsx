@@ -1,7 +1,6 @@
 "use client";
 
 import { hasActiveWorkspaceSubscriptionStatus } from "@formbro/convex/billingUtils";
-import { formatStorage, MEGABYTE, numberFormatter } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
@@ -19,30 +18,11 @@ import { useWorkspaceSettingsPrewarmIntent } from "../settings/_data-provider";
 
 type Form = NonNullable<ReturnType<typeof useWorkspaceData>["forms"]>[number];
 
-const lastSubmissionStubs = ["18m ago", "3h ago", "Yesterday", "5d ago"] as const;
 const createdDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
   year: "numeric",
 });
-
-function getStubFormMetrics(form: Form, index: number) {
-  if (form.status === "draft") {
-    return {
-      submissions: 0,
-      storageBytes: 0,
-      lastSubmission: "No submissions yet",
-    };
-  }
-
-  const submissions = (index + 1) * 47;
-
-  return {
-    submissions,
-    storageBytes: (index + 1) * 9 * MEGABYTE,
-    lastSubmission: lastSubmissionStubs[index % lastSubmissionStubs.length] ?? "Recently",
-  };
-}
 
 function FormStatusBadge({ status }: { status: Form["status"] }) {
   let badgeStatus: "neutral" | "success" | "warning" | "error" = "neutral";
@@ -80,14 +60,11 @@ function FormMetric({ label, value }: { label: string; value: string }) {
 
 function FormListRow({
   form,
-  index,
   workspaceSlug,
 }: {
   form: Form;
-  index: number;
   workspaceSlug: string;
 }) {
-  const metrics = getStubFormMetrics(form, index);
   const formPrewarm = useWorkspaceFormPrewarmIntent(workspaceSlug, form.slug);
 
   return (
@@ -110,9 +87,9 @@ function FormListRow({
         </div>
       </div>
 
-      <FormMetric label="Submissions" value={numberFormatter.format(metrics.submissions)} />
-      <FormMetric label="Storage" value={formatStorage(metrics.storageBytes)} />
-      <FormMetric label="Last Submission" value={metrics.lastSubmission} />
+      <FormMetric label="Submissions" value="Not tracked" />
+      <FormMetric label="Storage" value="Not tracked" />
+      <FormMetric label="Last Submission" value="Not tracked" />
 
       <RiArrowRightLine className="hidden size-4 text-muted-foreground transition-transform group-hover/row:translate-x-1 md:block" />
     </Link>
@@ -168,8 +145,8 @@ export default function FormsDashboardContent() {
         </div>
         <CreateForm />
       </div>
-      {forms.map((form, index) => (
-        <FormListRow key={form._id} form={form} index={index} workspaceSlug={workspaceSlug} />
+      {forms.map((form) => (
+        <FormListRow key={form._id} form={form} workspaceSlug={workspaceSlug} />
       ))}
     </Page>
   );

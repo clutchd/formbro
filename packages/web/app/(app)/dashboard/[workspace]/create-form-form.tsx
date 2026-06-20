@@ -28,7 +28,6 @@ export function CreateForm({ children }: { children?: React.ReactNode }) {
 
         if (form?.ok) {
           router.prefetch(`/dashboard/${workspace.slug}/${form.data.slug}`);
-          console.log("prefetched", `/dashboard/${workspace.slug}/${form.data.slug}`);
         }
 
         return form;

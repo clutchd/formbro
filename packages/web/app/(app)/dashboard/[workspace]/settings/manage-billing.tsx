@@ -10,12 +10,10 @@ import { useAction } from "convex/react";
 import { redirect } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
-import { useRequiredWorkspaceData } from "../_data-provider";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
 function ManageBillingButton() {
-  const { workspace } = useRequiredWorkspaceData();
-  const { billing } = useRequiredWorkspaceSettingsData();
+  const { billing, workspace } = useRequiredWorkspaceSettingsData();
   const [isLoading, setIsLoading] = useState(false);
   const createPortalSession = useAction(api.billing.createPortalSession);
 
@@ -56,7 +54,7 @@ function ManageBillingButton() {
 }
 
 export function ManageBilling() {
-  const { workspace } = useRequiredWorkspaceData();
+  const { workspace } = useRequiredWorkspaceSettingsData();
 
   return (
     <Card className="flex-row items-center justify-between">

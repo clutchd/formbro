@@ -44,7 +44,7 @@ export default defineSchema({
       v.literal("archived"),
     ),
   })
-    .index("by_slug", ["slug"])
+    .index("by_workspace_and_slug", ["workspaceId", "slug"])
     .index("by_workspace", ["workspaceId"])
     .index("by_workspace_and_status", ["workspaceId", "status"]),
 

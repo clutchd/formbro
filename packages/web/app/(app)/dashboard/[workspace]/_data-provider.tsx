@@ -18,6 +18,9 @@ const workspaceSegment = createSegmentData<{
   workspace:
     | Extract<FunctionReturnType<typeof api.workspace.context>, { ok: true }>["data"]["workspace"]
     | undefined;
+  form:
+    | Extract<FunctionReturnType<typeof api.workspace.context>, { ok: true }>["data"]["form"]
+    | undefined;
   forms: Extract<FunctionReturnType<typeof api.forms.list>, { ok: true }>["data"] | undefined;
 }>("Workspace");
 
@@ -36,18 +39,26 @@ export function useWorkspacePrewarmIntent(
 export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { workspace: workspaceSlug } = useParams<{ workspace: string }>();
-  const context = useQuery(api.workspace.context, { workspaceSlug });
+  const { workspace: workspaceSlug, form: formSlug } = useParams<{
+    workspace: string;
+    form?: string;
+  }>();
+  const contextArgs = useMemo(
+    () => (formSlug ? { workspaceSlug, formSlug } : { workspaceSlug }),
+    [workspaceSlug, formSlug],
+  );
+  const context = useQuery(api.workspace.context, contextArgs);
   const contextData = context?.ok ? context.data : null;
   const workspaceData = contextData?.workspace;
+  const formData = contextData?.form;
   const formsResult = useQuery(
     api.forms.list,
     workspaceData ? { workspaceId: workspaceData._id } : "skip",
   );
   const forms = formsResult?.ok ? formsResult.data : undefined;
   const value = useMemo(
-    () => ({ context, workspace: workspaceData, forms }),
-    [context, workspaceData, forms],
+    () => ({ context, workspace: workspaceData, form: formData, forms }),
+    [context, workspaceData, formData, forms],
   );
   const shouldRedirect =
     contextData !== null && !contextData.isCanonical && pathname !== contextData.canonicalPath;

@@ -51,15 +51,26 @@ export const context = query({
     let form: Doc<"forms"> | null = null;
 
     if (args.formSlug) {
+      if (!args.workspaceSlug) {
+        return fail({ data: null, error: ERRORS.WORKSPACE_NOT_FOUND });
+      }
+
+      const workspaceSlug = args.workspaceSlug;
+      workspace = await ctx.db
+        .query("workspaces")
+        .withIndex("by_slug", (q) => q.eq("slug", workspaceSlug))
+        .unique();
+      if (!workspace) return fail({ data: null, error: ERRORS.WORKSPACE_NOT_FOUND });
+
       const formSlug = args.formSlug;
+      const workspaceId = workspace._id;
       form = await ctx.db
         .query("forms")
-        .withIndex("by_slug", (q) => q.eq("slug", formSlug))
+        .withIndex("by_workspace_and_slug", (q) =>
+          q.eq("workspaceId", workspaceId).eq("slug", formSlug),
+        )
         .unique();
       if (!form) return fail({ data: null, error: FORM_ERRORS.FORM_NOT_FOUND });
-
-      workspace = await ctx.db.get(form.workspaceId);
-      if (!workspace) return fail({ data: null, error: ERRORS.WORKSPACE_NOT_FOUND });
     } else if (args.workspaceSlug) {
       const workspaceSlug = args.workspaceSlug;
       workspace = await ctx.db
@@ -354,6 +365,7 @@ export const list = query({
           ctx.db
             .query("forms")
             .withIndex("by_workspace", (q) => q.eq("workspaceId", membership.workspaceId))
+            .filter((q) => q.neq(q.field("status"), "archived"))
             .collect(),
         ]);
 

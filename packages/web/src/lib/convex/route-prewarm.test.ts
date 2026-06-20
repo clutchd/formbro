@@ -1,6 +1,7 @@
 import type { ConvexReactClient } from "convex/react";
 import { api } from "@formbro/convex/_generated/api";
 import { prewarmWorkspaceFormRoute } from "app/(app)/dashboard/[workspace]/[form]/_prewarm";
+import { prewarmWorkspaceSettingsRoute } from "app/(app)/dashboard/[workspace]/settings/_prewarm";
 import { prewarmWorkspaceRoute } from "app/(app)/dashboard/[workspace]/_prewarm";
 import { describe, it } from "bun:test";
 import { getFunctionName } from "convex/server";
@@ -41,7 +42,7 @@ describe("convex:route-prewarm", () => {
     assert.equal(calls[0]?.name, "workspace:context");
   });
 
-  it("prewarms form context with workspace and form slugs", async () => {
+  it("prewarms form route data from workspace context", async () => {
     const calls: Array<{ name: string; args: unknown }> = [];
 
     const convex = {
@@ -59,9 +60,39 @@ describe("convex:route-prewarm", () => {
 
     await prewarmWorkspaceFormRoute(convex, "workspace-slug", "form-slug");
 
-    assert.equal(calls.length, 1);
+    assert.equal(calls.length, 2);
     assert.equal(calls[0]?.name, "workspace:context");
     assert.deepEqual(calls[0]?.args, { workspaceSlug: "workspace-slug", formSlug: "form-slug" });
+    assert.equal(calls[1]?.name, "forms:list");
+    assert.deepEqual(calls[1]?.args, { workspaceId: "workspace-id" });
+  });
+
+  it("prewarms settings route data from workspace context", async () => {
+    const calls: Array<{ name: string; args: unknown }> = [];
+
+    const convex = {
+      prewarmQuery: ({ query, args }: { query: typeof api.workspace.context; args: unknown }) => {
+        calls.push({ name: getFunctionName(query), args });
+      },
+      query: async () => ({
+        ok: true,
+        data: {
+          workspace: { _id: "settings-workspace-id" },
+        },
+      }),
+    } as unknown as ConvexReactClient;
+
+    await prewarmWorkspaceSettingsRoute(convex, "workspace-slug");
+
+    assert.equal(calls.length, 4);
+    assert.equal(calls[0]?.name, "workspace:context");
+    assert.deepEqual(calls[0]?.args, { workspaceSlug: "workspace-slug" });
+    assert.equal(calls[1]?.name, "forms:list");
+    assert.deepEqual(calls[1]?.args, { workspaceId: "settings-workspace-id" });
+    assert.equal(calls[2]?.name, "workspace:listMembers");
+    assert.deepEqual(calls[2]?.args, { workspaceId: "settings-workspace-id" });
+    assert.equal(calls[3]?.name, "workspace:billing");
+    assert.deepEqual(calls[3]?.args, { workspaceId: "settings-workspace-id" });
   });
 
   it("skips form dependent prewarm when context has no form", async () => {

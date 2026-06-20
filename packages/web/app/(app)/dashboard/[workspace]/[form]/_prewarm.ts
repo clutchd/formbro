@@ -11,9 +11,13 @@ export async function prewarmWorkspaceFormRoute(
 
   try {
     const context = await convex.query(api.workspace.context, { workspaceSlug, formSlug });
-    if (!context?.ok || !context.data.form) {
+    if (!context?.ok) {
       return;
     }
+
+    prewarmRoute(convex, [
+      { query: api.forms.list, args: { workspaceId: context.data.workspace._id } },
+    ]);
   } catch (error) {
     console.warn("Workspace form dependent prewarm failed", error);
   }

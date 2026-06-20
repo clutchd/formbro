@@ -4,13 +4,13 @@ import type { FunctionReturnType } from "convex/server";
 import type { ReactNode } from "react";
 import { api } from "@formbro/convex/_generated/api";
 import { getErrorMessage } from "@formbro/convex/errors";
-import { useConvex, useQuery } from "convex/react";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { useConvex } from "convex/react";
 import { useMemo } from "react";
 import { Loading } from "@/components/loading";
 import { PageState } from "@/components/page-state";
 import { type RoutePrewarmOptions, useRoutePrewarm } from "@/lib/convex/route-prewarm";
 import { createSegmentData } from "@/lib/data-segment";
+import { useWorkspaceData } from "../_data-provider";
 import { prewarmWorkspaceFormRoute } from "./_prewarm";
 
 type WorkspaceContext = FunctionReturnType<typeof api.workspace.context>;
@@ -36,25 +36,12 @@ export function useWorkspaceFormPrewarmIntent(
 }
 
 export function WorkspaceFormDataProvider({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const { workspace: workspaceSlug, form: formSlug } = useParams<{
-    workspace: string;
-    form: string;
-  }>();
-  const context = useQuery(api.workspace.context, { workspaceSlug, formSlug });
+  const { context } = useWorkspaceData();
   const contextData = context?.ok ? context.data : null;
   const workspace = contextData?.workspace;
   const form = contextData?.form;
-  const shouldRedirect =
-    contextData !== null && !contextData.isCanonical && pathname !== contextData.canonicalPath;
 
   const value = useMemo(() => ({ context, workspace, form }), [context, workspace, form]);
-
-  if (shouldRedirect) {
-    router.replace(contextData.canonicalPath);
-    return <Loading title="form" />;
-  }
 
   return <workspaceFormSegment.Provider value={value}>{children}</workspaceFormSegment.Provider>;
 }
