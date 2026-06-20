@@ -106,8 +106,8 @@ export function InternalDialogForm<
             },
           }}
           onSuccess={(context) => {
-            handleOpenChange(false);
             onSuccess?.(context);
+            handleOpenChange(false);
           }}
           onError={onError}
         />

@@ -12,7 +12,7 @@ export default function WorkspaceFormLayout({ children }: { children: React.Reac
       <WorkspaceFormContentBoundary>
         <SidebarProvider defaultOpen={true} className="flex h-screen flex-col">
           <div className="flex flex-1 overflow-hidden bg-sidebar">
-            <Sidebar className="relative w-40! shrink-0 border-r">
+            <Sidebar className="relative w-50 shrink-0 border-r">
               <FormSidebar />
             </Sidebar>
             <SidebarInset>{children}</SidebarInset>

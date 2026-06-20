@@ -3,15 +3,17 @@
 import { api } from "@formbro/convex/_generated/api";
 import { CREATE_FORM } from "@formbro/convex/system/forms/create_form";
 import { RiAddLine } from "@remixicon/react";
-import { useMutation } from "convex/react";
+import { useConvex, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { InternalDialogForm } from "@/components/internal-dialog-form";
+import { prewarmWorkspaceFormRoute } from "./[form]/_prewarm";
 import { useRequiredWorkspaceData } from "./_data-provider";
 
 export function CreateForm({ children }: { children?: React.ReactNode }) {
   const router = useRouter();
   const { workspace } = useRequiredWorkspaceData();
+  const convex = useConvex();
   const createForm = useMutation(api.forms.create);
 
   return (
@@ -27,7 +29,9 @@ export function CreateForm({ children }: { children?: React.ReactNode }) {
         });
 
         if (form?.ok) {
-          router.prefetch(`/dashboard/${workspace.slug}/${form.data.slug}`);
+          const href = `/dashboard/${workspace.slug}/${form.data.slug}`;
+          router.prefetch(href);
+          await prewarmWorkspaceFormRoute(convex, workspace.slug, form.data.slug);
         }
 
         return form;

@@ -57,35 +57,6 @@ export default defineSchema({
   //     .index("by_form_id", ["formId"])
   //     .index("by_form_submitted", ["formId", "submittedAt"]),
 
-  //   plans: defineTable({
-  //     key: v.string(),
-  //     version: v.number(),
-  //     name: v.string(),
-  //     trialDays: v.optional(v.number()),
-  //     productId: v.optional(v.string()),
-  //     monthlyPriceId: v.optional(v.string()),
-  //     annualPriceId: v.optional(v.string()),
-  //   })
-  //     .index("by_key", ["key"])
-  //     .index("by_key_version", ["key", "version"])
-  //     .index("by_monthly_price_id", ["monthlyPriceId"])
-  //     .index("by_annual_price_id", ["annualPriceId"]),
-
-  //   subscriptions: defineTable({
-  //     planId: v.id("plans"),
-  //     referenceId: v.string(),
-  //     stripeCustomerId: v.string(),
-  //     stripeSubscriptionId: v.string(),
-  //     status: v.string(),
-  //     periodStart: v.optional(v.number()),
-  //     periodEnd: v.optional(v.number()),
-  //     cancelAtPeriodEnd: v.optional(v.boolean()),
-  //     trialStart: v.optional(v.number()),
-  //     trialEnd: v.optional(v.number()),
-  //   })
-  //     .index("by_reference_id", ["referenceId"])
-  //     .index("by_stripe_subscription_id", ["stripeSubscriptionId"]),
-
   //   templates: defineTable({
   //     sourceId: v.id("template_sources"),
   //     schemaVersion: v.optional(v.string()),
