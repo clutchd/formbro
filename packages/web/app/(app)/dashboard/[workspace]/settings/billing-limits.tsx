@@ -64,8 +64,6 @@ function LimitMeter({
 
 export function BillingLimits() {
   const { activeForms, billing, workspace } = useRequiredWorkspaceSettingsData();
-  const monthlySubmissions = 0; // TODO: get from workspace
-  const storageBytes = 0; // TODO: get from workspace
 
   return (
     <Card>
@@ -91,13 +89,13 @@ export function BillingLimits() {
         />
         <LimitMeter
           label="Submissions"
-          used={monthlySubmissions}
+          used={billing.usage.monthlySubmissions}
           limit={billing.limits.monthlySubmissions ?? null}
           detail="Resets monthly"
         />
         <LimitMeter
           label="Storage"
-          used={storageBytes}
+          used={billing.usage.storageBytes}
           limit={billing.limits.storageBytes ?? null}
           formatValue={formatStorage}
         />

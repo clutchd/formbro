@@ -81,7 +81,7 @@ export default function ShareFormPage() {
           <div>
             <TypographyH2>Link Preview</TypographyH2>
             <TypographyP className="text-sm text-muted-foreground">
-              This is how your link appears when shared on social, in messages, or search.
+              This is how your link appears when shared on social media, in messages, and more.
             </TypographyP>
           </div>
 

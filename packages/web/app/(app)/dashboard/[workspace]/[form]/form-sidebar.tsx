@@ -27,19 +27,19 @@ export function FormSidebar() {
           <SidebarMenuButton
             asChild
             className="data-[active=true]:bg-accent"
-            isActive={pathname === `${formPath}/share`}
+            isActive={pathname === `${formPath}/submissions`}
           >
-            <Link prefetch href={`${formPath}/share`}>
-              <RiShareLine /> Share
+            <Link prefetch href={`${formPath}/submissions`}>
+              <RiInboxLine /> Submissions
             </Link>
           </SidebarMenuButton>
           <SidebarMenuButton
             asChild
             className="data-[active=true]:bg-accent"
-            isActive={pathname === `${formPath}/submissions`}
+            isActive={pathname === `${formPath}/share`}
           >
-            <Link prefetch href={`${formPath}/submissions`}>
-              <RiInboxLine /> Submissions
+            <Link prefetch href={`${formPath}/share`}>
+              <RiShareLine /> Share
             </Link>
           </SidebarMenuButton>
           <SidebarMenuButton

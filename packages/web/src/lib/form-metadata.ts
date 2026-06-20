@@ -7,7 +7,7 @@ export function getFormMetadata(
   baseUrl: string = APP_URL,
 ) {
   const url = `${baseUrl}/f/${formSlug}`;
-  const description = "Open this form to submit your response.";
+  const description = "Made with Formbro.  Keep your forms simple, bro.";
   const title = `${formName} - ${workspaceName}`;
 
   return {
