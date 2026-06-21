@@ -6,7 +6,7 @@ import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess, getWorkspaceAccess } from "./access";
 import { requireWorkspaceSubscription } from "./billing";
 import { getWorkspaceFormsUsed, isWorkspaceLimitReached } from "./billingUtils";
-import { defineErrors } from "./errors";
+import { defineErrors, FormBroError } from "./errors";
 import { _delete as _deleteSubmission } from "./submissions";
 
 export const ERRORS = defineErrors({
@@ -40,7 +40,15 @@ export const create = mutation({
       return fail({ data: null, error: ERRORS.ACTIVE_FORM_LIMIT });
     }
 
-    const slug = nano();
+    let slug = nano();
+    while (
+      await ctx.db
+        .query("forms")
+        .withIndex("by_slug", (q) => q.eq("slug", slug))
+        .unique()
+    ) {
+      slug = nano();
+    }
 
     await ctx.db.insert("forms", {
       status: "draft",

@@ -411,31 +411,27 @@ export const billing = query({
       return fail({ data: undefined, error: subscriptionState.error });
     }
 
-    // const storageUsedBytes = await getTeamStorageUsedBytes(ctx, args.teamId);
-    // const subscription = subscriptionState.subscription;
+    const monthlySubmissionPeriod = getWorkspaceMonthlySubmissionPeriod(
+      subscriptionState.data.subscription,
+    );
+    const [formsUsed, monthlySubmissionsUsed, storageUsedBytes] = await Promise.all([
+      getWorkspaceFormsUsed(ctx, args.workspaceId),
+      getWorkspaceMonthlySubmissionsUsed(ctx, args.workspaceId, monthlySubmissionPeriod),
+      getWorkspaceStorageUsedBytes(ctx, args.workspaceId),
+    ]);
 
     return ok({
       workspaceId: subscriptionState.data.workspace._id,
       plan: subscriptionState.data.plan,
       planLabel: subscriptionState.data.planLabel,
       limits: subscriptionState.data.limits,
-      // monthlyPriceUsd: TEAM_PLAN_MONTHLY_PRICE_USD[subscriptionState.plan],
-      // storageLimitBytes: TEAM_PLAN_STORAGE_LIMIT_BYTES[subscriptionState.plan],
-      // storageUsedBytes,
+      usage: {
+        forms: formsUsed,
+        monthlySubmissions: monthlySubmissionsUsed,
+        monthlySubmissionPeriod,
+        storageBytes: storageUsedBytes,
+      },
       hasActiveSubscription: subscriptionState.data.hasActiveSubscription,
-      // subscriptionStatus:
-      //   subscription?.status ?? subscriptionState.team.billingStatus ?? null,
-      // stripeCustomerId:
-      //   subscriptionState.team.stripeCustomerId ??
-      //   subscription?.stripeCustomerId ??
-      //   null,
-      // stripeSubscriptionId:
-      //   subscription?.stripeSubscriptionId ??
-      //   subscriptionState.team.stripeSubscriptionId ??
-      //   null,
-      // stripePriceId: subscription?.priceId ?? subscriptionState.team.stripePriceId ?? null,
-      // currentPeriodEnd: subscription?.currentPeriodEnd ?? null,
-      // role: membership.role,
       canManageBilling: userWithAccess.data.membership.role === "owner",
       canDelete: subscriptionState.data.canDelete,
     });
