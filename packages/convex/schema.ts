@@ -2,6 +2,8 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { PLANS } from "./billingUtils";
 
+const SubmissionValue = v.union(v.string());
+
 export default defineSchema({
   workspaces: defineTable({
     name: v.string(),
@@ -39,67 +41,31 @@ export default defineSchema({
     publishedSchemaId: v.optional(v.id("formSchemas")),
     status: v.union(v.literal("draft"), v.literal("open"), v.literal("closed")),
   })
+    .index("by_slug", ["slug"])
     .index("by_workspace_and_slug", ["workspaceId", "slug"])
     .index("by_workspace", ["workspaceId"])
     .index("by_workspace_and_status", ["workspaceId", "status"]),
 
-  //   submissions: defineTable({
-  //     formId: v.id("forms"),
-  //     schemaId: v.id("schemas"),
-  //     data: v.string(), // TODO: better data storage
-  //     submittedAt: v.number(),
-  //   })
-  //     .index("by_form_id", ["formId"])
-  //     .index("by_form_submitted", ["formId", "submittedAt"]),
+  formSchemas: defineTable({
+    formId: v.id("forms"),
+    schema: v.string(),
+    status: v.union(v.literal("draft"), v.literal("published")),
+    createdBy: v.optional(v.id("workspaceMembers")),
+    publishedTime: v.optional(v.number()),
+  })
+    .index("by_form_id", ["formId"])
+    .index("by_schema_status", ["formId", "status"]),
 
-  //   templates: defineTable({
-  //     sourceId: v.id("template_sources"),
-  //     schemaVersion: v.optional(v.string()),
-  //     schema: v.optional(v.string()),
-  //     slug: v.optional(v.string()),
-  //     status: v.union(
-  //       v.literal("pending"),
-  //       v.literal("in_progress"),
-  //       v.literal("complete"),
-  //       v.literal("failed"),
-  //     ),
-  //     publicationStatus: v.union(v.literal("draft"), v.literal("published")),
-  //     attempts: v.number(),
-  //   })
-  //     .index("by_schema_version", ["schemaVersion"])
-  //     .index("by_status", ["status"])
-  //     .index("by_slug", ["slug"])
-  //     .index("by_publication_status", ["publicationStatus"]),
-
-  //   template_providers: defineTable({
-  //     name: v.string(),
-  //     baseUrl: v.string(),
-  //     discoverUrl: v.string(),
-  //     formUrl: v.string(),
-  //   }).index("by_name", ["name"]),
-
-  //   template_sources: defineTable({
-  //     provider: v.string(),
-  //     slug: v.string(),
-  //     formId: v.optional(v.string()),
-  //     rawHtml: v.optional(v.string()),
-  //     markdown: v.optional(v.string()),
-  //     status: v.union(
-  //       v.literal("pending"),
-  //       v.literal("in_progress"),
-  //       v.literal("complete"),
-  //       v.literal("failed"),
-  //     ),
-  //     attempts: v.number(),
-  //   })
-  //     .index("by_status", ["status"])
-  //     .index("by_provider_slug", ["provider", "slug"]),
-
-  //   usage: defineTable({
-  //     organizationId: v.string(),
-  //     feature: v.string(),
-  //     used: v.number(),
-  //     periodStart: v.optional(v.number()),
-  //     periodEnd: v.optional(v.number()),
-  //   }).index("by_org_feature", ["organizationId", "feature"]),
+  submissions: defineTable({
+    workspaceId: v.id("workspaces"),
+    formId: v.id("forms"),
+    schemaId: v.id("formSchemas"),
+    data: v.record(v.string(), SubmissionValue),
+    bytes: v.number(),
+    submittedTime: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_workspace_submitted", ["workspaceId", "submittedTime"])
+    .index("by_form_id", ["formId"])
+    .index("by_form_submitted", ["formId", "submittedTime"]),
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import type { Doc } from "@formbro/convex/_generated/dataModel";
+import type { Metadata } from "next";
 import { APP_URL } from "@formbro/shared/brand";
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
@@ -11,7 +12,7 @@ import { RiClipboardLine, RiExternalLinkLine, RiFileTextLine } from "@remixicon/
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
-import { getFormMetadata } from "@/lib/form-metadata";
+import { getFormMetadata, getOpenGraphImageUrl } from "@/lib/form-metadata";
 import { useRequiredWorkspaceFormData } from "../_data-provider";
 
 function getShareMessage(status: Doc<"forms">["status"]) {
@@ -34,7 +35,15 @@ export default function ShareFormPage() {
   const [copied, setCopied] = useState(false);
   const shareId = useId();
   const shareUrl = `${APP_URL}/f/${form.slug}`;
-  const shareMetadata = getFormMetadata(form.name, form.slug, workspace.name);
+  const metadata = getFormMetadata({
+    formName: form.name,
+    formSlug: form.slug,
+    workspaceName: workspace.name,
+    baseUrl: APP_URL,
+  });
+  const ogImageUrl = metadata.openGraph?.images
+    ? getOpenGraphImageUrl(metadata.openGraph.images)
+    : undefined;
 
   const copyToClipboard = async () => {
     try {
@@ -75,7 +84,7 @@ export default function ShareFormPage() {
           </div>
         </Card>
 
-        <Card className="gap-5 lg:col-span-2">
+        <Card className="gap-5 rounded-none lg:col-span-2">
           <div>
             <TypographyH2>Link Preview</TypographyH2>
             <TypographyP className="text-sm text-muted-foreground">
@@ -87,22 +96,18 @@ export default function ShareFormPage() {
             <div className="overflow-hidden rounded-lg border bg-muted/20">
               <div className="space-y-1 px-3.5 py-3">
                 <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
-                  {shareMetadata.openGraph.siteName}
+                  {metadata.openGraph?.siteName}
                 </p>
                 <p className="text-sm leading-snug font-semibold">
-                  {shareMetadata.openGraph.title}
+                  {metadata.openGraph?.title?.toString()}
                 </p>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  {shareMetadata.openGraph.description}
+                  {metadata.openGraph?.description}
                 </p>
               </div>
               <div className="flex aspect-2/1 items-center justify-center border-t bg-muted/40">
-                {shareMetadata.openGraph.image ? (
-                  <img
-                    src={shareMetadata.openGraph.image}
-                    alt=""
-                    className="size-full object-cover"
-                  />
+                {ogImageUrl ? (
+                  <img src={ogImageUrl} alt="" className="size-full object-cover" />
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <div className="flex size-10 items-center justify-center border bg-background">

@@ -11,13 +11,13 @@ import {
 export function PageState({
   children,
   description,
-  error,
+  status = "info",
   icon,
   title,
 }: {
   children?: ReactNode;
   description?: ReactNode;
-  error?: boolean;
+  status?: "error" | "warning" | "info";
   icon?: ReactNode;
   title: ReactNode;
 }) {
@@ -28,7 +28,13 @@ export function PageState({
           {icon ? (
             <EmptyMedia
               variant="icon"
-              className={error ? "border-destructive-border text-destructive" : undefined}
+              className={
+                status === "error"
+                  ? "border-destructive-border text-destructive"
+                  : status === "warning"
+                    ? "border-amber-200 text-amber-600"
+                    : undefined
+              }
             >
               {icon}
             </EmptyMedia>

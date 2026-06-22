@@ -3,6 +3,7 @@ import { RiFileAiLine, RiInboxLine, RiSettings2Line, RiShareLine } from "@remixi
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRequiredWorkspaceFormData } from "./_data-provider";
+import { useFormSubmissionsPrewarmIntent } from "./submissions/_data-provider";
 
 export function FormSidebar() {
   const pathname = usePathname();
@@ -10,6 +11,7 @@ export function FormSidebar() {
   const workspaceSlug = workspace.slug;
   const formSlug = form.slug;
   const formPath = `/dashboard/${workspaceSlug}/${formSlug}`;
+  const submissionsPrewarm = useFormSubmissionsPrewarmIntent(workspaceSlug, formSlug);
 
   return (
     <>
@@ -29,7 +31,7 @@ export function FormSidebar() {
             className="data-[active=true]:bg-accent"
             isActive={pathname === `${formPath}/submissions`}
           >
-            <Link prefetch href={`${formPath}/submissions`}>
+            <Link {...submissionsPrewarm}>
               <RiInboxLine /> Submissions
             </Link>
           </SidebarMenuButton>
