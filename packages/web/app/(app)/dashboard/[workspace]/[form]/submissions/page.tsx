@@ -622,7 +622,7 @@ export default function FormSubmissionsPage() {
   const selectedLabel = selectedRows.length > 0 ? `${selectedRows.length} selected` : "All rows";
 
   return (
-    <Page className="max-w-none overflow-hidden py-5">
+    <Page className="flex max-w-none flex-1 flex-col py-5">
       <div className="mb-4 flex flex-row items-center justify-between gap-4">
         <div>
           <TypographyH1>All Submissions</TypographyH1>
