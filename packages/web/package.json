@@ -15,6 +15,7 @@
     "@formbro/ui": "workspace:*",
     "@remixicon/react": "catalog:",
     "@sentry/nextjs": "10.49.0",
+    "@tanstack/react-table": "8.21.3",
     "better-auth": "catalog:",
     "convex": "catalog:",
     "next": "catalog:",

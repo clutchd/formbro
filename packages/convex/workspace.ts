@@ -7,6 +7,7 @@ import { ERRORS as ACCESS_ERRORS, getWorkspaceAccess } from "./access";
 import { getUser, resolveUserProfile } from "./auth";
 import { getWorkspaceSubscriptionState } from "./billing";
 import {
+  aggregateWorkspaceSubmissions,
   getWorkspaceFormsUsed,
   getWorkspaceMonthlySubmissionPeriod,
   getWorkspaceMonthlySubmissionsUsed,
@@ -15,6 +16,7 @@ import {
 } from "./billingUtils";
 import { defineErrors } from "./errors";
 import { _deleteForm, ERRORS as FORM_ERRORS } from "./forms";
+import { datetimeFormatter } from "./lib";
 
 export const ERRORS = defineErrors({
   DELETE_WORKSPACE_PERMISSION_DENIED: {
@@ -414,6 +416,7 @@ export const billing = query({
     const monthlySubmissionPeriod = getWorkspaceMonthlySubmissionPeriod(
       subscriptionState.data.subscription,
     );
+
     const [formsUsed, monthlySubmissionsUsed, storageUsedBytes] = await Promise.all([
       getWorkspaceFormsUsed(ctx, args.workspaceId),
       getWorkspaceMonthlySubmissionsUsed(ctx, args.workspaceId, monthlySubmissionPeriod),
@@ -435,5 +438,18 @@ export const billing = query({
       canManageBilling: userWithAccess.data.membership.role === "owner",
       canDelete: subscriptionState.data.canDelete,
     });
+  },
+});
+
+export const metrics = query({
+  args: {
+    workspaceId: v.id("workspaces"),
+  },
+  handler: async (ctx, args) => {
+    const access = await getWorkspaceAccess(ctx, args.workspaceId);
+    if (!access.ok) return fail({ data: null, error: access.error });
+
+    const stats = await aggregateWorkspaceSubmissions(ctx, args.workspaceId);
+    return ok(Object.fromEntries(stats.byForm));
   },
 });

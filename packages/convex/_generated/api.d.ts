@@ -15,7 +15,6 @@ import type * as billing from "../billing.js";
 import type * as billingUtils from "../billingUtils.js";
 import type * as emails from "../emails.js";
 import type * as errors from "../errors.js";
-import type * as formSchema from "../formSchema.js";
 import type * as forms from "../forms.js";
 import type * as http from "../http.js";
 import type * as lib from "../lib.js";
@@ -40,7 +39,6 @@ declare const fullApi: ApiFromModules<{
   billingUtils: typeof billingUtils;
   emails: typeof emails;
   errors: typeof errors;
-  formSchema: typeof formSchema;
   forms: typeof forms;
   http: typeof http;
   lib: typeof lib;

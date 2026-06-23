@@ -1,12 +1,13 @@
+import { createDefaultFormSchema, JsonSerialize } from "@formbro/core/schema/form";
 import { nano } from "@formbro/shared/nanoid";
 import { fail, ok } from "@formbro/shared/result";
 import { v } from "convex/values";
-import type { Doc, Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess, getWorkspaceAccess } from "./access";
 import { requireWorkspaceSubscription } from "./billing";
 import { getWorkspaceFormsUsed, isWorkspaceLimitReached } from "./billingUtils";
-import { defineErrors, FormBroError } from "./errors";
+import { defineErrors } from "./errors";
 import { _delete as _deleteSubmission } from "./submissions";
 
 export const ERRORS = defineErrors({
@@ -17,6 +18,14 @@ export const ERRORS = defineErrors({
   FORM_NOT_FOUND: {
     message: "Form not found.",
     status: "NOT_FOUND",
+  },
+  FORM_SCHEMA_NOT_FOUND: {
+    message: "Form schema not found.",
+    status: "NOT_FOUND",
+  },
+  SCHEMA_INVALID: {
+    message: "Form schema is invalid.",
+    status: "UNPROCESSABLE_ENTITY",
   },
 });
 
@@ -50,12 +59,22 @@ export const create = mutation({
       slug = nano();
     }
 
-    await ctx.db.insert("forms", {
+    const formId = await ctx.db.insert("forms", {
       status: "draft",
       slug,
       workspaceId: args.workspaceId,
       name: args.name,
     });
+
+    const schema = createDefaultFormSchema(args.name, slug);
+    const draftSchemaId = await ctx.db.insert("formSchemas", {
+      formId,
+      schema: JsonSerialize(schema),
+      status: "draft",
+      createdBy: access.data.membership._id,
+    });
+
+    await ctx.db.patch(formId, { draftSchemaId });
 
     return ok({ slug });
   },
@@ -85,14 +104,21 @@ export const getPublic = query({
 
     if (!form) return null;
 
-    const publishedSchema = form.publishedSchemaId
-      ? await ctx.db.get(form.publishedSchemaId)
-      : null;
+    const [publishedSchema, workspace] = await Promise.all([
+      form.publishedSchemaId ? await ctx.db.get(form.publishedSchemaId) : null,
+      ctx.db.get(form.workspaceId),
+    ]);
 
     return ok({
+      id: form._id,
+      workspace: {
+        name: workspace?.name,
+        slug: workspace?.slug,
+      },
       name: form.name,
       slug: form.slug,
       status: form.status,
+      schemaId: publishedSchema?._id ?? null,
       schema: publishedSchema?.schema ?? null,
     });
   },

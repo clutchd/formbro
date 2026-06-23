@@ -62,6 +62,32 @@ export const FormSchema = z
   });
 
 export type FormInput = z.input<typeof FormSchema>;
+export type FormOutput = z.output<typeof FormSchema>;
+
+export function createDefaultFormSchema({ id, name }: { id: string; name: string }): FormOutput {
+  return FormSchema.parse({
+    id,
+    name,
+    elements: [
+      {
+        id: "title",
+        name: "Title",
+        type: "heading",
+        label: name,
+        level: 1,
+      },
+    ],
+  });
+}
+
+export function JsonSerialize(schema: FormInput) {
+  return JSON.stringify(FormSchema.parse(schema));
+}
+
+export function JsonParse(schema: string) {
+  return FormSchema.parse(JSON.parse(schema));
+}
+
 export type FormValues<T extends FormInput = FormInput> = ExtractFormData<T> &
   Record<string, string>;
 export type FormActionResult<TData = undefined, TError = unknown> =
