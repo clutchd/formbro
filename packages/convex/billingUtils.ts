@@ -282,7 +282,7 @@ export function getWorkspaceMonthlySubmissionPeriod(
     currentPeriodEnd?: number | null;
     priceId?: string | null;
     status?: string | null;
-  },
+  } | null,
   now = Date.now(),
 ): BillingUsagePeriod {
   if (!subscription?.currentPeriodEnd) {
