@@ -58,13 +58,21 @@ export function WorkspaceSettingsContentBoundary({ children }: { children: React
 
   if (!billing.ok) {
     return (
-      <PageState title="Billing unavailable" description={getErrorMessage(billing.error)} error />
+      <PageState
+        title="Billing unavailable"
+        description={getErrorMessage(billing.error)}
+        status="error"
+      />
     );
   }
 
   if (!members.ok) {
     return (
-      <PageState title="Members unavailable" description={getErrorMessage(members.error)} error />
+      <PageState
+        title="Members unavailable"
+        description={getErrorMessage(members.error)}
+        status="error"
+      />
     );
   }
 

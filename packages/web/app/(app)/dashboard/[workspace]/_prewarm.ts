@@ -11,6 +11,10 @@ export async function prewarmWorkspaceRoute(convex: ConvexReactClient, workspace
     }
     prewarmRoute(convex, [
       { query: api.forms.list, args: { workspaceId: context.data.workspace._id } },
+      {
+        query: api.workspace.metrics,
+        args: { workspaceId: context.data.workspace._id },
+      },
     ]);
   } catch (error) {
     console.warn("Workspace dependent prewarm failed", error);

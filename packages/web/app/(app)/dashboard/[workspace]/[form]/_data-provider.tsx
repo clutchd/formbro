@@ -57,7 +57,11 @@ export function WorkspaceFormContentBoundary({ children }: { children: ReactNode
 
   if (!context.ok) {
     return (
-      <PageState title="Form unavailable" description={getErrorMessage(context.error)} error />
+      <PageState
+        title="Form unavailable"
+        description={getErrorMessage(context.error)}
+        status="error"
+      />
     );
   }
 
@@ -66,7 +70,7 @@ export function WorkspaceFormContentBoundary({ children }: { children: ReactNode
       <PageState
         title="Form unavailable"
         description="This form does not exist or you no longer have access."
-        error
+        status="error"
       />
     );
   }

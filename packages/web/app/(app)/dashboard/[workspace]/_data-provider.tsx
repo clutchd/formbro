@@ -22,6 +22,9 @@ const workspaceSegment = createSegmentData<{
     | Extract<FunctionReturnType<typeof api.workspace.context>, { ok: true }>["data"]["form"]
     | undefined;
   forms: Extract<FunctionReturnType<typeof api.forms.list>, { ok: true }>["data"] | undefined;
+  metrics:
+    | Extract<FunctionReturnType<typeof api.workspace.metrics>, { ok: true }>["data"]
+    | undefined;
 }>("Workspace");
 
 export function useWorkspacePrewarmIntent(
@@ -55,10 +58,15 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
     api.forms.list,
     workspaceData ? { workspaceId: workspaceData._id } : "skip",
   );
+  const metricsResult = useQuery(
+    api.workspace.metrics,
+    workspaceData ? { workspaceId: workspaceData._id } : "skip",
+  );
   const forms = formsResult?.ok ? formsResult.data : undefined;
+  const metrics = metricsResult?.ok ? metricsResult.data : undefined;
   const value = useMemo(
-    () => ({ context, workspace: workspaceData, form: formData, forms }),
-    [context, workspaceData, formData, forms],
+    () => ({ context, workspace: workspaceData, form: formData, forms, metrics }),
+    [context, workspaceData, formData, forms, metrics],
   );
   const shouldRedirect =
     contextData !== null && !contextData.isCanonical && pathname !== contextData.canonicalPath;
@@ -84,7 +92,7 @@ export function WorkspaceContentBoundary({ children }: { children: ReactNode }) 
         icon={<RiErrorWarningLine />}
         title="Workspace unavailable"
         description="This workspace does not exist or you no longer have access."
-        error
+        status="error"
       />
     );
   }

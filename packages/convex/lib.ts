@@ -4,8 +4,22 @@ import { v, type Validator } from "convex/values";
 export const TERABYTE = 1024 ** 4;
 export const GIGABYTE = 1024 ** 3;
 export const MEGABYTE = 1024 ** 2;
+export const KILOBYTE = 1024;
 
 export const numberFormatter = new Intl.NumberFormat("en-US");
+
+export const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+});
+
+export const datetimeFormatter = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+});
 
 export function formatUsd(amount: number) {
   const hasCents = !Number.isInteger(amount);
@@ -27,7 +41,11 @@ export function formatStorage(bytes: number) {
     return `${Math.round(bytes / (1024 * MEGABYTE))} GB`;
   }
 
-  return `${Math.round(bytes / MEGABYTE)} MB`;
+  if (bytes >= 1024 * KILOBYTE) {
+    return `${Math.round(bytes / (1024 * KILOBYTE))} MB`;
+  }
+
+  return `${Math.round(bytes / KILOBYTE)} KB`;
 }
 
 export function Result<T extends Validator<any, any, any>>(schema: T) {

@@ -1,8 +1,8 @@
 "use client";
 
 import { hasActiveWorkspaceSubscriptionStatus } from "@formbro/convex/billingUtils";
+import { datetimeFormatter, formatStorage, numberFormatter } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
-import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
 import { tuiFont, TypographyH1, TypographySubheading } from "@formbro/ui/typography";
 import { RiArrowRightLine, RiBankCardLine, RiFileAiLine, RiFileTextLine } from "@remixicon/react";
@@ -17,14 +17,6 @@ import { useWorkspaceData } from "../_data-provider";
 import { CreateForm } from "../create-form-form";
 import { useWorkspaceSettingsPrewarmIntent } from "../settings/_data-provider";
 
-type Form = NonNullable<ReturnType<typeof useWorkspaceData>["forms"]>[number];
-
-const createdDateFormatter = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-
 function FormMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
@@ -34,7 +26,15 @@ function FormMetric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function FormListRow({ form, workspaceSlug }: { form: Form; workspaceSlug: string }) {
+function FormListRow({
+  form,
+  metrics,
+  workspaceSlug,
+}: {
+  form: NonNullable<ReturnType<typeof useWorkspaceData>["forms"]>[number];
+  metrics: NonNullable<ReturnType<typeof useWorkspaceData>["metrics"]>[string];
+  workspaceSlug: string;
+}) {
   const formPrewarm = useWorkspaceFormPrewarmIntent(workspaceSlug, form.slug);
 
   return (
@@ -52,14 +52,26 @@ function FormListRow({ form, workspaceSlug }: { form: Form; workspaceSlug: strin
             <FormStatusBadge status={form.status} />
           </div>
           <p className="mt-1 truncate text-xs text-muted-foreground">
-            /{form.slug} · Created {createdDateFormatter.format(form._creationTime)}
+            /{form.slug} · Created {datetimeFormatter.format(form._creationTime)}
           </p>
         </div>
       </div>
 
-      <FormMetric label="Submissions" value="Not tracked" />
-      <FormMetric label="Storage" value="Not tracked" />
-      <FormMetric label="Last Submission" value="Not tracked" />
+      <FormMetric
+        label="Submissions"
+        value={metrics ? numberFormatter.format(metrics.submissions) : "—"}
+      />
+      <FormMetric label="Storage" value={metrics ? formatStorage(metrics.storageBytes) : "—"} />
+      <FormMetric
+        label="Last Submission"
+        value={
+          metrics?.lastSubmittedTime
+            ? datetimeFormatter.format(metrics.lastSubmittedTime)
+            : metrics
+              ? "None"
+              : "—"
+        }
+      />
 
       <RiArrowRightLine className="hidden size-4 text-muted-foreground transition-transform group-hover/row:translate-x-1 md:block" />
     </Link>
@@ -68,7 +80,7 @@ function FormListRow({ form, workspaceSlug }: { form: Form; workspaceSlug: strin
 
 export default function FormsDashboardContent() {
   const { workspace: workspaceSlug } = useParams<{ workspace: string }>();
-  const { forms, workspace } = useWorkspaceData();
+  const { forms, metrics, workspace } = useWorkspaceData();
   const settingsPrewarm = useWorkspaceSettingsPrewarmIntent(workspaceSlug);
 
   if (!forms) {
@@ -116,7 +128,14 @@ export default function FormsDashboardContent() {
         <CreateForm />
       </div>
       {forms.map((form) => (
-        <FormListRow key={form._id} form={form} workspaceSlug={workspaceSlug} />
+        <FormListRow
+          key={form._id}
+          form={form}
+          metrics={
+            metrics?.[form._id] ?? { submissions: 0, storageBytes: 0, lastSubmittedTime: null }
+          }
+          workspaceSlug={workspaceSlug}
+        />
       ))}
     </Page>
   );

@@ -1,5 +1,7 @@
 import { hasString } from "@formbro/shared/util";
 import { v } from "convex/values";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import { formatStorage, GIGABYTE, numberFormatter } from "./lib";
 
 export const WORKSPACE_TRIAL_DAYS = 7;
@@ -19,6 +21,13 @@ const BILLING_STATUSES = [
   "paused",
 ] as const;
 type BillingStatus = (typeof BILLING_STATUSES)[number];
+
+type BillingInterval = "monthly" | "annual";
+
+type BillingUsagePeriod = {
+  start: number;
+  end: number;
+};
 
 export const PLANS = ["basic", "pro"] as const;
 export type Plan = (typeof PLANS)[number];
@@ -42,6 +51,7 @@ const WORKSPACE_PLAN_MONTHLY_PRICE_USD: Record<Plan, number> = {
 };
 
 const WORKSPACE_PLAN_YEARLY_PRICE_USD_MULTIPLIER = 10;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const WORKSPACE_LIMITS: Record<
   WorkspacePlan,
@@ -141,9 +151,16 @@ export function getPlanDetails(plan: Plan) {
   };
 }
 
-export function resolvePlanFromStripePriceId(
-  stripePriceId: string | undefined | null,
-): Plan | null {
+export function getStripePriceIdForPlan(plan: Plan, interval: BillingInterval) {
+  const details = getPlanDetails(plan);
+  const priceId = interval === "annual" ? details.yearlyPriceId : details.monthlyPriceId;
+  return hasString(priceId) ? priceId : null;
+}
+
+export function resolvePlanFromStripePriceId(stripePriceId: string | undefined | null): {
+  plan: Plan;
+  interval: BillingInterval;
+} | null {
   if (!hasString(stripePriceId)) return null;
 
   const basicPriceId = process.env.STRIPE_BASIC_MONTHLY_PRICE_ID;
@@ -151,10 +168,18 @@ export function resolvePlanFromStripePriceId(
   const proPriceId = process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
   const proYearlyPriceId = process.env.STRIPE_PRO_YEARLY_PRICE_ID;
 
-  if (hasString(basicPriceId) && stripePriceId === basicPriceId) return "basic";
-  if (hasString(basicYearlyPriceId) && stripePriceId === basicYearlyPriceId) return "basic";
-  if (hasString(proPriceId) && stripePriceId === proPriceId) return "pro";
-  if (hasString(proYearlyPriceId) && stripePriceId === proYearlyPriceId) return "pro";
+  if (hasString(basicPriceId) && stripePriceId === basicPriceId) {
+    return { plan: "basic", interval: "monthly" };
+  }
+  if (hasString(basicYearlyPriceId) && stripePriceId === basicYearlyPriceId) {
+    return { plan: "basic", interval: "annual" };
+  }
+  if (hasString(proPriceId) && stripePriceId === proPriceId) {
+    return { plan: "pro", interval: "monthly" };
+  }
+  if (hasString(proYearlyPriceId) && stripePriceId === proYearlyPriceId) {
+    return { plan: "pro", interval: "annual" };
+  }
 
   return null;
 }
@@ -222,11 +247,65 @@ export function canDeleteWorkspace(input: {
   return !hasActiveWorkspaceSubscriptionStatus(input.workspaceBillingStatus);
 }
 
-export function getStripePriceIdForPlan(plan: Plan, interval: "monthly" | "annual") {
-  const details = getPlanDetails(plan);
-  const priceId = interval === "annual" ? details.yearlyPriceId : details.monthlyPriceId;
-  return hasString(priceId) ? priceId : null;
+function getUtcCalendarMonthPeriod(now: number): BillingUsagePeriod {
+  const date = new Date(now);
+  const start = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1);
+  const end = Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1);
+  return { start, end };
 }
+
+function addUtcMonths(value: number, months: number) {
+  const date = new Date(value);
+  const day = date.getUTCDate();
+  date.setUTCDate(1);
+  date.setUTCMonth(date.getUTCMonth() + months);
+  const daysInTargetMonth = new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+  date.setUTCDate(Math.min(day, daysInTargetMonth));
+  return date.getTime();
+}
+
+function getAnnualMonthlyPeriod(periodEnd: number, now: number): BillingUsagePeriod {
+  for (let monthOffset = -11; monthOffset <= 0; monthOffset += 1) {
+    const end = addUtcMonths(periodEnd, monthOffset);
+    if (now < end) {
+      return { start: addUtcMonths(periodEnd, monthOffset - 1), end };
+    }
+  }
+
+  return { start: addUtcMonths(periodEnd, -1), end: periodEnd };
+}
+
+export function getWorkspaceMonthlySubmissionPeriod(
+  subscription?: {
+    currentPeriodEnd?: number | null;
+    priceId?: string | null;
+    status?: string | null;
+  },
+  now = Date.now(),
+): BillingUsagePeriod {
+  if (!subscription?.currentPeriodEnd) {
+    return getUtcCalendarMonthPeriod(now);
+  }
+
+  const periodEnd = subscription.currentPeriodEnd * 1000;
+
+  if (subscription.status === "trialing") {
+    return {
+      start: periodEnd - WORKSPACE_TRIAL_DAYS * DAY_MS,
+      end: periodEnd,
+    };
+  }
+
+  const priceDetails = resolvePlanFromStripePriceId(subscription.priceId);
+  if (priceDetails?.interval === "annual") {
+    return getAnnualMonthlyPeriod(periodEnd, now);
+  }
+
+  return { start: addUtcMonths(periodEnd, -1), end: periodEnd };
+}
+
 export function isLimitReached(used: number, limit: number | null) {
   return limit !== null && used >= limit;
 }
@@ -240,7 +319,7 @@ export async function isWorkspaceLimitReached(
 }
 
 export async function getWorkspaceFormsUsed(
-  ctx: BillingCtx,
+  ctx: QueryCtx | MutationCtx,
   workspaceId: Id<"workspaces">,
   limit?: number,
 ) {
@@ -251,3 +330,72 @@ export async function getWorkspaceFormsUsed(
   return limit === undefined ? (await query.collect()).length : (await query.take(limit)).length;
 }
 
+export async function aggregateWorkspaceSubmissions(
+  ctx: QueryCtx | MutationCtx,
+  workspaceId: Id<"workspaces">,
+  options?: {
+    period?: BillingUsagePeriod;
+    limit?: number;
+  },
+) {
+  const period = options?.period;
+  const submissionQuery = ctx.db.query("submissions").withIndex("by_workspace_submitted", (q) => {
+    const workspaceQuery = q.eq("workspaceId", workspaceId);
+    return period
+      ? workspaceQuery.gte("submittedTime", period.start).lt("submittedTime", period.end)
+      : workspaceQuery;
+  });
+
+  const submissions =
+    options?.limit === undefined
+      ? await submissionQuery.collect()
+      : await submissionQuery.take(options.limit);
+
+  const byForm = new Map<
+    Id<"forms">,
+    {
+      submissions: number;
+      storageBytes: number;
+      lastSubmittedTime: number | null;
+    }
+  >();
+  let totalStorageBytes = 0;
+
+  for (const submission of submissions) {
+    totalStorageBytes += submission.bytes;
+
+    const existing = byForm.get(submission.formId);
+    if (!existing) {
+      byForm.set(submission.formId, {
+        submissions: 1,
+        storageBytes: submission.bytes,
+        lastSubmittedTime: submission.submittedTime,
+      });
+      continue;
+    }
+
+    existing.submissions += 1;
+    existing.storageBytes += submission.bytes;
+    existing.lastSubmittedTime = submission.submittedTime;
+  }
+
+  return { byForm, totalSubmissions: submissions.length, totalStorageBytes };
+}
+
+export async function getWorkspaceStorageUsedBytes(
+  ctx: QueryCtx | MutationCtx,
+  workspaceId: Id<"workspaces">,
+) {
+  const stats = await aggregateWorkspaceSubmissions(ctx, workspaceId);
+  return stats.totalStorageBytes;
+}
+
+export async function getWorkspaceMonthlySubmissionsUsed(
+  ctx: QueryCtx | MutationCtx,
+  workspaceId: Id<"workspaces">,
+  period: { start: number; end: number },
+  limit?: number,
+) {
+  const stats = await aggregateWorkspaceSubmissions(ctx, workspaceId, { period, limit });
+  return stats.totalSubmissions;
+}

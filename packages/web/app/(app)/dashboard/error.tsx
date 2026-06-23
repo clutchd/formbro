@@ -29,13 +29,11 @@ export default function DashboardError({
 
   return (
     <PageState
-      error
+      status="error"
       icon={<RiErrorWarningLine />}
       title="Dashboard unavailable"
       description={
-        IS_PROD
-          ? "Something went wrong while loading this dashboard. Try again, or head back to safety."
-          : `Error: ${error.message}`
+        "Something went wrong while loading this dashboard. Try again, or head back to safety."
       }
     >
       <>

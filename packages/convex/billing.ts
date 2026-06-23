@@ -87,8 +87,8 @@ export async function getWorkspaceSubscriptionState(
 
   const subscription = await getSubsctionByWorkspaceId(ctx, workspaceId);
 
-  const subscriptionPlan = resolvePlanFromStripePriceId(subscription?.priceId);
-  const plan = subscriptionPlan ?? normalizeWorkspacePlan(workspace.plan);
+  const subscriptionPriceDetails = resolvePlanFromStripePriceId(subscription?.priceId);
+  const plan = subscriptionPriceDetails?.plan ?? normalizeWorkspacePlan(workspace.plan);
   const hasActiveSubscription =
     hasActiveWorkspaceSubscriptionStatus(subscription?.status) ||
     hasActiveWorkspaceSubscriptionStatus(workspace.billingStatus) ||
@@ -194,8 +194,9 @@ export const syncSubscription = internalMutation({
         .unique();
     }
 
+    const priceDetails = resolvePlanFromStripePriceId(args.stripePriceId);
     const subscription = {
-      plan: resolvePlanFromStripePriceId(args.stripePriceId) ?? workspace?.plan,
+      plan: priceDetails?.plan ?? workspace?.plan,
       stripeCustomerId: args.stripeCustomerId ?? workspace?.stripeCustomerId,
       stripeSubscriptionId: args.stripeSubscriptionId,
       stripePriceId: args.stripePriceId ?? workspace?.stripePriceId,

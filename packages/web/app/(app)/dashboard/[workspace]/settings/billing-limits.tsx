@@ -1,4 +1,4 @@
-import { formatStorage, numberFormatter } from "@formbro/convex/lib";
+import { dateFormatter, formatStorage, numberFormatter } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Card } from "@formbro/ui/card";
 import { Progress } from "@formbro/ui/progress";
@@ -87,7 +87,7 @@ export function BillingLimits() {
           label="Submissions"
           used={billing.usage.monthlySubmissions}
           limit={billing.limits.monthlySubmissions ?? null}
-          detail="Resets monthly"
+          detail={`Resets on ${dateFormatter.format(new Date(billing.usage.monthlySubmissionPeriod.end))}`}
         />
         <LimitMeter
           label="Storage"

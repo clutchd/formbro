@@ -2,7 +2,6 @@ import { api } from "@formbro/convex/_generated/api";
 import { getErrorMessage } from "@formbro/convex/errors";
 import { APP_URL } from "@formbro/shared/brand";
 import { Button } from "@formbro/ui/button";
-import { Card } from "@formbro/ui/card";
 import { Spinner } from "@formbro/ui/spinner";
 import { TypographyH1, TypographySubheading } from "@formbro/ui/typography";
 import { RiExternalLinkLine } from "@remixicon/react";
