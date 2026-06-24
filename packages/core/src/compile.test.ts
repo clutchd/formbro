@@ -143,7 +143,7 @@ describe("compile", () => {
 
     expect(compiled.pages).toHaveLength(2);
     expect(compiled.pages[0]).toMatchObject({
-      label: "Next step",
+      label: undefined,
       fieldIds: ["title", "slug"],
     });
     expect(compiled.pages[0]?.sections[0]).toMatchObject({
@@ -163,6 +163,7 @@ describe("compile", () => {
       ],
     });
     expect(compiled.pages[1]).toMatchObject({
+      label: "Next step",
       fieldIds: ["email"],
     });
     expect(compiled.pages[1]?.sections[0]).toMatchObject({

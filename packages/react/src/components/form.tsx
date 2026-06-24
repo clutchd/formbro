@@ -154,7 +154,11 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
 
       {children?.(state)}
 
-      {isMultiPage && !onPercentChange && <Progress className="h-1" value={percent} />}
+      {isMultiPage && !onPercentChange ? (
+        <div className="pt-5 pb-1">
+          <Progress className="h-1" value={percent} />
+        </div>
+      ) : null}
 
       {debug && <pre>{JSON.stringify(state.tanstack.state, null, 2)}</pre>}
     </form>

@@ -2,12 +2,19 @@ import type { IFieldProps } from "@formbro/core/schema/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbro/ui/select";
 import { RiListCheck } from "@remixicon/react";
 import * as React from "react";
+import {
+  EditorSelectPreview,
+  FieldEditor,
+  choiceFieldEditorProperties,
+  type EditorFieldElement,
+  type EditorProps,
+} from "../editor";
 import { useFieldContext } from "../hooks/tanstack-context";
 
 export const icon = RiListCheck;
 export const color = "bg-emerald-100 text-emerald-600";
 
-export function component({ schema, ariaInvalid }: IFieldProps) {
+export const component = function SingleSelectComponent({ schema, ariaInvalid }: IFieldProps) {
   const field = useFieldContext<string>();
   const options =
     Array.isArray(schema.options) && schema.options.length > 0
@@ -23,7 +30,12 @@ export function component({ schema, ariaInvalid }: IFieldProps) {
 
   return (
     <Select value={selectedValue} onValueChange={(value) => field.handleChange(value)}>
-      <SelectTrigger id={schema.id} aria-invalid={ariaInvalid} className="w-full">
+      <SelectTrigger
+        id={schema.id}
+        aria-invalid={ariaInvalid}
+        className="w-full"
+        onBlur={field.handleBlur}
+      >
         <SelectValue placeholder={schema.placeholder ?? "Select an option"} />
       </SelectTrigger>
       <SelectContent>
@@ -34,5 +46,13 @@ export function component({ schema, ariaInvalid }: IFieldProps) {
         ))}
       </SelectContent>
     </Select>
+  );
+};
+
+export function editor(props: EditorProps<EditorFieldElement>) {
+  return (
+    <FieldEditor {...props} properties={choiceFieldEditorProperties}>
+      <EditorSelectPreview element={props.element} fallbackPlaceholder="Select an option" />
+    </FieldEditor>
   );
 }

@@ -21,6 +21,8 @@
   "exports": {
     "./package.json": "./package.json",
     ".": "./src/index.ts",
+    "./editor": "./src/editor.tsx",
+    "./registry": "./src/registry.ts",
     "./*": "./src/*.tsx"
   },
   "dependencies": {

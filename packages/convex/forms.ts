@@ -28,6 +28,10 @@ export const ERRORS = defineErrors({
     message: "Form schema not found.",
     status: "NOT_FOUND",
   },
+  FORM_NOT_PUBLISHED: {
+    message: "This form does not have a published version to restore.",
+    status: "UNPROCESSABLE_ENTITY",
+  },
   SCHEMA_INVALID: {
     message: "Form schema is invalid.",
     status: "UNPROCESSABLE_ENTITY",
@@ -183,8 +187,13 @@ export const saveDraft = mutation({
       const schema = FormSchema.parse(args.schema);
       const serialized = JsonSerialize(schema);
       await ctx.db.patch(draftSchema._id, { schema: serialized });
+      if (form.name !== schema.name) {
+        await ctx.db.patch(form._id, { name: schema.name });
+      }
 
-      const publishedSchema = form.publishedSchemaId ? await ctx.db.get(form.publishedSchemaId) : null;
+      const publishedSchema = form.publishedSchemaId
+        ? await ctx.db.get(form.publishedSchemaId)
+        : null;
 
       return ok({
         schema,
@@ -232,6 +241,7 @@ export const publish = mutation({
 
       await ctx.db.patch(form._id, {
         draftSchemaId: draftSchema._id,
+        name: schema.name,
         publishedSchemaId,
         status,
       });
@@ -242,6 +252,47 @@ export const publish = mutation({
         publishedSchemaId,
         status,
         publishedTime: now,
+        hasUnpublishedChanges: false,
+      });
+    } catch {
+      return fail({ data: null, error: ERRORS.SCHEMA_INVALID });
+    }
+  },
+});
+
+export const revertDraft = mutation({
+  args: {
+    formId: v.id("forms"),
+  },
+  handler: async (ctx, args) => {
+    const formWithAccess = await getFormAccess(ctx, args.formId);
+    if (!formWithAccess.ok) return fail({ data: null, error: formWithAccess.error });
+
+    const { form } = formWithAccess.data;
+    if (!form.draftSchemaId) return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_FOUND });
+    if (!form.publishedSchemaId) return fail({ data: null, error: ERRORS.FORM_NOT_PUBLISHED });
+
+    const [draftSchema, publishedSchema] = await Promise.all([
+      ctx.db.get(form.draftSchemaId),
+      ctx.db.get(form.publishedSchemaId),
+    ]);
+    if (!draftSchema || !publishedSchema) {
+      return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_FOUND });
+    }
+
+    try {
+      const schema = JsonParse(publishedSchema.schema);
+      const serialized = JsonSerialize(schema);
+
+      await ctx.db.patch(draftSchema._id, { schema: serialized });
+      if (form.name !== schema.name) {
+        await ctx.db.patch(form._id, { name: schema.name });
+      }
+
+      return ok({
+        schema,
+        draftSchemaId: draftSchema._id,
+        publishedSchemaId: publishedSchema._id,
         hasUnpublishedChanges: false,
       });
     } catch {

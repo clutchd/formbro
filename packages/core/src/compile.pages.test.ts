@@ -64,7 +64,7 @@ describe("compile:pages", () => {
     }
   });
 
-  it("should preserve page_break label as page label", () => {
+  it("should preserve page_break label as the next page label", () => {
     const pages = compilePages([
       { id: "email", name: "Email", type: "short_text" },
       {
@@ -76,7 +76,8 @@ describe("compile:pages", () => {
       { id: "name", name: "Name", type: "short_text" },
     ]);
 
-    expect(pages[0]?.label).toBe("Contact Info");
+    expect(pages[0]?.label).toBeUndefined();
+    expect(pages[1]?.label).toBe("Contact Info");
   });
 
   it("should handle empty elements array", () => {
@@ -88,11 +89,12 @@ describe("compile:pages", () => {
 
   it("should handle page_break at start", () => {
     const pages = compilePages([
-      { id: "break", name: "Break", type: "page_break" },
+      { id: "break", name: "Break", type: "page_break", label: "First page" },
       { id: "email", name: "Email", type: "short_text" },
     ]);
 
     expect(pages).toHaveLength(1);
+    expect(pages[0]?.label).toBe("First page");
     expect(pages[0]?.elements).toHaveLength(1);
   });
 

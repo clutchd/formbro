@@ -251,10 +251,14 @@ function compilePages(elements: Array<CompiledAnyElement>) {
   };
 
   const commitPage = (label?: string) => {
-    if (page.elements.length === 0) return;
+    if (page.elements.length === 0) {
+      page.label = label;
+      return;
+    }
+
     commitSection();
-    page.label = label;
     page = compilePage();
+    page.label = label;
     pages.push(page);
     section = compileSection("section-0");
     sectionIdx = 0;
