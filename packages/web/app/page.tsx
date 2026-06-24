@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { APP_DESCRIPTION } from "@formbro/shared/brand";
 import { HomePage } from "./home-page";
 
 export const metadata: Metadata = {
-  title: "FormBro",
-  description: "The open-source form platform for serious workflows.",
+  title: "FormBro | Serious forms without the enterprise tax",
+  description: APP_DESCRIPTION,
 };
 
 export default function Home() {

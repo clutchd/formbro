@@ -46,7 +46,14 @@ import {
   RiSearchLine,
   RiSendPlaneLine,
 } from "@remixicon/react";
-import { useEffect, useMemo, useState, type CSSProperties, type MouseEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+  type MouseEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
+} from "react";
 
 type EditorElement = FormInput["elements"][number];
 type SubmitConfig = NonNullable<FormInput["submit"]>;
@@ -143,6 +150,15 @@ function updateSubmitConfig(
   updater: (submit: SubmitConfig) => SubmitConfig,
 ) {
   return updater(current ?? {});
+}
+
+function handleKeyboardSelect(event: ReactKeyboardEvent<HTMLElement>, onSelect: () => void) {
+  if (event.target !== event.currentTarget) return;
+  if (event.key !== "Enter" && event.key !== " ") return;
+
+  event.preventDefault();
+  event.stopPropagation();
+  onSelect();
 }
 
 function createRegistryElement(type: RegistryKey, elements: EditorElement[]): EditorElement {
@@ -293,13 +309,6 @@ export function FormBuilderCanvas({
   );
 
   useEffect(() => {
-    if (!selectedElementId) return;
-    if (selectedElementId === submitEditorId) return;
-    if (schema.elements.some((element) => element.id === selectedElementId)) return;
-    setSelectedElementId(null);
-  }, [schema.elements, selectedElementId]);
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSelectedElementId(null);
     };
@@ -384,11 +393,17 @@ export function FormBuilderCanvas({
   };
 
   const elementIds = useMemo(() => schema.elements.map((element) => element.id), [schema.elements]);
+  const selectedElementIsAvailable =
+    selectedElementId === submitEditorId ||
+    schema.elements.some((element) => element.id === selectedElementId);
+  const activeSelectedElementId = selectedElementIsAvailable ? selectedElementId : null;
+  const dndContextId = `form-builder-${schema.id.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 
   return (
     <div
       className={twx("w-full py-12 lg:py-16", className)}
       onClick={() => setSelectedElementId(null)}
+      role="presentation"
     >
       <div className="mx-auto grid w-full max-w-[52rem] grid-cols-[2.25rem_minmax(0,48rem)] gap-2 px-3 sm:px-6">
         <div aria-hidden />
@@ -416,6 +431,7 @@ export function FormBuilderCanvas({
 
       {schema.elements.length > 0 ? (
         <DndContext
+          id={dndContextId}
           sensors={sensors}
           collisionDetection={closestCenter}
           measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}
@@ -426,7 +442,7 @@ export function FormBuilderCanvas({
               <SortableEditorBlock
                 key={element.id}
                 element={element}
-                selected={selectedElementId === element.id}
+                selected={activeSelectedElementId === element.id}
                 onAddAfter={(type) => addElement(index + 1, type)}
                 onDeselect={() => setSelectedElementId(null)}
                 onRemove={() => removeElement(element.id)}
@@ -440,7 +456,7 @@ export function FormBuilderCanvas({
       ) : null}
 
       <SubmitButtonEditorBlock
-        selected={selectedElementId === submitEditorId}
+        selected={activeSelectedElementId === submitEditorId}
         submit={schema.submit}
         onDeselect={() => setSelectedElementId(null)}
         onSelect={() => setSelectedElementId(submitEditorId)}
@@ -461,21 +477,38 @@ function ElementPicker({
   const [query, setQuery] = useState("");
   const normalizedQuery = query.trim().toLowerCase();
   const groups = useMemo(
-    () =>
-      pickerGroups
-        .map((group) => ({
-          ...group,
-          items: group.keys
-            .map((key) => getRegistryItem(key))
-            .filter((item): item is RegistryItem => Boolean(item))
-            .filter((item) => {
-              if (!normalizedQuery) return true;
-              return `${item.display} ${item.description} ${item.key}`
-                .toLowerCase()
-                .includes(normalizedQuery);
-            }),
-        }))
-        .filter((group) => group.items.length > 0),
+    () => {
+      const matchingGroups: Array<{
+        items: RegistryItem[];
+        keys: RegistryKey[];
+        label: string;
+      }> = [];
+
+      for (const group of pickerGroups) {
+        const items: RegistryItem[] = [];
+
+        for (const key of group.keys) {
+          const item = getRegistryItem(key);
+          if (!item) continue;
+          if (
+            normalizedQuery &&
+            !`${item.display} ${item.description} ${item.key}`
+              .toLowerCase()
+              .includes(normalizedQuery)
+          ) {
+            continue;
+          }
+
+          items.push(item);
+        }
+
+        if (items.length > 0) {
+          matchingGroups.push({ ...group, items });
+        }
+      }
+
+      return matchingGroups;
+    },
     [normalizedQuery],
   );
 
@@ -606,6 +639,9 @@ function SubmitButtonEditorBlock({
         event.stopPropagation();
         onSelect();
       }}
+      onKeyDown={(event) => handleKeyboardSelect(event, onSelect)}
+      role="button"
+      tabIndex={0}
     >
       <div className="mx-auto grid w-full max-w-[52rem] grid-cols-[2.25rem_minmax(0,48rem)] gap-2">
         <div aria-hidden />
@@ -805,6 +841,9 @@ function SortableEditorBlock({
       data-editor-row={element.id}
       className={twx("group/editor relative w-full px-3 py-1 sm:px-6", isDragging && "z-40")}
       onClick={handleClick}
+      onKeyDown={(event) => handleKeyboardSelect(event, onSelect)}
+      role="button"
+      tabIndex={0}
     >
       <div className="mx-auto grid w-full max-w-[52rem] grid-cols-[2.25rem_minmax(0,48rem)] gap-2">
         <div
@@ -813,7 +852,6 @@ function SortableEditorBlock({
             "flex items-start justify-end opacity-0 transition-opacity group-focus-within/editor:opacity-100 group-hover/editor:opacity-100",
             selected && "opacity-100",
           )}
-          onClick={(event) => event.stopPropagation()}
         >
           <div className="flex shrink-0 flex-col items-center gap-0.5 rounded-full border bg-background p-1 shadow-sm">
             <ElementPicker onSelect={onAddAfter} trigger="compact" />
