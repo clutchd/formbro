@@ -35,33 +35,39 @@ export function Page({
           {page.label}
         </FieldLegend>
       )}
-      {page.sections.map((section) => (
-        <div key={section.key}>
-          {(section.header.length > 0 || section.body.length > 0) && (
-            <FieldSet>
-              {section.header.map((element) => renderElement(element))}
-              {section.body.length > 0 && (
-                <FieldGroup>
-                  {section.body.map((element) =>
-                    element.category === "field" ? (
-                      <Field
-                        key={element.id}
-                        tanstack={tanstack}
-                        schema={element}
-                        listeners={listeners.get(element.id)}
-                        validators={validators.get(element.id)}
-                      />
-                    ) : (
-                      renderElement(element)
-                    ),
+      <div className="[&>[data-form-section]:first-child>[data-slot=field-set]>*:first-child]:pt-0! [&>[data-form-section]:first-child>[data-slot=field-set]>[data-slot=field-group]:first-child>*:first-child]:pt-0!">
+        {page.sections.map((section) => {
+          const hasContent = section.header.length > 0 || section.body.length > 0;
+
+          return (
+            <div key={section.key} data-form-section>
+              {hasContent && (
+                <FieldSet>
+                  {section.header.map((element) => renderElement(element))}
+                  {section.body.length > 0 && (
+                    <FieldGroup>
+                      {section.body.map((element) =>
+                        element.category === "field" ? (
+                          <Field
+                            key={element.id}
+                            tanstack={tanstack}
+                            schema={element}
+                            listeners={listeners.get(element.id)}
+                            validators={validators.get(element.id)}
+                          />
+                        ) : (
+                          renderElement(element)
+                        ),
+                      )}
+                    </FieldGroup>
                   )}
-                </FieldGroup>
+                </FieldSet>
               )}
-            </FieldSet>
-          )}
-          {section.separator ? renderElement(section.separator) : null}
-        </div>
-      ))}
+              {section.separator ? renderElement(section.separator) : null}
+            </div>
+          );
+        })}
+      </div>
     </>
   );
 }

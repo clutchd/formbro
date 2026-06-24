@@ -24,7 +24,9 @@ export function component({ level = 2, label }: { level?: 1 | 2 | 3; label?: For
   }
 
   return (
-    <FieldLegend className={twx("font-display font-bold tracking-tight text-foreground", fontSize)}>
+    <FieldLegend
+      className={twx("pt-4 font-display font-bold tracking-tight text-foreground", fontSize)}
+    >
       {label}
     </FieldLegend>
   );

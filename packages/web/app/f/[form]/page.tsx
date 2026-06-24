@@ -1,5 +1,6 @@
 import { api } from "@formbro/convex/_generated/api";
 import { APP_URL } from "@formbro/shared/brand";
+import { Button } from "@formbro/ui/button";
 import { fetchQuery } from "convex/nextjs";
 import Link from "next/link";
 import { getFormMetadata } from "@/lib/form-metadata";
@@ -25,20 +26,20 @@ export default async function PublicFormPage({ params }: { params: Promise<{ for
     : `${APP_URL}?utm_source=form&utm_medium=branding&utm_campaign=not_found&utm_content=${encodeURIComponent(formSlug)}&utm_term=footer`;
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
+    <div className="flex min-h-dvh flex-col bg-background pb-10">
       <PublicForm form={form} />
-      <footer className="border-t bg-background/90 px-4 py-3 backdrop-blur">
-        <div className="mx-auto flex max-w-xl items-center justify-center">
+      <footer className="fixed inset-x-0 bottom-0 z-30">
+        <Button asChild className="h-10 w-full gap-1 rounded-none border-t text-xs">
           <Link
             href={footerHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="group inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Powered by FormBro"
           >
             <span>Powered by</span>
             <span className="font-display font-bold tracking-tight">FormBro</span>
           </Link>
-        </div>
+        </Button>
       </footer>
     </div>
   );

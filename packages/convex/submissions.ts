@@ -15,6 +15,18 @@ export const ERRORS = defineErrors({
     message: "Submission not found.",
     status: "NOT_FOUND",
   },
+  FORM_NOT_OPEN: {
+    message: "This form is not accepting responses.",
+    status: "FORBIDDEN",
+  },
+  FORM_SCHEMA_NOT_PUBLISHED: {
+    message: "This form is not accepting responses yet.",
+    status: "FORBIDDEN",
+  },
+  FORM_SCHEMA_MISMATCH: {
+    message: "This form schema is not available for submissions.",
+    status: "BAD_REQUEST",
+  },
 });
 
 function parseStoredForm(json: string): CompiledForm | null {
@@ -65,6 +77,7 @@ function collectFileStorageIds(fields: CompiledField[], data: Record<string, unk
 
 export const create = mutation({
   args: {
+    formId: v.id("forms"),
     schemaId: v.id("formSchemas"),
     data: v.record(v.string(), SubmissionValue),
   },
@@ -72,8 +85,24 @@ export const create = mutation({
     const schema = await ctx.db.get(args.schemaId);
     if (!schema) return fail({ data: null, error: FORM_ERRORS.FORM_SCHEMA_NOT_FOUND });
 
-    const form = await ctx.db.get(schema.formId);
+    if (schema.status !== "published") {
+      return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_PUBLISHED });
+    }
+
+    if (schema.formId !== args.formId) {
+      return fail({ data: null, error: ERRORS.FORM_SCHEMA_MISMATCH });
+    }
+
+    const form = await ctx.db.get(args.formId);
     if (!form) return fail({ data: null, error: FORM_ERRORS.FORM_NOT_FOUND });
+
+    if (form.status !== "open") {
+      return fail({ data: null, error: ERRORS.FORM_NOT_OPEN });
+    }
+
+    if (form.publishedSchemaId !== schema._id) {
+      return fail({ data: null, error: ERRORS.FORM_SCHEMA_MISMATCH });
+    }
 
     const submittedTime = Date.now();
     const data = {
