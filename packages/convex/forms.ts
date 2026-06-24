@@ -66,7 +66,7 @@ export const create = mutation({
       name: args.name,
     });
 
-    const schema = createDefaultFormSchema(args.name, slug);
+    const schema = createDefaultFormSchema({ id: slug, name: args.name });
     const draftSchemaId = await ctx.db.insert("formSchemas", {
       formId,
       schema: JsonSerialize(schema),
