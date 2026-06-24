@@ -1,4 +1,9 @@
-import { createDefaultFormSchema, JsonSerialize } from "@formbro/core/schema/form";
+import {
+  createDefaultFormSchema,
+  FormSchema,
+  JsonParse,
+  JsonSerialize,
+} from "@formbro/core/schema/form";
 import { nano } from "@formbro/shared/nanoid";
 import { fail, ok } from "@formbro/shared/result";
 import { v } from "convex/values";
@@ -121,6 +126,127 @@ export const getPublic = query({
       schemaId: publishedSchema?._id ?? null,
       schema: publishedSchema?.schema ?? null,
     });
+  },
+});
+
+export const getDraft = query({
+  args: {
+    formId: v.id("forms"),
+  },
+  handler: async (ctx, args) => {
+    const formWithAccess = await getFormAccess(ctx, args.formId);
+    if (!formWithAccess.ok) return fail({ data: null, error: formWithAccess.error });
+
+    const { form } = formWithAccess.data;
+    if (!form.draftSchemaId) return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_FOUND });
+
+    const [draftSchema, publishedSchema] = await Promise.all([
+      ctx.db.get(form.draftSchemaId),
+      form.publishedSchemaId ? ctx.db.get(form.publishedSchemaId) : null,
+    ]);
+    if (!draftSchema) return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_FOUND });
+
+    try {
+      const schema = JsonParse(draftSchema.schema);
+      const published = publishedSchema ? JsonParse(publishedSchema.schema) : null;
+
+      return ok({
+        form,
+        schema,
+        draftSchemaId: draftSchema._id,
+        publishedSchemaId: publishedSchema?._id ?? null,
+        publishedSchema: published,
+        hasUnpublishedChanges: draftSchema.schema !== (publishedSchema?.schema ?? null),
+      });
+    } catch {
+      return fail({ data: null, error: ERRORS.SCHEMA_INVALID });
+    }
+  },
+});
+
+export const saveDraft = mutation({
+  args: {
+    formId: v.id("forms"),
+    schema: v.any(),
+  },
+  handler: async (ctx, args) => {
+    const formWithAccess = await getFormAccess(ctx, args.formId);
+    if (!formWithAccess.ok) return fail({ data: null, error: formWithAccess.error });
+
+    const { form } = formWithAccess.data;
+    if (!form.draftSchemaId) return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_FOUND });
+
+    const draftSchema = await ctx.db.get(form.draftSchemaId);
+    if (!draftSchema) return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_FOUND });
+
+    try {
+      const schema = FormSchema.parse(args.schema);
+      const serialized = JsonSerialize(schema);
+      await ctx.db.patch(draftSchema._id, { schema: serialized });
+
+      const publishedSchema = form.publishedSchemaId ? await ctx.db.get(form.publishedSchemaId) : null;
+
+      return ok({
+        schema,
+        draftSchemaId: draftSchema._id,
+        publishedSchemaId: publishedSchema?._id ?? null,
+        hasUnpublishedChanges: serialized !== (publishedSchema?.schema ?? null),
+      });
+    } catch {
+      return fail({ data: null, error: ERRORS.SCHEMA_INVALID });
+    }
+  },
+});
+
+export const publish = mutation({
+  args: {
+    formId: v.id("forms"),
+  },
+  handler: async (ctx, args) => {
+    const formWithAccess = await getFormAccess(ctx, args.formId);
+    if (!formWithAccess.ok) return fail({ data: null, error: formWithAccess.error });
+
+    const { form, access } = formWithAccess.data;
+    if (!form.draftSchemaId) return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_FOUND });
+
+    const draftSchema = await ctx.db.get(form.draftSchemaId);
+    if (!draftSchema) return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_FOUND });
+
+    try {
+      const schema = JsonParse(draftSchema.schema);
+      const serialized = JsonSerialize(schema);
+      const now = Date.now();
+
+      if (draftSchema.schema !== serialized) {
+        await ctx.db.patch(draftSchema._id, { schema: serialized });
+      }
+
+      const publishedSchemaId = await ctx.db.insert("formSchemas", {
+        formId: form._id,
+        schema: serialized,
+        status: "published",
+        createdBy: access.membership._id,
+        publishedTime: now,
+      });
+      const status = form.status === "draft" ? "open" : form.status;
+
+      await ctx.db.patch(form._id, {
+        draftSchemaId: draftSchema._id,
+        publishedSchemaId,
+        status,
+      });
+
+      return ok({
+        schema,
+        draftSchemaId: draftSchema._id,
+        publishedSchemaId,
+        status,
+        publishedTime: now,
+        hasUnpublishedChanges: false,
+      });
+    } catch {
+      return fail({ data: null, error: ERRORS.SCHEMA_INVALID });
+    }
   },
 });
 
