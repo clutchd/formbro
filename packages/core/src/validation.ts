@@ -1,12 +1,24 @@
-import type { CompiledValidator, CompiledValidators } from "@formbro/core/compile";
-import type { FormRule } from "@formbro/core/schema/rule";
-import { Registry } from "@formbro/core/registry";
-import { SYNC_EVENTS } from "@formbro/core/schema/event";
 import { z } from "zod";
-import type { TanStackFieldProps } from "../hooks/tanstack";
+import type { CompiledField, CompiledForm, CompiledValidator, CompiledValidators } from "./compile";
+import type { FormRule } from "./schema/rule";
+import { Registry } from "./registry";
+import { SYNC_EVENTS } from "./schema/event";
 
-export function buildValidators(validators: CompiledValidators) {
-  const result = new Map<string, TanStackFieldProps["validators"]>();
+type SyncFormEvent = (typeof SYNC_EVENTS)[number];
+
+export type BuiltValidators = Map<string, Partial<Record<SyncFormEvent, z.ZodTypeAny>>>;
+
+export type FormValidationIssue = {
+  fieldId: string;
+  message: string;
+};
+
+export type FormValidationResult =
+  | { success: true }
+  | { issues: FormValidationIssue[]; success: false };
+
+export function buildValidators(validators: CompiledValidators): BuiltValidators {
+  const result: BuiltValidators = new Map();
 
   for (const [fieldId, validatorPlan] of validators.entries()) {
     const fieldValidators = buildFieldValidators(validatorPlan);
@@ -19,9 +31,51 @@ export function buildValidators(validators: CompiledValidators) {
   return result;
 }
 
+export function validateFormSubmission(
+  form: CompiledForm,
+  data: Record<string, unknown>,
+): FormValidationResult {
+  const fields = getCompiledFields(form);
+  const fieldIds = new Set(fields.map((field) => field.id));
+  const validators = buildValidators(form.validators);
+  const issues: FormValidationIssue[] = [];
+
+  for (const fieldId of Object.keys(data)) {
+    if (!fieldIds.has(fieldId)) {
+      issues.push({
+        fieldId,
+        message: `Unknown field: ${fieldId}`,
+      });
+    }
+  }
+
+  for (const field of fields) {
+    const fieldValidators = validators.get(field.id);
+    if (!fieldValidators) continue;
+
+    const value = valueForValidation(field, data[field.id] ?? "");
+
+    for (const event of SYNC_EVENTS) {
+      const validator = fieldValidators[event];
+      if (!validator) continue;
+
+      const parsed = validator.safeParse(value);
+      if (!parsed.success) {
+        issues.push({
+          fieldId: field.id,
+          message: parsed.error.issues[0]?.message ?? `${field.label ?? field.name} is invalid`,
+        });
+        break;
+      }
+    }
+  }
+
+  return issues.length > 0 ? { issues, success: false } : { success: true };
+}
+
 function buildFieldValidators(validatorPlan: CompiledValidator) {
   const baseValidator: z.ZodTypeAny | undefined = Registry[validatorPlan.type]?.schema;
-  const validators: NonNullable<TanStackFieldProps["validators"]> = {};
+  const validators: Partial<Record<SyncFormEvent, z.ZodTypeAny>> = {};
 
   if (!baseValidator) {
     return validators;
@@ -37,9 +91,9 @@ function buildFieldValidators(validatorPlan: CompiledValidator) {
     const hasRequiredRule = rules.some((rule) => {
       return rule.type === "required" && rule.value;
     });
-    const defaultValidator = hasRequiredRule ? baseValidator : toOptionalValidator(baseValidator);
-
-    let validator: z.ZodTypeAny = defaultValidator;
+    let validator: z.ZodTypeAny = hasRequiredRule
+      ? baseValidator
+      : toOptionalValidator(baseValidator);
 
     for (const rule of rules) {
       switch (rule.type) {
@@ -62,6 +116,38 @@ function buildFieldValidators(validatorPlan: CompiledValidator) {
   }
 
   return validators;
+}
+
+function getCompiledFields(form: CompiledForm): CompiledField[] {
+  return form.pages.flatMap((page) =>
+    page.elements.filter((element): element is CompiledField => element.category === "field"),
+  );
+}
+
+function getDisplayName(validatorPlan: CompiledValidator) {
+  return validatorPlan.label || validatorPlan.name;
+}
+
+function getRangeMessage(validatorPlan: CompiledValidator, type: "min" | "max", value: number) {
+  const direction = type === "min" ? "at least" : "at most";
+
+  if (validatorPlan.type === "number") {
+    return `${getDisplayName(validatorPlan)} must be ${direction} ${value}`;
+  }
+
+  return `${getDisplayName(validatorPlan)} must be ${direction} ${value} characters`;
+}
+
+function toOptionalValidator(validator: z.ZodTypeAny): z.ZodTypeAny {
+  if (validator instanceof z.ZodString) {
+    return z.union([validator, z.literal("")]);
+  }
+
+  if (validator instanceof z.ZodUnion) {
+    return validator;
+  }
+
+  return validator.optional();
 }
 
 function required(validatorPlan: CompiledValidator, validator: z.ZodTypeAny): z.ZodTypeAny {
@@ -218,28 +304,9 @@ function regex(
 
   return validator;
 }
-function getDisplayName(validatorPlan: CompiledValidator) {
-  return validatorPlan.label || validatorPlan.name;
-}
 
-function getRangeMessage(validatorPlan: CompiledValidator, type: "min" | "max", value: number) {
-  const direction = type === "min" ? "at least" : "at most";
-
-  if (validatorPlan.type === "number") {
-    return `${getDisplayName(validatorPlan)} must be ${direction} ${value}`;
-  }
-
-  return `${getDisplayName(validatorPlan)} must be ${direction} ${value} characters`;
-}
-
-function toOptionalValidator(validator: z.ZodTypeAny): z.ZodTypeAny {
-  if (validator instanceof z.ZodString) {
-    return z.union([validator, z.literal("")]);
-  }
-
-  if (validator instanceof z.ZodUnion) {
-    return validator;
-  }
-
-  return validator.optional();
+function valueForValidation(field: CompiledField, value: unknown) {
+  if (field.type !== "number" || value === "") return value;
+  if (typeof value === "string") return Number(value);
+  return value;
 }

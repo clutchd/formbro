@@ -1,4 +1,5 @@
 import { compile, type CompiledField, type CompiledForm } from "@formbro/core/compile";
+import { validateFormSubmission } from "@formbro/core/validation";
 import { fail, ok } from "@formbro/shared/result";
 import { getDocumentSize, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
@@ -25,6 +26,10 @@ export const ERRORS = defineErrors({
   },
   FORM_SCHEMA_MISMATCH: {
     message: "This form schema is not available for submissions.",
+    status: "BAD_REQUEST",
+  },
+  SUBMISSION_INVALID: {
+    message: "Submitted form data is invalid.",
     status: "BAD_REQUEST",
   },
 });
@@ -102,6 +107,14 @@ export const create = mutation({
 
     if (form.publishedSchemaId !== schema._id) {
       return fail({ data: null, error: ERRORS.FORM_SCHEMA_MISMATCH });
+    }
+
+    const compiled = parseStoredForm(schema.schema);
+    if (!compiled) return fail({ data: null, error: FORM_ERRORS.SCHEMA_INVALID });
+
+    const validation = validateFormSubmission(compiled, args.data);
+    if (!validation.success) {
+      return fail({ data: null, error: ERRORS.SUBMISSION_INVALID });
     }
 
     const submittedTime = Date.now();

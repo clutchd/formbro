@@ -9,9 +9,9 @@ import {
   type FormOnSuccess,
   type FormValues,
 } from "@formbro/core/schema/form";
+import { buildValidators } from "@formbro/core/validation";
 import { useCallback, useMemo } from "react";
 import { buildListeners } from "../utils/build-listeners";
-import { buildValidators } from "../utils/build-validators";
 import { useAppForm } from "./tanstack";
 
 function stringifyValues<T extends FormInput>(value: Record<string, unknown>) {

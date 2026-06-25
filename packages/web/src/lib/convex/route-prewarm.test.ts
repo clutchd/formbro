@@ -84,15 +84,13 @@ describe("convex:route-prewarm", () => {
 
     await prewarmWorkspaceSettingsRoute(convex, "workspace-slug");
 
-    assert.equal(calls.length, 4);
-    assert.equal(calls[0]?.name, "workspace:context");
-    assert.deepEqual(calls[0]?.args, { workspaceSlug: "workspace-slug" });
-    assert.equal(calls[1]?.name, "forms:list");
-    assert.deepEqual(calls[1]?.args, { workspaceId: "settings-workspace-id" });
-    assert.equal(calls[2]?.name, "workspace:listMembers");
-    assert.deepEqual(calls[2]?.args, { workspaceId: "settings-workspace-id" });
-    assert.equal(calls[3]?.name, "workspace:billing");
-    assert.deepEqual(calls[3]?.args, { workspaceId: "settings-workspace-id" });
+    assert.deepEqual(calls, [
+      { name: "workspace:context", args: { workspaceSlug: "workspace-slug" } },
+      { name: "forms:list", args: { workspaceId: "settings-workspace-id" } },
+      { name: "workspace:listMembers", args: { workspaceId: "settings-workspace-id" } },
+      { name: "workspace:listInvites", args: { workspaceId: "settings-workspace-id" } },
+      { name: "workspace:billing", args: { workspaceId: "settings-workspace-id" } },
+    ]);
   });
 
   it("skips form dependent prewarm when context has no form", async () => {
