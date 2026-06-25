@@ -197,6 +197,13 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     secret: process.env.BETTER_AUTH_SECRET,
     baseURL: APP_URL,
     trustedOrigins: TRUSTED_ORIGINS,
+    account: {
+      accountLinking: {
+        enabled: true,
+        trustedProviders: ["google", "microsoft"],
+        allowDifferentEmails: false,
+      },
+    },
     socialProviders: {
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID as string,
