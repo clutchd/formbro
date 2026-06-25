@@ -1,13 +1,21 @@
+import { authCallbackURL, authHref } from "@/lib/auth/callback-url";
 import { Auth } from "../auth";
 
-export default function SignUpPage() {
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ callbackURL?: string | string[] }>;
+}) {
+  const callbackURL = authCallbackURL((await searchParams).callbackURL);
+
   return (
     <Auth
       title="Create your account"
       subtitle="Get started in seconds"
       footerText="Already have an account?"
       footerLinkText="Sign in"
-      footerLinkHref={`/sign-in`}
+      footerLinkHref={authHref("/sign-in", callbackURL)}
+      callbackURL={callbackURL}
     />
   );
 }

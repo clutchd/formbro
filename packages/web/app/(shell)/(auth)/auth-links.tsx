@@ -75,18 +75,18 @@ function MicrosoftIcon({ className }: { className?: string }) {
   );
 }
 
-export function AuthLinks() {
+export function AuthLinks({ callbackURL = "/dashboard" }: { callbackURL?: string }) {
   return (
     <>
       <AuthLink
-        onClick={() => signIn.social({ provider: "google", callbackURL: "/dashboard" })}
+        onClick={() => signIn.social({ provider: "google", callbackURL })}
         icon={<GoogleIcon className="size-5" />}
       >
         Continue with Google
       </AuthLink>
 
       <AuthLink
-        onClick={() => signIn.social({ provider: "microsoft", callbackURL: "/dashboard" })}
+        onClick={() => signIn.social({ provider: "microsoft", callbackURL })}
         icon={<MicrosoftIcon className="size-5" />}
       >
         Continue with Microsoft

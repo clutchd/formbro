@@ -7,12 +7,14 @@ export function Auth({
   footerText,
   footerLinkText,
   footerLinkHref,
+  callbackURL,
 }: {
   title: string;
   subtitle: string;
   footerText: string;
   footerLinkText: string;
   footerLinkHref: string;
+  callbackURL?: string;
 }) {
   return (
     <>
@@ -22,7 +24,7 @@ export function Auth({
       </div>
 
       <div className="w-full space-y-3">
-        <AuthLinks />
+        <AuthLinks callbackURL={callbackURL} />
       </div>
 
       <p className="text-sm text-muted-foreground">
