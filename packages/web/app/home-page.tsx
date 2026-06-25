@@ -78,10 +78,26 @@ const WORKFLOW_STEPS = [
 
 const INTEGRATIONS = ["Email", "Webhooks", "SMS", "PDFs", "CRM", "Sheets", "Zapier", "API"];
 const POSITIONING_FEATURES = [
-  "AI-assisted form drafts",
-  "Fast publishing and submissions",
-  "Simple enough for every team",
-  "Powerful enough for real operations",
+  {
+    title: "AI-assisted form drafts",
+    description:
+      "Start from a plain-language prompt, then refine the result in the builder instead of staring at a blank canvas.",
+  },
+  {
+    title: "Fast publishing and submissions",
+    description:
+      "Share a usable form quickly, collect responses, and keep the work moving without extra setup.",
+  },
+  {
+    title: "Simple enough for every team",
+    description:
+      "Clean defaults and familiar controls make forms approachable for ops, admin, and client-facing teams.",
+  },
+  {
+    title: "Powerful enough for real operations",
+    description:
+      "Required fields, page breaks, draft publishing, workspace members, and response history are built in.",
+  },
 ];
 const COPYRIGHT_YEAR = 2026;
 const BUILDER_DEMO_STEP_DELAY_MS = 620;
@@ -1153,13 +1169,12 @@ function PositioningSection() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {POSITIONING_FEATURES.map((item) => (
-          <div key={item} className="rounded-lg border bg-card p-5">
+        {POSITIONING_FEATURES.map((feature) => (
+          <div key={feature.title} className="rounded-lg border bg-card p-5">
             <RiCheckboxCircleLine className="mb-5 size-5 text-brand" />
-            <h3 className="font-display text-xl font-bold tracking-tight">{item}</h3>
+            <h3 className="font-display text-xl font-bold tracking-tight">{feature.title}</h3>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Practical defaults, fewer clicks, and a product surface designed for operators, not
-              enterprise procurement theater.
+              {feature.description}
             </p>
           </div>
         ))}
