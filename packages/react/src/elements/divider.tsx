@@ -6,6 +6,6 @@ export const icon = RiSeparator;
 export const color = "bg-gray-100 text-gray-600";
 
 export function component({ label }: { label?: FormLabel }) {
-  if (!label) return <FieldSeparator />;
-  return <FieldSeparator>{label}</FieldSeparator>;
+  if (!label) return <FieldSeparator className="my-4 sm:my-5" />;
+  return <FieldSeparator className="my-4 sm:my-5">{label}</FieldSeparator>;
 }

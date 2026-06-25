@@ -1,4 +1,3 @@
-import type { FormRegistryEditorLayout } from "@formbro/core/schema/registry";
 import type * as React from "react";
 import {
   ElementRegistry,
@@ -42,7 +41,6 @@ type RegistryComponentModule =
   | (typeof ElementComponents)[ElementRegistryKey]
   | (typeof FieldComponents)[FieldRegistryKey];
 type RegistryEditor = (props: EditorProps) => React.ReactNode;
-export type RegistryEditorLayout = FormRegistryEditorLayout;
 
 export const registryItems = [...ElementRegistry, ...FieldRegistry] as RegistryItem[];
 
