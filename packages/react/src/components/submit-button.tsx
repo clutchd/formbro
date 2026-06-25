@@ -1,11 +1,9 @@
 import type { CompiledForm } from "@formbro/core/compile";
-import { twx } from "@formbro/shared/twx";
-import { Button } from "@formbro/ui/button";
-import { Spinner } from "@formbro/ui/spinner";
-import { cva } from "class-variance-authority";
 import { type ReactNode, useSyncExternalStore } from "react";
 import * as React from "react";
-import { useFormContext } from "../hooks/tanstack-context";
+import { useFormContext } from "../hooks/tanstack-context.js";
+import { cx } from "../utils/cx.js";
+import { Button, Spinner } from "./primitives.js";
 
 interface FormWithSubscribe<
   T = {
@@ -18,18 +16,6 @@ interface FormWithSubscribe<
     children: (state: T) => ReactNode;
   }) => ReactNode;
 }
-
-const submitButtonVariants = cva("relative font-semibold transition-all duration-200", {
-  variants: {
-    size: {
-      default: "min-w-[120px]",
-      "full-width": "w-full",
-    },
-  },
-  defaultVariants: {
-    size: "default",
-  },
-});
 
 export function SubmitButton({
   schema,
@@ -69,21 +55,22 @@ export function SubmitButton({
               aria-disabled={isDisabled}
               aria-busy={isSubmitting}
               variant={schema.submit?.variant}
-              className={twx(
-                submitButtonVariants({ size: schema.submit?.size }),
+              className={cx(
+                "relative font-semibold transition-all duration-200",
+                schema.submit?.size === "full-width" ? "w-full" : "min-w-[120px]",
                 isSubmitting ? "cursor-wait" : "cursor-pointer",
                 className,
               )}
             >
               <span
-                className={twx(
+                className={cx(
                   "flex items-center transition-all duration-150",
                   !isSubmitting && "-ml-6 opacity-0",
                 )}
               >
                 <Spinner className="size-4" />
               </span>
-              <span className={twx("inline-flex items-center gap-2")}>
+              <span className="inline-flex items-center gap-2">
                 <span>{buttonLabel}</span>
               </span>
             </Button>

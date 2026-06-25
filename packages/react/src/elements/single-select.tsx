@@ -1,12 +1,13 @@
-import type { IFieldProps } from "@formbro/core/schema/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbro/ui/select";
-import { RiListCheck } from "@remixicon/react";
-import { useFieldContext } from "../hooks/tanstack-context";
+import type { FieldComponentProps } from "../types.js";
+import { Select } from "../components/primitives.js";
+import { useFieldContext } from "../hooks/tanstack-context.js";
 
-export const icon = RiListCheck;
-export const color = "bg-emerald-100 text-emerald-600";
-
-export const component = function SingleSelectComponent({ schema, ariaInvalid }: IFieldProps) {
+export const component = function SingleSelectComponent({
+  ariaDescribedBy,
+  ariaInvalid,
+  ariaRequired,
+  schema,
+}: FieldComponentProps) {
   const field = useFieldContext<string>();
   const options =
     Array.isArray(schema.options) && schema.options.length > 0
@@ -21,22 +22,22 @@ export const component = function SingleSelectComponent({ schema, ariaInvalid }:
       : "";
 
   return (
-    <Select value={selectedValue} onValueChange={(value) => field.handleChange(value)}>
-      <SelectTrigger
-        id={schema.id}
-        aria-invalid={ariaInvalid}
-        className="w-full"
-        onBlur={field.handleBlur}
-      >
-        <SelectValue placeholder={schema.placeholder ?? "Select an option"} />
-      </SelectTrigger>
-      <SelectContent>
-        {fallbackOptions.map((option) => (
-          <SelectItem key={option} value={option}>
-            {option}
-          </SelectItem>
-        ))}
-      </SelectContent>
+    <Select
+      id={schema.id}
+      name={schema.id}
+      value={selectedValue}
+      onChange={(event) => field.handleChange(event.target.value)}
+      onBlur={field.handleBlur}
+      aria-invalid={ariaInvalid}
+      aria-required={ariaRequired}
+      aria-describedby={ariaDescribedBy}
+    >
+      <option value="">{schema.placeholder ?? "Select an option"}</option>
+      {fallbackOptions.map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
     </Select>
   );
 };

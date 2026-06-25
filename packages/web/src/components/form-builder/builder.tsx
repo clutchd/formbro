@@ -31,10 +31,10 @@ import {
   updateSubmitConfig,
   type EditorElement,
   type SubmitConfig,
-} from "./builder/canvas-utils";
-import { ElementPicker } from "./builder/element-picker";
-import { SortableEditorBlock } from "./builder/sortable-editor-block";
-import { SubmitButtonEditorBlock } from "./builder/submit-button-editor-block";
+} from "./canvas-utils";
+import { ElementPicker } from "./element-picker";
+import { SortableEditorBlock } from "./sortable-editor-block";
+import { SubmitButtonEditorBlock } from "./submit-button-editor-block";
 
 type FormBuilderDensity = "compact" | "default";
 

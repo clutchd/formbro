@@ -13,38 +13,85 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/clutchd/formbro",
+    "url": "git+https://github.com/clutchd/formbro.git",
     "directory": "packages/react"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "type": "module",
   "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     "./package.json": "./package.json",
-    ".": "./src/index.ts",
-    "./builder": "./src/builder.tsx",
-    "./editor": "./src/editor.tsx",
-    "./registry": "./src/registry.ts",
-    "./*": "./src/*.tsx"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./components/field": {
+      "types": "./dist/components/field.d.ts",
+      "import": "./dist/components/field.js",
+      "default": "./dist/components/field.js"
+    },
+    "./components/field-label": {
+      "types": "./dist/components/field-label.d.ts",
+      "import": "./dist/components/field-label.js",
+      "default": "./dist/components/field-label.js"
+    },
+    "./components/form": {
+      "types": "./dist/components/form.d.ts",
+      "import": "./dist/components/form.js",
+      "default": "./dist/components/form.js"
+    },
+    "./components/page": {
+      "types": "./dist/components/page.d.ts",
+      "import": "./dist/components/page.js",
+      "default": "./dist/components/page.js"
+    },
+    "./components/submit-button": {
+      "types": "./dist/components/submit-button.d.ts",
+      "import": "./dist/components/submit-button.js",
+      "default": "./dist/components/submit-button.js"
+    },
+    "./hooks/use-form": {
+      "types": "./dist/hooks/use-form.d.ts",
+      "import": "./dist/hooks/use-form.js",
+      "default": "./dist/hooks/use-form.js"
+    },
+    "./registry": {
+      "types": "./dist/registry.d.ts",
+      "import": "./dist/registry.js",
+      "default": "./dist/registry.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "tag": "alpha"
+  },
+  "scripts": {
+    "build": "bun run --cwd ../core build && tsc -p tsconfig.build.json",
+    "test": "bun test",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@dnd-kit/core": "6.3.1",
-    "@dnd-kit/sortable": "10.0.0",
-    "@dnd-kit/utilities": "3.2.2",
-    "@formbro/core": "workspace:*",
-    "@formbro/shared": "workspace:*",
-    "@formbro/ui": "workspace:*",
-    "@remixicon/react": "catalog:",
-    "@tanstack/react-form-nextjs": "1.28.3",
-    "class-variance-authority": "0.7.1",
-    "react": "catalog:",
-    "react-dom": "catalog:",
-    "slugify": "1.6.9",
-    "zod": "catalog:"
+    "@tanstack/react-form": "1.28.3",
+    "slugify": "1.6.9"
   },
   "devDependencies": {
+    "@formbro/core": "workspace:*",
     "@types/bun": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "@formbro/core": "0.1.0-alpha.0",
+    "react": "^18.3.0 || ^19.0.0",
+    "react-dom": "^18.3.0 || ^19.0.0"
   }
 }

@@ -2,7 +2,6 @@
 
 import type { FormInput } from "@formbro/core/schema/form";
 import { applyFormSchemaEdit, type FormSchemaEditInput } from "@formbro/core/ai";
-import { FormBuilderCanvas } from "@formbro/react/builder";
 import { Form } from "@formbro/react/components/form";
 import { APP_NAME, TAGLINE } from "@formbro/shared/brand";
 import { Badge } from "@formbro/ui/badge";
@@ -30,6 +29,7 @@ import {
   type RefObject,
   type SetStateAction,
 } from "react";
+import { FormBuilderCanvas } from "@/components/form-builder/builder";
 import { ThemeIcon, useToggleTheme } from "@/components/theme";
 import { useDashboardPrewarmIntent } from "./(shell)/(app)/dashboard/(dashboard)/_data-provider";
 
@@ -1173,9 +1173,7 @@ function PositioningSection() {
           <div key={feature.title} className="rounded-lg border bg-card p-5">
             <RiCheckboxCircleLine className="mb-5 size-5 text-brand" />
             <h3 className="font-display text-xl font-bold tracking-tight">{feature.title}</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              {feature.description}
-            </p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{feature.description}</p>
           </div>
         ))}
       </div>

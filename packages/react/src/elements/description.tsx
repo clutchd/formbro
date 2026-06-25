@@ -1,9 +1,5 @@
 import type { FormLabel } from "@formbro/core/schema/label";
-import { FieldDescription } from "@formbro/ui/field";
-import { RiAlignLeft } from "@remixicon/react";
-
-export const icon = RiAlignLeft;
-export const color = "bg-slate-100 text-slate-600";
+import { FieldDescription } from "../components/primitives.js";
 
 export function component({ label }: { label?: FormLabel }) {
   if (!label) return null;

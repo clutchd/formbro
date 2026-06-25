@@ -1,12 +1,13 @@
-import type { IFieldProps } from "@formbro/core/schema/form";
-import { Input } from "@formbro/ui/input";
-import { RiHashtag } from "@remixicon/react";
-import { useFieldContext } from "../hooks/tanstack-context";
+import type { FieldComponentProps } from "../types.js";
+import { Input } from "../components/primitives.js";
+import { useFieldContext } from "../hooks/tanstack-context.js";
 
-export const icon = RiHashtag;
-export const color = "bg-blue-100 text-blue-600";
-
-export const component = function NumberComponent({ schema, ariaInvalid }: IFieldProps) {
+export const component = function NumberComponent({
+  ariaDescribedBy,
+  ariaInvalid,
+  ariaRequired,
+  schema,
+}: FieldComponentProps) {
   const field = useFieldContext<number | "">();
 
   return (
@@ -20,6 +21,8 @@ export const component = function NumberComponent({ schema, ariaInvalid }: IFiel
       onChange={(e) => field.handleChange(e.target.value ? Number(e.target.value) : "")}
       onBlur={field.handleBlur}
       aria-invalid={ariaInvalid}
+      aria-required={ariaRequired}
+      aria-describedby={ariaDescribedBy}
     />
   );
 };

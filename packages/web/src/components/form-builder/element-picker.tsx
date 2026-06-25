@@ -14,7 +14,7 @@ import {
 import { Input } from "@formbro/ui/input";
 import { RiAddLine, RiSearchLine } from "@remixicon/react";
 import { useMemo, useState } from "react";
-import { getRegistryVisual } from "../registry";
+import { getRegistryVisual } from "./registry";
 
 const pickerGroups: Array<{ label: string; keys: RegistryKey[] }> = [
   { label: "Questions", keys: ["short_text", "long_text", "number"] },

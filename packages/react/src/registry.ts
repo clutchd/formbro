@@ -1,25 +1,33 @@
+import type { CompiledElement } from "@formbro/core/compile";
 import type * as React from "react";
 import {
   ElementRegistry,
   FieldRegistry,
-  Registry,
   type ElementRegistryKey,
   type FieldRegistryKey,
   type RegistryItem,
-  type RegistryKey,
 } from "@formbro/core/registry";
-import { getRegistryEditorMetadata, getRegistryRules } from "@formbro/core/schema/editor";
-import { RegistryElementEditor, type EditorProps, type EditorTransformOption } from "./editor";
-import * as description from "./elements/description";
-import * as divider from "./elements/divider";
-import * as email from "./elements/email";
-import * as heading from "./elements/heading";
-import * as link from "./elements/link";
-import * as long_text from "./elements/long-text";
-import * as number from "./elements/number";
-import * as page_break from "./elements/page-break";
-import * as short_text from "./elements/short-text";
-import * as single_select from "./elements/single-select";
+import type { FieldComponentProps } from "./types.js";
+import * as description from "./elements/description.js";
+import * as divider from "./elements/divider.js";
+import * as email from "./elements/email.js";
+import * as heading from "./elements/heading.js";
+import * as link from "./elements/link.js";
+import * as long_text from "./elements/long-text.js";
+import * as number from "./elements/number.js";
+import * as page_break from "./elements/page-break.js";
+import * as short_text from "./elements/short-text.js";
+import * as single_select from "./elements/single-select.js";
+
+export type ElementComponent = (props: CompiledElement) => React.ReactNode;
+export type FieldComponent = (props: FieldComponentProps) => React.ReactNode;
+
+type ElementComponentModule = {
+  component: ElementComponent;
+};
+type FieldComponentModule = {
+  component: FieldComponent;
+};
 
 export const ElementComponents = {
   description: description,
@@ -35,40 +43,22 @@ export const FieldComponents = {
   number: number,
   single_select: single_select,
   short_text: short_text,
-} as const;
-
-type RegistryComponentModule =
-  | (typeof ElementComponents)[ElementRegistryKey]
-  | (typeof FieldComponents)[FieldRegistryKey];
-type RegistryEditor = (props: EditorProps) => React.ReactNode;
+} as const satisfies Record<FieldRegistryKey, FieldComponentModule>;
 
 export const registryItems = [...ElementRegistry, ...FieldRegistry] as RegistryItem[];
 
-export function getRegistryVisual(type: string): RegistryComponentModule | null {
+export function getElementComponent(type: string): ElementComponent | null {
   if (type in ElementComponents) {
-    return ElementComponents[type as ElementRegistryKey];
-  }
-
-  if (type in FieldComponents) {
-    return FieldComponents[type as FieldRegistryKey];
+    return ElementComponents[type as ElementRegistryKey].component;
   }
 
   return null;
 }
 
-export function getRegistryEditor(type: string): RegistryEditor | null {
-  if (!(type in Registry)) return null;
-  return getRegistryEditorMetadata(type as RegistryKey) ? RegistryElementEditor : null;
+export function getFieldComponent(type: string): FieldComponent | null {
+  if (type in FieldComponents) {
+    return FieldComponents[type as FieldRegistryKey].component;
+  }
+
+  return null;
 }
-
-export const editorTransformOptions: EditorTransformOption[] = registryItems.map((item) => {
-  const visual = getRegistryVisual(item.key);
-
-  return {
-    color: visual?.color,
-    icon: visual?.icon,
-    key: item.key as RegistryKey,
-    label: item.display,
-    rules: getRegistryRules(item),
-  };
-});

@@ -1,14 +1,18 @@
 "use client";
 
 import type { CompiledField } from "@formbro/core/compile";
-import { twx } from "@formbro/shared/twx";
-import { FieldContent, FieldDescription, FieldError, Field as RootField } from "@formbro/ui/field";
-import { Spinner } from "@formbro/ui/spinner";
-import { RiErrorWarningLine } from "@remixicon/react";
 import * as React from "react";
-import type { TanStackFieldProps, TanStackForm } from "../hooks/tanstack";
-import { FieldComponents } from "../registry";
-import { FieldLabel } from "./field-label";
+import type { TanStackFieldProps, TanStackForm } from "../hooks/tanstack.js";
+import { getFieldComponent } from "../registry.js";
+import { cx } from "../utils/cx.js";
+import { FieldLabel } from "./field-label.js";
+import {
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  Field as RootField,
+  Spinner,
+} from "./primitives.js";
 
 export function Field({
   tanstack,
@@ -23,7 +27,7 @@ export function Field({
   validators?: TanStackFieldProps["validators"];
   listeners?: TanStackFieldProps["listeners"];
 }) {
-  const { component: Component } = FieldComponents[schema.type as keyof typeof FieldComponents];
+  const Component = getFieldComponent(schema.type);
 
   if (!Component) {
     throw new Error(`Component is required for field ${schema.id}`);
@@ -51,7 +55,7 @@ export function Field({
             <span className="inline-flex items-center gap-1">
               {LabelContent}
               {schema.required && (
-                <span className="font-normal text-destructive" aria-hidden="true">
+                <span className="font-normal text-red-700" aria-hidden="true">
                   *
                 </span>
               )}
@@ -69,7 +73,7 @@ export function Field({
           <RootField
             data-invalid={errored}
             orientation={schema.orientation}
-            className={twx(
+            className={cx(
               "transition-all duration-200",
               errored && "animate-in duration-200 fade-in",
             )}
@@ -88,9 +92,9 @@ export function Field({
             <div className="relative">
               <Component
                 schema={schema}
-                aria-invalid={errored}
-                aria-required={schema.required}
-                aria-describedby={
+                ariaInvalid={errored}
+                ariaRequired={schema.required}
+                ariaDescribedBy={
                   errored
                     ? `${schema.id}-error`
                     : schema.description
@@ -100,8 +104,8 @@ export function Field({
               />
             </div>
             <div
-              className={twx(
-                "flex items-center gap-2 overflow-hidden text-sm text-muted-foreground transition-all duration-200",
+              className={cx(
+                "flex items-center gap-2 overflow-hidden text-sm text-neutral-600 transition-all duration-200",
                 field.state.meta.isTouched && (field.state.meta.isValidating || hasErrors)
                   ? "max-h-24 opacity-100"
                   : "max-h-0 opacity-0",
@@ -116,7 +120,9 @@ export function Field({
                 ) : (
                   hasErrors && (
                     <>
-                      <RiErrorWarningLine className="mt-0.5 size-4 shrink-0 text-destructive" />
+                      <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border border-red-700 text-xs leading-none text-red-700">
+                        !
+                      </span>
                       <FieldError errors={field.state.meta.errors} />
                     </>
                   )
