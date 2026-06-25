@@ -62,6 +62,10 @@ export const ERRORS = defineErrors({
     message: "Failed to sync workspace subscription. Please try again.",
     status: "INTERNAL_SERVER_ERROR",
   },
+  WORKSPACE_IDENTIFIER_REQUIRED: {
+    message: "A workspace id or slug is required.",
+    status: "BAD_REQUEST",
+  },
 });
 
 const client = new StripeSubscriptions(components.stripe, {});
@@ -87,8 +91,13 @@ export async function getWorkspaceSubscriptionState(
 
   const subscription = await getSubsctionByWorkspaceId(ctx, workspaceId);
 
-  const subscriptionPriceDetails = resolvePlanFromStripePriceId(subscription?.priceId);
-  const plan = subscriptionPriceDetails?.plan ?? normalizeWorkspacePlan(workspace.plan);
+  const workspacePlan = normalizeWorkspacePlan(workspace.plan);
+  const subscriptionPriceDetails =
+    workspacePlan === "unlimited" ? null : resolvePlanFromStripePriceId(subscription?.priceId);
+  const plan =
+    workspacePlan === "unlimited"
+      ? workspacePlan
+      : (subscriptionPriceDetails?.plan ?? workspacePlan);
   const hasActiveSubscription =
     hasActiveWorkspaceSubscriptionStatus(subscription?.status) ||
     hasActiveWorkspaceSubscriptionStatus(workspace.billingStatus) ||
@@ -111,6 +120,45 @@ export async function getWorkspaceSubscriptionState(
     limits,
   });
 }
+
+export const grantUnlimitedWorkspace = internalMutation({
+  args: {
+    workspaceId: v.optional(v.id("workspaces")),
+    workspaceSlug: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    if (!args.workspaceId && !hasString(args.workspaceSlug)) {
+      return fail({ data: null, error: ERRORS.WORKSPACE_IDENTIFIER_REQUIRED });
+    }
+
+    const workspace = args.workspaceId
+      ? await ctx.db.get(args.workspaceId)
+      : await ctx.db
+          .query("workspaces")
+          .withIndex("by_slug", (q) => q.eq("slug", args.workspaceSlug ?? ""))
+          .unique();
+
+    if (!workspace) {
+      return fail({ data: null, error: WORKSPACE_ERRORS.WORKSPACE_NOT_FOUND });
+    }
+
+    await ctx.db.patch(workspace._id, {
+      plan: "unlimited",
+      billingStatus: "active",
+    });
+
+    return ok({
+      workspaceId: workspace._id,
+      workspaceSlug: workspace.slug,
+      plan: "unlimited" as const,
+      billingStatus: "active" as const,
+      hadStripeBilling:
+        hasString(workspace.stripeCustomerId) ||
+        hasString(workspace.stripeSubscriptionId) ||
+        hasString(workspace.stripePriceId),
+    });
+  },
+});
 
 export async function requireWorkspaceSubscription(
   ctx: QueryCtx | MutationCtx,
