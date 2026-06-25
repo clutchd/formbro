@@ -347,6 +347,6 @@ describe("compile:elements", () => {
           label: "Field",
         },
       ]),
-    ).toThrow("ID must start with a lowercase letter");
+    ).toThrow("ID must contain only lowercase letters, numbers, and underscores");
   });
 });

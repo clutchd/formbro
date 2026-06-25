@@ -167,7 +167,10 @@ describe("applyFormSchemaEdit", () => {
         },
       ],
       label: "Adding attendee intro",
-      placements: [{ id: "attendee_heading" }, { afterId: "attendee_heading", id: "attendee_intro" }],
+      placements: [
+        { id: "attendee_heading" },
+        { afterId: "attendee_heading", id: "attendee_intro" },
+      ],
       type: "add_layout_elements",
     }).schema;
     schema = applyFormSchemaEdit(schema, {
@@ -316,7 +319,6 @@ describe("applyFormSchemaEdit", () => {
       }),
     ).toThrow("duplicate insertion anchor title");
   });
-
 });
 
 describe("AI edit parsers", () => {

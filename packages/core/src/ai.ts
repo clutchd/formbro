@@ -243,11 +243,7 @@ function assertSequentialPlacements(input: AddFormSchemaEditInput) {
 
 function assertAddOperationCategory(input: AddFormSchemaEditInput) {
   const expectedTarget =
-    input.type === "add_pages"
-      ? "page"
-      : input.type === "add_fields"
-        ? "field"
-        : "element";
+    input.type === "add_pages" ? "page" : input.type === "add_fields" ? "field" : "element";
   const mismatched = input.elements.filter((element) => elementTarget(element) !== expectedTarget);
 
   if (mismatched.length > 0) {
@@ -396,9 +392,7 @@ export function applyFormSchemaEdit(
   };
 }
 
-export function parseFormSchemaEditInputPreview(
-  value: unknown,
-): FormSchemaEditInputPreview | null {
+export function parseFormSchemaEditInputPreview(value: unknown): FormSchemaEditInputPreview | null {
   const preview = FormSchemaEditInputPreviewSchema.safeParse(value);
   return preview.success ? preview.data : null;
 }
@@ -413,9 +407,7 @@ export function parseFormSchemaEditOutput(value: unknown): FormSchemaEditOutput 
   return null;
 }
 
-export function parseFinishFormSchemaEditOutput(
-  value: unknown,
-): FinishFormSchemaEditOutput | null {
+export function parseFinishFormSchemaEditOutput(value: unknown): FinishFormSchemaEditOutput | null {
   const output = FinishFormSchemaEditOutputSchema.safeParse(value);
   return output.success ? output.data : null;
 }
