@@ -4,6 +4,7 @@ import type { Id } from "@formbro/convex/_generated/dataModel";
 import type { FormInput } from "@formbro/core/schema/form";
 import { api } from "@formbro/convex/_generated/api";
 import { getErrorMessage } from "@formbro/convex/errors";
+import { FormBuilderCanvas } from "@formbro/react/builder";
 import { twx } from "@formbro/shared/twx";
 import { Badge, badgeVariants } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
@@ -23,7 +24,6 @@ import Link from "next/link";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FormAiSidebar } from "@/components/form-ai-sidebar";
-import { FormBuilderCanvas } from "@/components/form-builder-canvas";
 import { Loading } from "@/components/loading";
 import { PageState } from "@/components/page-state";
 import { useRequiredWorkspaceFormData } from "./_data-provider";
@@ -205,11 +205,11 @@ function DraftStatusBadge({
           aria-label="Reset unpublished changes"
           className={twx(
             badgeVariants({ status: "warning" }),
-            "cursor-pointer transition-colors hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-amber-400/25",
+            "cursor-pointer gap-1.5 transition-colors hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-amber-400/25 [&>svg]:size-3.5",
           )}
         >
-          <RiArrowGoBackLine className="size-3" />
           {label}
+          <RiArrowGoBackLine className="size-3.5" />
         </button>
       </DialogTrigger>
       <DialogContent>
@@ -255,7 +255,8 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
   const publishForm = useMutation(api.forms.publish);
   const [{ hasUnpublishedChanges, publishing, reverting, saveState, schema }, dispatch] =
     useReducer(editorReducer, initialEditorState);
-  const [aiOpen, setAiOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(true);
+  const [undoingAiChanges, setUndoingAiChanges] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const schemaRef = useRef<FormInput | null>(null);
   const loadedFormId = useRef<string | null>(null);
@@ -297,13 +298,6 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
   const updateSchema = useCallback((updater: (schema: FormInput) => FormInput) => {
     dispatch({ type: "schema-updated", updater });
   }, []);
-
-  const applyAiSchema = useCallback(
-    (nextSchema: FormInput) => {
-      updateSchema(() => nextSchema);
-    },
-    [updateSchema],
-  );
 
   useEffect(() => {
     if (!schema || loadedFormId.current !== formId) return;
@@ -428,6 +422,43 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
     }
   };
 
+  const undoAiChanges = async (previousSchema: FormInput) => {
+    saveSequence.current += 1;
+    setUndoingAiChanges(true);
+    dispatch({ saveState: "saving", type: "save-state-changed" });
+
+    if (saveTimeoutRef.current !== null) {
+      window.clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+
+    try {
+      const result = await saveDraft({ formId, schema: previousSchema });
+      if (!result.ok) {
+        dispatch({ saveState: "error", type: "save-state-changed" });
+        throw new Error(getErrorMessage(result.error));
+      }
+
+      const serialized = serializeSchema(result.data.schema);
+      lastSavedSerialized.current = serialized;
+      lastServerSerialized.current = serialized;
+      lastSubmittedSave.current = serialized;
+      dispatch({
+        hasUnpublishedChanges: result.data.hasUnpublishedChanges,
+        schema: result.data.schema,
+        type: "server-loaded",
+      });
+    } catch (error) {
+      dispatch({ saveState: "error", type: "save-state-changed" });
+      toast.error("Could not undo AI changes", {
+        description: getErrorMessage(error),
+      });
+      throw error;
+    } finally {
+      setUndoingAiChanges(false);
+    }
+  };
+
   if (draft === undefined || !schema) {
     return <Loading title="editor" />;
   }
@@ -502,9 +533,10 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
         </div>
         <FormAiSidebar
           formId={formId}
+          onUndoAiChanges={undoAiChanges}
           open={aiOpen}
           schema={schema}
-          onApplySchema={applyAiSchema}
+          undoing={undoingAiChanges}
           onOpenChange={setAiOpen}
         />
       </div>

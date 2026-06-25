@@ -8,10 +8,8 @@
     "start": "bun --env-file=../../.env next start"
   },
   "dependencies": {
+    "@ai-sdk/react": "^3.0.210",
     "@convex-dev/better-auth": "catalog:",
-    "@dnd-kit/core": "6.3.1",
-    "@dnd-kit/sortable": "10.0.0",
-    "@dnd-kit/utilities": "3.2.2",
     "@formbro/convex": "workspace:*",
     "@formbro/react": "workspace:*",
     "@formbro/shared": "workspace:*",

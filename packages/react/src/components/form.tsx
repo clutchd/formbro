@@ -11,9 +11,14 @@ import type {
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { Progress } from "@formbro/ui/progress";
-import { RiArrowLeftLine, RiArrowRightLine } from "@remixicon/react";
+import {
+  RiArrowLeftLine,
+  RiArrowRightLine,
+  RiCheckboxCircleLine,
+  RiErrorWarningLine,
+} from "@remixicon/react";
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { type UseFormInstrumentation, useForm } from "../hooks/use-form";
 import { Page } from "./page";
 
@@ -75,6 +80,9 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   });
 
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
+  const [previewValidationStatus, setPreviewValidationStatus] = useState<
+    "invalid" | "valid" | null
+  >(null);
 
   const isMultiPage = state.schema.pages.length > 1;
   const currentPage = state.schema.pages[currentPageIndex];
@@ -86,6 +94,10 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
       : 0;
   const percent = computePercent(currentPageIndex);
 
+  useEffect(() => {
+    setPreviewValidationStatus(null);
+  }, [state.schema]);
+
   const setPageIndex = (next: number) => {
     setCurrentPageIndex(next);
     onPercentChange?.(computePercent(next));
@@ -96,8 +108,7 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   }
 
   const handleNext = async () => {
-    if (disabled || preview) {
-      if (!isLastPage) setPageIndex(currentPageIndex + 1);
+    if (disabled) {
       return;
     }
 
@@ -115,11 +126,16 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (disabled || preview) {
+    if (disabled) {
       return;
     }
 
     const valid = await state.validate();
+
+    if (preview) {
+      setPreviewValidationStatus(valid ? "valid" : "invalid");
+      return;
+    }
 
     if (valid) {
       void state.tanstack.handleSubmit();
@@ -157,11 +173,15 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
                 <RiArrowRightLine className="size-4" />
               </Button>
             ) : (
-              <state.tanstack.SubmitButton schema={state.schema} disabled={disabled} />
+              <FormSubmitArea previewValidationStatus={previewValidationStatus} preview={preview}>
+                <state.tanstack.SubmitButton schema={state.schema} disabled={disabled} />
+              </FormSubmitArea>
             )}
           </div>
         ) : (
-          <state.tanstack.SubmitButton schema={state.schema} disabled={disabled} />
+          <FormSubmitArea previewValidationStatus={previewValidationStatus} preview={preview}>
+            <state.tanstack.SubmitButton schema={state.schema} disabled={disabled} />
+          </FormSubmitArea>
         )}
       </state.tanstack.AppForm>
 
@@ -175,5 +195,43 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
 
       {debug && <pre>{JSON.stringify(state.tanstack.state, null, 2)}</pre>}
     </form>
+  );
+}
+
+function FormSubmitArea({
+  children,
+  preview,
+  previewValidationStatus,
+}: {
+  children: React.ReactNode;
+  preview?: boolean;
+  previewValidationStatus: "invalid" | "valid" | null;
+}) {
+  return (
+    <div className="space-y-2">
+      {preview && previewValidationStatus ? (
+        <div
+          className={twx(
+            "flex items-center gap-2 rounded-md border px-3 py-2 text-sm",
+            previewValidationStatus === "valid"
+              ? "border-green-300 bg-green-50 text-green-950 dark:border-green-400/40 dark:bg-green-400/10 dark:text-green-200"
+              : "border-destructive-border bg-destructive/5 text-destructive",
+          )}
+          aria-live="polite"
+        >
+          {previewValidationStatus === "valid" ? (
+            <RiCheckboxCircleLine className="size-4 shrink-0" />
+          ) : (
+            <RiErrorWarningLine className="size-4 shrink-0" />
+          )}
+          <span className="font-medium">
+            {previewValidationStatus === "valid"
+              ? "Preview validation passed."
+              : "Check the highlighted fields."}
+          </span>
+        </div>
+      ) : null}
+      {children}
+    </div>
   );
 }

@@ -18,7 +18,7 @@ export const component = function SingleSelectComponent({ schema, ariaInvalid }:
   const selectedValue =
     typeof field.state.value === "string" && fallbackOptions.includes(field.state.value)
       ? field.state.value
-      : undefined;
+      : "";
 
   return (
     <Select value={selectedValue} onValueChange={(value) => field.handleChange(value)}>

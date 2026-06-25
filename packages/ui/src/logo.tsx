@@ -11,7 +11,7 @@ export function Logo({ className }: { className?: string }) {
         className,
       )}
     >
-      <Image src="/logo.svg" alt={APP_NAME} height={16} width={16} />
+      <Image src="/logo.svg" alt={APP_NAME} width={1451} height={1842} className="h-[1em] w-auto" />
       {APP_NAME}
     </span>
   );
