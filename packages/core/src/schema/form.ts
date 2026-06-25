@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { CompiledField } from "../compile";
+import type { FieldRegistryKey } from "../registry";
 import type { ExtractFormData } from "./extract";
 // import type { TanStackForm } from "@/forms/hooks/tanstack";
 import { ElementSchema } from "./element";
@@ -63,6 +64,8 @@ export const FormSchema = z
 
 export type FormInput = z.input<typeof FormSchema>;
 export type FormOutput = z.output<typeof FormSchema>;
+export type FormElementInput = FormInput["elements"][number];
+export type FormFieldInput = Extract<FormElementInput, { type: FieldRegistryKey }>;
 
 export function createDefaultFormSchema({ id, name }: { id: string; name: string }): FormOutput {
   return FormSchema.parse({

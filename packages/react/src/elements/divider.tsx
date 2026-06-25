@@ -2,12 +2,11 @@ import type { FormLabel } from "@formbro/core/schema/label";
 import { FieldSeparator } from "@formbro/ui/field";
 import { Input } from "@formbro/ui/input";
 import { RiSeparator } from "@remixicon/react";
-import * as React from "react";
 import {
   EditorInlineTextInput,
   EditorPanel,
   EditorPropertyField,
-  setEditorElementValue,
+  setFormElementInputValue,
   type EditorElement,
   type EditorProps,
 } from "../editor";
@@ -53,7 +52,7 @@ export function editor({
             id={`${element.id}-label`}
             value={label}
             onChange={(event) =>
-              onChange(setEditorElementValue(element, "label", event.target.value))
+              onChange(setFormElementInputValue(element, "label", event.target.value))
             }
             placeholder="Optional divider label"
           />
@@ -73,7 +72,7 @@ export function editor({
             ariaLabel="Divider label"
             className="text-center text-sm text-muted-foreground"
             onFocus={onSelect}
-            onChange={(value) => onChange(setEditorElementValue(element, "label", value))}
+            onChange={(value) => onChange(setFormElementInputValue(element, "label", value))}
           />
         ) : null}
       </div>

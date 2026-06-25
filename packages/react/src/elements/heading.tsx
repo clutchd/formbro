@@ -3,13 +3,12 @@ import { twx } from "@formbro/shared/twx";
 import { FieldLegend } from "@formbro/ui/field";
 import { Input } from "@formbro/ui/input";
 import { RiHeading } from "@remixicon/react";
-import * as React from "react";
 import {
   EditorInlineTextInput,
   EditorPanel,
   EditorPropertyField,
   editorLabelForElement,
-  setEditorElementValue,
+  setFormElementInputValue,
   type EditorElement,
   type EditorProps,
 } from "../editor";
@@ -76,7 +75,7 @@ export function editor({
             onChange={(event) => {
               const value = event.target.value;
               onChange({
-                ...setEditorElementValue(element, "label", value),
+                ...setFormElementInputValue(element, "label", value),
                 name: value || element.name,
               });
             }}
@@ -95,15 +94,15 @@ export function editor({
         placeholder="Heading"
         ariaLabel="Heading text"
         className={twx(
-          "font-display font-bold tracking-tight",
-          element.level === 1 && "text-4xl md:text-5xl",
-          (element.level ?? 2) === 2 && "text-2xl md:text-3xl",
-          element.level === 3 && "text-xl md:text-2xl",
+          "font-display font-bold tracking-tight text-foreground",
+          element.level === 1 && "text-2xl md:text-2xl",
+          (element.level ?? 2) === 2 && "text-xl md:text-xl",
+          element.level === 3 && "text-lg md:text-lg",
         )}
         onFocus={onSelect}
         onChange={(value) =>
           onChange({
-            ...setEditorElementValue(element, "label", value),
+            ...setFormElementInputValue(element, "label", value),
             name: value || element.name,
           })
         }

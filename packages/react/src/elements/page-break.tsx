@@ -1,10 +1,9 @@
 import { Input } from "@formbro/ui/input";
 import { RiPageSeparator } from "@remixicon/react";
-import * as React from "react";
 import {
   EditorPanel,
   EditorPropertyField,
-  setEditorElementValue,
+  setFormElementInputValue,
   type EditorElement,
   type EditorProps,
 } from "../editor";
@@ -55,7 +54,7 @@ export function editor({
             onChange={(event) => {
               const value = event.target.value;
               onChange({
-                ...setEditorElementValue(element, "label", value || undefined),
+                ...setFormElementInputValue(element, "label", value || undefined),
                 name: value || "Page Break",
               });
             }}

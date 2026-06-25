@@ -1,3 +1,4 @@
+import type { ElementRegistryKey, FieldRegistryKey } from "@formbro/core/registry";
 import * as description from "./elements/description";
 import * as divider from "./elements/divider";
 import * as email from "./elements/email";

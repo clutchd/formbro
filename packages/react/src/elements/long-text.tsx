@@ -1,13 +1,7 @@
-import type { IFieldProps } from "@formbro/core/schema/form";
+import type { FormFieldInput, IFieldProps } from "@formbro/core/schema/form";
 import { Textarea } from "@formbro/ui/textarea";
 import { RiText } from "@remixicon/react";
-import * as React from "react";
-import {
-  EditorTextareaPreview,
-  FieldEditor,
-  type EditorFieldElement,
-  type EditorProps,
-} from "../editor";
+import { EditorTextareaPreview, FieldEditor, type EditorProps } from "../editor";
 import { useFieldContext } from "../hooks/tanstack-context";
 
 export const icon = RiText;
@@ -30,7 +24,7 @@ export const component = function LongTextComponent({ schema, ariaInvalid }: IFi
   );
 };
 
-export function editor(props: EditorProps<EditorFieldElement>) {
+export function editor(props: EditorProps<FormFieldInput>) {
   return (
     <FieldEditor {...props}>
       <EditorTextareaPreview element={props.element} fallbackPlaceholder="Long answer" />

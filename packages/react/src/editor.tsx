@@ -1,4 +1,6 @@
-import type { FormInput } from "@formbro/core/schema/form";
+import type { RegistryKey } from "@formbro/core/registry";
+import type { FormElementInput, FormFieldInput } from "@formbro/core/schema/form";
+import type { FormRule, FormRuleType } from "@formbro/core/schema/rule";
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { Input } from "@formbro/ui/input";
@@ -8,23 +10,16 @@ import { Textarea } from "@formbro/ui/textarea";
 import { RiArrowDownSLine, RiCloseLine, RiEditLine, RiSettings3Line } from "@remixicon/react";
 import * as React from "react";
 
-export type EditorElement = FormInput["elements"][number];
-export type EditorFieldElement = EditorElement & {
-  description?: string;
-  placeholder?: string;
-  options?: string[];
-  rules?: Array<{ type: string; value?: unknown }>;
-};
 export type EditorTransformOption = {
   color?: string;
   icon?: React.ComponentType<{ className?: string }>;
-  key: string;
+  key: RegistryKey;
   label: string;
-  rules?: readonly string[];
+  rules?: readonly FormRuleType[];
 };
-export type EditorProps<TElement extends EditorElement = EditorElement> = {
+export type EditorProps<TElement extends FormElementInput = FormElementInput> = {
   element: TElement;
-  onChange: (element: EditorElement) => void;
+  onChange: (element: FormElementInput) => void;
   onDeselect?: () => void;
   onSelect: () => void;
   onTransform?: (type: string) => void;
@@ -32,19 +27,18 @@ export type EditorProps<TElement extends EditorElement = EditorElement> = {
   transformOptions?: EditorTransformOption[];
 };
 
-export type EditorPropertyKey =
-  | "description"
-  | "level"
-  | "max"
-  | "min"
-  | "options"
-  | "placeholder"
-  | "required";
+type KeysOfUnion<T> = T extends T ? keyof T : never;
+type EditorSchemaPropertyKey = Extract<
+  KeysOfUnion<FormElementInput>,
+  "description" | "level" | "options" | "placeholder"
+>;
+type EditorRulePropertyKey = Extract<FormRuleType, "max" | "min" | "required">;
+export type EditorPropertyKey = EditorSchemaPropertyKey | EditorRulePropertyKey;
 export type EditorPropertySection = "content" | "validation" | "behavior";
 export type EditorPropertyDefinition = {
   key: string;
   className?: string;
-  render: (context: EditorPropertyContext) => React.ReactNode;
+  render: (context: EditorPropertyContext) => React.ReactElement;
   section: EditorPropertySection;
 };
 export type EditorProperty =
@@ -53,7 +47,8 @@ export type EditorProperty =
       section?: EditorPropertySection;
     });
 
-export type EditorPropertyContext = EditorProps<EditorElement>;
+export type EditorElement = FormElementInput;
+export type EditorPropertyContext = EditorProps<FormElementInput>;
 
 export const defaultFieldEditorProperties = [
   "description",
@@ -71,7 +66,7 @@ const editorPropertyDefinitions = {
     key: "description",
     section: "content",
     render: ({ element, onChange }) => {
-      const field = element as EditorFieldElement;
+      const field = element as FormFieldInput;
 
       return (
         <EditorPropertyField label="Helper text" htmlFor={`${element.id}-description`}>
@@ -79,7 +74,7 @@ const editorPropertyDefinitions = {
             id={`${element.id}-description`}
             value={field.description ?? ""}
             onChange={(event) =>
-              onChange(setEditorElementValue(element, "description", event.target.value))
+              onChange(setFormElementInputValue(element, "description", event.target.value))
             }
             placeholder="Optional helper text"
           />
@@ -99,7 +94,7 @@ const editorPropertyDefinitions = {
           <Select
             value={value}
             onValueChange={(nextValue) =>
-              onChange(setEditorElementValue(element, "level", Number(nextValue) as 1 | 2 | 3))
+              onChange(setFormElementInputValue(element, "level", Number(nextValue) as 1 | 2 | 3))
             }
           >
             <SelectTrigger id={`${element.id}-level`} className="w-full">
@@ -119,7 +114,7 @@ const editorPropertyDefinitions = {
     key: "max",
     section: "validation",
     render: ({ element, onChange }) => {
-      const field = element as EditorFieldElement;
+      const field = element as FormFieldInput;
       const rule = getEditorFieldRule(field, "max");
       const enabled = typeof rule?.value === "number";
       const defaultValue = field.type === "number" ? 100 : 240;
@@ -152,7 +147,7 @@ const editorPropertyDefinitions = {
     key: "min",
     section: "validation",
     render: ({ element, onChange }) => {
-      const field = element as EditorFieldElement;
+      const field = element as FormFieldInput;
       const rule = getEditorFieldRule(field, "min");
       const enabled = typeof rule?.value === "number";
       const defaultValue = field.type === "number" ? 0 : 1;
@@ -186,7 +181,7 @@ const editorPropertyDefinitions = {
     section: "content",
     className: "md:col-span-2",
     render: ({ element, onChange }) => {
-      const field = element as EditorFieldElement;
+      const field = element as FormFieldInput;
 
       return (
         <EditorPropertyField label="Options" htmlFor={`${element.id}-options`}>
@@ -205,7 +200,7 @@ const editorPropertyDefinitions = {
     key: "placeholder",
     section: "content",
     render: ({ element, onChange }) => {
-      const field = element as EditorFieldElement;
+      const field = element as FormFieldInput;
 
       return (
         <EditorPropertyField label="Placeholder" htmlFor={`${element.id}-placeholder`}>
@@ -213,7 +208,7 @@ const editorPropertyDefinitions = {
             id={`${element.id}-placeholder`}
             value={field.placeholder ?? ""}
             onChange={(event) =>
-              onChange(setEditorElementValue(element, "placeholder", event.target.value))
+              onChange(setFormElementInputValue(element, "placeholder", event.target.value))
             }
             placeholder="Input placeholder"
           />
@@ -225,7 +220,7 @@ const editorPropertyDefinitions = {
     key: "required",
     section: "validation",
     render: ({ element, onChange }) => {
-      const field = element as EditorFieldElement;
+      const field = element as FormFieldInput;
 
       return (
         <EditorRuleOption
@@ -238,32 +233,31 @@ const editorPropertyDefinitions = {
   },
 } satisfies Record<EditorPropertyKey, EditorPropertyDefinition>;
 
-export function editorLabelForElement(element: EditorElement) {
+export function editorLabelForElement(element: FormElementInput) {
   if ("label" in element && typeof element.label === "string") return element.label;
   return element.name;
 }
 
-export function setEditorElementValue(
-  element: EditorElement,
+export function setFormElementInputValue(
+  element: FormElementInput,
   key: string,
   value: unknown,
-): EditorElement {
+): FormElementInput {
   return {
     ...element,
     [key]: value,
-  } as EditorElement;
+  } as FormElementInput;
 }
 
-export function isEditorFieldRequired(element: EditorFieldElement) {
+export function isEditorFieldRequired(element: FormFieldInput) {
   return element.rules?.some((rule) => rule.type === "required" && rule.value) ?? false;
 }
 
-export function setEditorFieldRequired(
-  element: EditorFieldElement,
-  required: boolean,
-): EditorFieldElement {
+export function setEditorFieldRequired(element: FormFieldInput, required: boolean): FormFieldInput {
   const otherRules = element.rules?.filter((rule) => rule.type !== "required") ?? [];
-  const rules = required ? [{ type: "required", value: true }, ...otherRules] : otherRules;
+  const rules = required
+    ? ([{ type: "required", value: true }, ...otherRules] satisfies FormRule[])
+    : otherRules;
 
   return {
     ...element,
@@ -271,15 +265,20 @@ export function setEditorFieldRequired(
   };
 }
 
-export function getEditorFieldRule(element: EditorFieldElement, type: string) {
-  return element.rules?.find((rule) => rule.type === type);
+export function getEditorFieldRule<TType extends FormRuleType>(
+  element: FormFieldInput,
+  type: TType,
+) {
+  return element.rules?.find(
+    (rule): rule is Extract<FormRule, { type: TType }> => rule.type === type,
+  );
 }
 
 export function setEditorNumberRule(
-  element: EditorFieldElement,
+  element: FormFieldInput,
   type: "max" | "min",
   value: number | undefined,
-): EditorFieldElement {
+): FormFieldInput {
   const otherRules = element.rules?.filter((rule) => rule.type !== type) ?? [];
   const rules =
     typeof value === "number" && Number.isFinite(value)
@@ -292,15 +291,15 @@ export function setEditorNumberRule(
   };
 }
 
-export function getEditorOptionsText(element: EditorFieldElement) {
+export function getEditorOptionsText(element: FormFieldInput) {
   return Array.isArray(element.options) ? element.options.join("\n") : "";
 }
 
-export function setEditorOptions(element: EditorFieldElement, value: string): EditorFieldElement {
-  const options = value
-    .split("\n")
-    .map((option) => option.trim())
-    .filter(Boolean);
+export function setEditorOptions(element: FormFieldInput, value: string): FormFieldInput {
+  const options = value.split("\n").flatMap((option) => {
+    const trimmed = option.trim();
+    return trimmed ? [trimmed] : [];
+  });
 
   return {
     ...element,
@@ -343,7 +342,7 @@ export function EditorInputPreview({
   fallbackPlaceholder,
   type = "text",
 }: {
-  element: EditorFieldElement;
+  element: FormFieldInput;
   fallbackPlaceholder: string;
   type?: React.HTMLInputTypeAttribute;
 }) {
@@ -362,7 +361,7 @@ export function EditorTextareaPreview({
   element,
   fallbackPlaceholder,
 }: {
-  element: EditorFieldElement;
+  element: FormFieldInput;
   fallbackPlaceholder: string;
 }) {
   return (
@@ -379,7 +378,7 @@ export function EditorSelectPreview({
   element,
   fallbackPlaceholder,
 }: {
-  element: EditorFieldElement;
+  element: FormFieldInput;
   fallbackPlaceholder: string;
 }) {
   return (
@@ -390,7 +389,7 @@ export function EditorSelectPreview({
   );
 }
 
-export function EditorPanel<TElement extends EditorElement>({
+export function EditorPanel<TElement extends FormElementInput>({
   children,
   element,
   onChange,
@@ -412,9 +411,8 @@ export function EditorPanel<TElement extends EditorElement>({
     selected: true,
     transformOptions,
   };
-  const renderedProperties = properties
-    .map((property) => renderEditorProperty(property, context))
-    .filter(Boolean);
+  const renderedProperties = properties.map((property) => renderEditorProperty(property, context));
+
   const editProperties = renderedProperties.filter((property) => property.section === "content");
   const optionProperties = renderedProperties.filter((property) => property.section !== "content");
   const hasEditProperties = Boolean(children || editProperties.length > 0);
@@ -488,7 +486,7 @@ export function FieldEditor({
   selected,
   settingsTitle = "Question",
   transformOptions,
-}: EditorProps<EditorFieldElement> & {
+}: EditorProps<FormFieldInput> & {
   children: React.ReactNode;
   properties?: readonly EditorProperty[];
   settingsTitle?: string;
@@ -514,7 +512,7 @@ export function FieldEditor({
             onChange={(event) => {
               const value = event.target.value;
               onChange({
-                ...setEditorElementValue(element, "label", value),
+                ...setFormElementInputValue(element, "label", value),
                 name: value || element.name,
               });
             }}
@@ -536,7 +534,7 @@ export function FieldEditor({
           onFocus={onSelect}
           onChange={(value) =>
             onChange({
-              ...setEditorElementValue(element, "label", value),
+              ...setFormElementInputValue(element, "label", value),
               name: value || element.name,
             })
           }
@@ -552,7 +550,7 @@ export function FieldEditor({
 }
 
 function resolveFieldEditorProperties(
-  element: EditorFieldElement,
+  element: FormFieldInput,
   properties: readonly EditorProperty[] | undefined,
   transformOptions: readonly EditorTransformOption[] | undefined,
 ) {
@@ -572,9 +570,7 @@ function getRuleEditorProperties(
   return supportedRules.filter(isVisibleRuleProperty);
 }
 
-function isVisibleRuleProperty(
-  rule: string,
-): rule is Extract<EditorPropertyKey, "max" | "min" | "required"> {
+function isVisibleRuleProperty(rule: FormRuleType): rule is EditorRulePropertyKey {
   return rule === "required" || rule === "min" || rule === "max";
 }
 
@@ -644,14 +640,14 @@ function EditorTypeControl({
   transformOptions,
 }: {
   currentType: string;
-  onTransform: (type: string) => void;
-  transformOptions: EditorTransformOption[];
+  onTransform: (type: RegistryKey) => void;
+  transformOptions: readonly EditorTransformOption[];
 }) {
   const selectedOption = transformOptions.find((option) => option.key === currentType);
   const SelectedIcon = selectedOption?.icon;
 
   return (
-    <Select value={currentType} onValueChange={(value) => onTransform(value)}>
+    <Select value={currentType} onValueChange={(value) => onTransform(value as RegistryKey)}>
       <SelectTrigger className="h-8 w-44 bg-background">
         <span className="flex min-w-0 items-center gap-2">
           {SelectedIcon ? (
@@ -744,12 +740,11 @@ function renderEditorProperty(property: EditorProperty, context: EditorPropertyC
           ...property,
         };
   const content = definition.render(context);
-
-  if (!content) return null;
+  const className = "className" in definition ? definition.className : undefined;
 
   return {
     content: (
-      <div key={definition.key} className={twx(definition.className)}>
+      <div key={definition.key} className={twx(className)}>
         {content}
       </div>
     ),

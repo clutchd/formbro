@@ -1,15 +1,9 @@
 "use client";
 
-import type { IFieldProps } from "@formbro/core/schema/form";
+import type { FormFieldInput, IFieldProps } from "@formbro/core/schema/form";
 import { Input } from "@formbro/ui/input";
 import { RiLinkM } from "@remixicon/react";
-import * as React from "react";
-import {
-  EditorInputPreview,
-  FieldEditor,
-  type EditorFieldElement,
-  type EditorProps,
-} from "../editor";
+import { EditorInputPreview, FieldEditor, type EditorProps } from "../editor";
 import { useFieldContext } from "../hooks/tanstack-context";
 
 export const icon = RiLinkM;
@@ -33,7 +27,7 @@ export const component = function LinkComponent({ schema, ariaInvalid }: IFieldP
   );
 };
 
-export function editor(props: EditorProps<EditorFieldElement>) {
+export function editor(props: EditorProps<FormFieldInput>) {
   return (
     <FieldEditor {...props}>
       <EditorInputPreview

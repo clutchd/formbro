@@ -124,9 +124,17 @@ const single_select = field({
 
 export const ElementRegistry = elements([description, divider, heading, page_break]);
 export const FieldRegistry = fields([email, link, long_text, number, short_text, single_select]);
+export type ElementRegistryItem = (typeof ElementRegistry)[number];
+export type FieldRegistryItem = (typeof FieldRegistry)[number];
+export type RegistryItem = ElementRegistryItem | FieldRegistryItem;
+export type ElementRegistryKey = ElementRegistryItem["key"];
+export type FieldRegistryKey = FieldRegistryItem["key"];
+export type RegistryKey = RegistryItem["key"];
+
 export const Registry = Object.fromEntries(
   [...ElementRegistry, ...FieldRegistry].map((item) => [item.key, item]),
-);
+) as {
+  [Key in RegistryKey]: Extract<RegistryItem, { key: Key }>;
+};
 
-export type RegistryKey = (typeof Registry)[number]["key"];
-export const RegistryKeys = Object.keys(Registry);
+export const RegistryKeys = Object.keys(Registry) as [RegistryKey, ...RegistryKey[]];

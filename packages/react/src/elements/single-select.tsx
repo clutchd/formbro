@@ -1,12 +1,10 @@
-import type { IFieldProps } from "@formbro/core/schema/form";
+import type { FormFieldInput, IFieldProps } from "@formbro/core/schema/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbro/ui/select";
 import { RiListCheck } from "@remixicon/react";
-import * as React from "react";
 import {
   EditorSelectPreview,
   FieldEditor,
   choiceFieldEditorProperties,
-  type EditorFieldElement,
   type EditorProps,
 } from "../editor";
 import { useFieldContext } from "../hooks/tanstack-context";
@@ -49,7 +47,7 @@ export const component = function SingleSelectComponent({ schema, ariaInvalid }:
   );
 };
 
-export function editor(props: EditorProps<EditorFieldElement>) {
+export function editor(props: EditorProps<FormFieldInput>) {
   return (
     <FieldEditor {...props} properties={choiceFieldEditorProperties}>
       <EditorSelectPreview element={props.element} fallbackPlaceholder="Select an option" />

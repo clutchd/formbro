@@ -2,12 +2,11 @@ import type { FormLabel } from "@formbro/core/schema/label";
 import { FieldDescription } from "@formbro/ui/field";
 import { Textarea } from "@formbro/ui/textarea";
 import { RiAlignLeft } from "@remixicon/react";
-import * as React from "react";
 import {
   EditorPanel,
   EditorPropertyField,
   editorLabelForElement,
-  setEditorElementValue,
+  setFormElementInputValue,
   type EditorElement,
   type EditorProps,
 } from "../editor";
@@ -34,6 +33,8 @@ export function editor({
   selected,
   transformOptions,
 }: EditorProps<DescriptionEditorElement>) {
+  const value = editorLabelForElement(element);
+
   if (selected) {
     return (
       <EditorPanel
@@ -49,10 +50,10 @@ export function editor({
         <EditorPropertyField label="Description text" htmlFor={`${element.id}-label`}>
           <Textarea
             id={`${element.id}-label`}
-            value={editorLabelForElement(element)}
+            value={value}
             onChange={(event) =>
               onChange({
-                ...setEditorElementValue(element, "label", event.target.value),
+                ...setFormElementInputValue(element, "label", event.target.value),
                 name: event.target.value || element.name,
               })
             }
@@ -67,16 +68,17 @@ export function editor({
   return (
     <>
       <Textarea
-        value={editorLabelForElement(element)}
+        value={value}
+        rows={Math.max(1, value.split("\n").length)}
         onFocus={onSelect}
         onChange={(event) =>
           onChange({
-            ...setEditorElementValue(element, "label", event.target.value),
+            ...setFormElementInputValue(element, "label", event.target.value),
             name: event.target.value || element.name,
           })
         }
         aria-label="Description text"
-        className="min-h-20 resize-none rounded-none border-0 bg-transparent px-0 py-0 leading-7 text-muted-foreground shadow-none focus-visible:outline-none"
+        className="min-h-0 resize-none overflow-hidden rounded-none border-0 bg-transparent px-0 py-0 text-sm leading-relaxed text-muted-foreground shadow-none focus-visible:outline-none"
         placeholder="Description"
       />
     </>
