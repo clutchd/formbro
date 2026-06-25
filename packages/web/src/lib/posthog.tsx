@@ -8,30 +8,6 @@ import { useEffect, useRef } from "react";
 import { useSession } from "@/lib/auth/client";
 
 const IDENTIFIED_USER_STORAGE_KEY = "formbro.posthog.identified_user_id";
-const SERVICE_VERSION =
-  process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ??
-  process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF ??
-  "local";
-
-if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {
-  throw new Error("NEXT_PUBLIC_POSTHOG_KEY is not set");
-}
-
-posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
-  api_host: "/ingest",
-  capture_exceptions: {
-    capture_console_errors: false,
-    capture_unhandled_errors: true,
-    capture_unhandled_rejections: true,
-  },
-  logs: {
-    captureConsoleLogs: false,
-    environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
-    serviceName: "formbro-web",
-    serviceVersion: SERVICE_VERSION,
-  },
-  person_profiles: "identified_only",
-});
 
 function identifiedStorageGet() {
   try {
@@ -79,18 +55,21 @@ function personProperties({
   return properties;
 }
 
-function personSignature({
-  email,
-  id,
-  image,
-  name,
-}: {
+type AnalyticsUser = {
   email?: string | null;
   id: string;
   image?: string | null;
   name?: string | null;
-}) {
-  return [id, email, name, image].join("\n");
+};
+
+export function identifyAnalyticsUser(user: AnalyticsUser) {
+  posthog.identify(user.id, personProperties(user));
+  identifiedStorageSet(user.id);
+}
+
+export function resetAnalytics() {
+  posthog.reset();
+  identifiedStorageClear();
 }
 
 function PosthogIdentity() {
@@ -101,38 +80,26 @@ function PosthogIdentity() {
   const userName = user?.name;
   const userImage = user?.image;
   const identifiedUserIdRef = useRef<string | null>(null);
-  const identifiedSignatureRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (isPending) return;
 
     if (!userId) {
       if (identifiedUserIdRef.current || identifiedStorageGet()) {
-        posthog.reset();
-        identifiedStorageClear();
+        resetAnalytics();
         identifiedUserIdRef.current = null;
-        identifiedSignatureRef.current = null;
       }
       return;
     }
 
     const previousIdentifiedUserId = identifiedUserIdRef.current ?? identifiedStorageGet();
     if (previousIdentifiedUserId && previousIdentifiedUserId !== userId) {
-      posthog.reset();
+      resetAnalytics();
       identifiedUserIdRef.current = null;
-      identifiedSignatureRef.current = null;
     }
 
-    const person = { email: userEmail, id: userId, image: userImage, name: userName };
-    const signature = personSignature(person);
-    if (identifiedUserIdRef.current === userId && identifiedSignatureRef.current === signature) {
-      return;
-    }
-
-    posthog.identify(userId, personProperties(person));
-    identifiedStorageSet(userId);
+    identifyAnalyticsUser({ email: userEmail, id: userId, image: userImage, name: userName });
     identifiedUserIdRef.current = userId;
-    identifiedSignatureRef.current = signature;
   }, [isPending, userEmail, userId, userImage, userName]);
 
   return null;

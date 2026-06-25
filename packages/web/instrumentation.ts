@@ -44,6 +44,7 @@ async function getPostHogLoggerProvider() {
           new OTLPLogExporter({
             headers: {
               Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
             },
             url: `${POSTHOG_HOST}/i/v1/logs`,
           }),

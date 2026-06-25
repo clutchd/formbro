@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ThemeIcon, useToggleTheme } from "@/components/theme";
 import { signOut } from "@/lib/auth/client";
+import { resetAnalytics } from "@/lib/posthog";
 import { useDashboardPrewarmIntent } from "./(dashboard)/_data-provider";
 
 type User =
@@ -76,8 +77,9 @@ export function AccountMenu({ user }: { user: User }) {
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => {
-            signOut();
+          onClick={async () => {
+            resetAnalytics();
+            await signOut();
             router.replace("/sign-in");
           }}
           variant="destructive"

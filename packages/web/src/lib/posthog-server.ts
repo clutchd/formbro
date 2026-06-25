@@ -10,6 +10,7 @@ export function getPostHogServer() {
 
   posthogServer ??= new PostHog(token, {
     flushAt: 1,
+    flushInterval: 0,
     host: POSTHOG_HOST,
   });
 
