@@ -1,9 +1,16 @@
+import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
 import { fonts } from "@formbro/ui/typography";
 import { Toaster } from "@/components/sonner";
 import { ThemeProvider } from "@/components/theme";
 import { PosthogProvider } from "@/lib/posthog";
 import "./globals.css";
+
+export const metadata: Metadata = {
+  icons: {
+    icon: "/favicon.ico",
+  },
+};
 
 export default function RootLayout({ children }: PropsWithChildren) {
   return (
