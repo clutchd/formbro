@@ -1,3 +1,4 @@
+import type { Context } from "@opentelemetry/api";
 import {
   FinishFormSchemaEditInputSchema,
   FinishFormSchemaEditOutputSchema,
@@ -14,6 +15,9 @@ import {
   BasicTracerProvider,
   SimpleSpanProcessor,
   type IdGenerator,
+  type ReadableSpan,
+  type Span,
+  type SpanProcessor,
 } from "@opentelemetry/sdk-trace-base";
 import { PostHogTraceExporter } from "@posthog/ai/otel";
 import {
@@ -49,6 +53,9 @@ const FORM_EDITOR_AI_MODEL = process.env.FORM_EDITOR_AI_MODEL ?? "openai/gpt-5-m
 const FORM_EDITOR_AI_MAX_STEPS = getPositiveIntegerEnv("FORM_EDITOR_AI_MAX_STEPS", 24);
 const FORM_EDITOR_AI_REASONING_EFFORT = "minimal";
 const FORM_EDITOR_AI_TEXT_VERBOSITY = "low";
+const POSTHOG_DISTINCT_ID_ATTRIBUTE = "posthog_distinct_id";
+const POSTHOG_TRACE_ID_ATTRIBUTE = "posthog_trace_id";
+const AI_SDK_METADATA_PREFIX = "ai.telemetry.metadata.";
 const aiTelemetryResource = resourceFromAttributes({
   "service.name": AI_SERVICE_NAME,
 });
@@ -110,12 +117,66 @@ class FixedTraceIdGenerator implements IdGenerator {
   }
 }
 
-function createAiTelemetry() {
+function createPostHogAiTelemetryAttributes({
+  distinctId,
+  traceId,
+}: {
+  distinctId: string;
+  traceId: string;
+}) {
+  return {
+    [POSTHOG_DISTINCT_ID_ATTRIBUTE]: distinctId,
+    [`${AI_SDK_METADATA_PREFIX}${POSTHOG_DISTINCT_ID_ATTRIBUTE}`]: distinctId,
+    [POSTHOG_TRACE_ID_ATTRIBUTE]: traceId,
+    [`${AI_SDK_METADATA_PREFIX}${POSTHOG_TRACE_ID_ATTRIBUTE}`]: traceId,
+  };
+}
+
+function createPostHogAiTelemetryMetadata({
+  distinctId,
+  traceId,
+}: {
+  distinctId: string;
+  traceId: string;
+}) {
+  return {
+    posthog_distinct_id: distinctId,
+    posthog_trace_id: traceId,
+  };
+}
+
+class PostHogAiIdentitySpanProcessor implements SpanProcessor {
+  constructor(private readonly attributes: Record<string, string>) {}
+
+  forceFlush() {
+    return Promise.resolve();
+  }
+
+  onStart(_span: Span, _parentContext: Context) {
+    return;
+  }
+
+  onEnding(span: Span) {
+    span.setAttributes(this.attributes);
+  }
+
+  onEnd(_span: ReadableSpan) {
+    return;
+  }
+
+  shutdown() {
+    return Promise.resolve();
+  }
+}
+
+function createAiTelemetry({ distinctId }: { distinctId: string }) {
   const traceId = createTraceId();
+  const posthogAttributes = createPostHogAiTelemetryAttributes({ distinctId, traceId });
   const provider = new BasicTracerProvider({
     idGenerator: new FixedTraceIdGenerator(traceId),
     resource: aiTelemetryResource,
     spanProcessors: [
+      new PostHogAiIdentitySpanProcessor(posthogAttributes),
       new SimpleSpanProcessor(
         new PostHogTraceExporter({
           projectToken: POSTHOG_PROJECT_TOKEN,
@@ -140,6 +201,7 @@ function createAiTelemetry() {
 
   return {
     flush,
+    metadata: createPostHogAiTelemetryMetadata({ distinctId, traceId }),
     traceId,
     tracer: provider.getTracer(AI_SERVICE_NAME),
   };
@@ -177,7 +239,7 @@ function getFormSchemaPromptReference() {
   return `FormBro schema version: ${FORMBRO_SCHEMA_VERSION}
 
 Root object:
-- id: required form id (lowercase snake_case, starts with a letter, max 64 chars)
+- id: required form id (lowercase letters, numbers, and underscores)
 - version: optional, defaults to "${FORMBRO_SCHEMA_VERSION}"
 - name: required form title
 - elements: ordered array of layout elements and fields (each id must be unique)
@@ -187,7 +249,7 @@ Root object:
 - variables: optional string map for interpolation
 
 Every element or field requires:
-- id: unique lowercase snake_case element id. Use only lowercase letters, numbers, and underscores; never use hyphens, spaces, uppercase, or camelCase.
+- id: unique lowercase snake_case element id. Use lowercase letters, numbers, and underscores; never use hyphens, spaces, uppercase, or camelCase.
 - name: internal name
 - type: one of the supported types below
 - category: "element" or "field" (defaults from type)
@@ -332,7 +394,7 @@ export const chat = httpAction(async (ctx, request) => {
     let latestSchema = currentSchema;
     const model = FORM_EDITOR_AI_MODEL;
     const messages = await convertToModelMessages(pruneFormEditorAiMessagesForModel(body.messages));
-    const aiTelemetry = createAiTelemetry();
+    const aiTelemetry = createAiTelemetry({ distinctId: identity.subject });
 
     const editForm = async (input: EditFormInput): Promise<FormSchemaEditOutput> => {
       const nextSchema = FormSchema.parse({
@@ -351,9 +413,10 @@ export const chat = httpAction(async (ctx, request) => {
 
       latestSchema = saved.data.schema;
       return {
-        operations: operations.length > 0
-          ? operations
-          : [{ label: input.label, target: "element", type: "update" }],
+        operations:
+          operations.length > 0
+            ? operations
+            : [{ label: input.label, target: "element", type: "update" }],
       };
     };
 
@@ -381,10 +444,10 @@ export const chat = httpAction(async (ctx, request) => {
         functionId: "form-editor-ai",
         tracer: aiTelemetry.tracer,
         metadata: {
+          ...aiTelemetry.metadata,
           ai_trace_id: aiTelemetry.traceId,
           form_id: draft.data.form._id,
           model,
-          posthog_distinct_id: identity.subject,
           source: "form-editor",
           workspace_id: draft.data.form.workspaceId,
         },

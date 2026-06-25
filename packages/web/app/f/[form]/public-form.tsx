@@ -7,23 +7,81 @@ import { getErrorMessage } from "@formbro/convex/errors";
 import { Form } from "@formbro/react/components/form";
 import { RiAlertLine, RiCheckboxCircleLine } from "@remixicon/react";
 import { useMutation } from "convex/react";
-import { useState } from "react";
+import { usePostHog } from "posthog-js/react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
 
+type PublicFormAnalyticsProps = {
+  formId?: Id<"forms">;
+  formName?: string;
+  formSlug?: string;
+  status?: string;
+  workspaceSlug?: string;
+};
+
+function publicFormProperties({
+  formId,
+  formName,
+  formSlug,
+  status,
+  workspaceSlug,
+}: PublicFormAnalyticsProps) {
+  return {
+    form_id: formId,
+    form_name: formName,
+    form_slug: formSlug,
+    form_status: status,
+    workspace_slug: workspaceSlug,
+  };
+}
+
+export function PublicFormAnalytics({
+  formId,
+  formName,
+  formSlug,
+  status,
+  workspaceSlug,
+}: PublicFormAnalyticsProps) {
+  const posthog = usePostHog();
+
+  useEffect(() => {
+    posthog.capture(
+      "public_form_viewed",
+      publicFormProperties({ formId, formName, formSlug, status, workspaceSlug }),
+    );
+  }, [formId, formName, formSlug, posthog, status, workspaceSlug]);
+
+  return null;
+}
+
 export function PublicForm({
   compiledSchema,
   formId,
+  formName,
+  formSlug,
   schemaId,
+  workspaceSlug,
 }: {
   compiledSchema: CompiledForm;
   formId: Id<"forms">;
+  formName?: string;
+  formSlug?: string;
   schemaId: Id<"formSchemas">;
+  workspaceSlug?: string;
 }) {
+  const posthog = usePostHog();
   const submit = useMutation(api.submissions.create);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const analytics = {
+    formId,
+    formName,
+    formSlug,
+    status: "ready",
+    workspaceSlug,
+  };
 
   if (submitted) {
     return (
@@ -55,10 +113,15 @@ export function PublicForm({
         onSuccess={() => {
           setSubmitError(null);
           setSubmitted(true);
+          posthog.capture("public_form_submitted", publicFormProperties(analytics));
         }}
         onError={({ error }) => {
           const message = getErrorMessage(error);
           setSubmitError(message);
+          posthog.capture("public_form_submit_failed", {
+            ...publicFormProperties(analytics),
+            error_message: message,
+          });
           toast.error("Could not submit response", {
             description: message,
           });

@@ -3,11 +3,11 @@
 import { Alert, AlertDescription, AlertTitle } from "@formbro/ui/alert";
 import { Button } from "@formbro/ui/button";
 import { RiArrowLeftLine, RiErrorWarningLine, RiRefreshLine } from "@remixicon/react";
-import * as Sentry from "@sentry/nextjs";
 import Link from "next/link";
 import { useEffect } from "react";
 import { IS_PROD } from "src/lib/env";
 import { PageState } from "@/components/page-state";
+import { captureClientException } from "@/lib/posthog";
 
 export default function DashboardError({
   error,
@@ -17,13 +17,9 @@ export default function DashboardError({
   reset: () => void;
 }) {
   useEffect(() => {
-    Sentry.captureException(error, {
-      tags: {
-        boundary: "dashboard",
-      },
-      extra: {
-        digest: error.digest,
-      },
+    captureClientException(error, {
+      boundary: "dashboard",
+      digest: error.digest,
     });
   }, [error]);
 

@@ -2,10 +2,10 @@
 
 import { Alert, AlertDescription } from "@formbro/ui/alert";
 import { RiErrorWarningLine } from "@remixicon/react";
-import * as Sentry from "@sentry/nextjs";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { IS_PROD } from "src/lib/env";
+import { captureClientException } from "@/lib/posthog";
 
 export function AuthError() {
   const searchParams = useSearchParams();
@@ -21,8 +21,8 @@ export function AuthError() {
 
   useEffect(() => {
     if (!decoded) return;
-    Sentry.captureException(new Error(decoded), {
-      tags: { source: "auth_redirect" },
+    captureClientException(new Error(decoded), {
+      source: "auth_redirect",
     });
   }, [decoded]);
 

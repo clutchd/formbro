@@ -209,7 +209,10 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
         clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
         tenantId: process.env.MICROSOFT_TENANT_ID ?? "common",
         prompt: "select_account",
-        mapProfileToUser: (profile) => ({ image: profile.picture }),
+        mapProfileToUser: (profile) => ({
+          email: profile.email ?? profile.preferred_username ?? profile.upn,
+          image: profile.picture,
+        }),
         overrideUserInfoOnSignIn: true,
       },
     },

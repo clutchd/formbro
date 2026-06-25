@@ -5,7 +5,7 @@ import Link from "next/link";
 import { PageState } from "@/components/page-state";
 import { getFormMetadata } from "@/lib/form-metadata";
 import { getPublicForm, getPublicFormState, type PublicFormState } from "./data";
-import { PublicForm } from "./public-form";
+import { PublicForm, PublicFormAnalytics } from "./public-form";
 
 export async function generateMetadata({ params }: { params: Promise<{ form: string }> }) {
   const { form: formSlug } = await params;
@@ -19,14 +19,25 @@ export async function generateMetadata({ params }: { params: Promise<{ form: str
   });
 }
 
-function PublicFormStateView({ state }: { state: PublicFormState }) {
+type PublicFormDetails = NonNullable<Awaited<ReturnType<typeof getPublicForm>>>["data"];
+
+function PublicFormStateView({
+  form,
+  state,
+}: {
+  form: PublicFormDetails | null;
+  state: PublicFormState;
+}) {
   switch (state.type) {
     case "ready":
       return (
         <PublicForm
           compiledSchema={state.compiledSchema}
           formId={state.formId}
+          formName={form?.name}
+          formSlug={form?.slug}
           schemaId={state.schemaId}
+          workspaceSlug={form?.workspace.slug}
         />
       );
     case "closed":
@@ -76,7 +87,14 @@ export default async function PublicFormPage({ params }: { params: Promise<{ for
 
   return (
     <div className="flex min-h-dvh flex-col bg-background pb-10">
-      <PublicFormStateView state={state} />
+      <PublicFormAnalytics
+        formId={form?.data.id}
+        formName={form?.data.name}
+        formSlug={form?.data.slug ?? formSlug}
+        status={state.type}
+        workspaceSlug={form?.data.workspace.slug}
+      />
+      <PublicFormStateView form={form?.data ?? null} state={state} />
       <footer className="fixed inset-x-0 bottom-0 z-30">
         <Button asChild className="h-10 w-full gap-1 rounded-none border-t text-xs">
           <Link
