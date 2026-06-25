@@ -1,5 +1,33 @@
 {
   "$schema": "https://turborepo.dev/schema.json",
+  "globalEnv": [
+    "BETTER_AUTH_URL",
+    "FORM_EDITOR_AI_MODEL",
+    "NEXT_PUBLIC_*",
+    "NODE_ENV",
+    "STRIPE_BASIC_MONTHLY_PRICE_ID",
+    "STRIPE_BASIC_YEARLY_PRICE_ID",
+    "STRIPE_PRO_MONTHLY_PRICE_ID",
+    "STRIPE_PRO_YEARLY_PRICE_ID",
+    "VERCEL_ENV",
+    "VERCEL_GIT_COMMIT_REF",
+    "VERCEL_GIT_COMMIT_SHA"
+  ],
+  "globalPassThroughEnv": [
+    "ADMIN",
+    "AI_GATEWAY_API_KEY",
+    "BETTER_AUTH_SECRET",
+    "CONVEX_DEPLOY_KEY",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "MICROSOFT_CLIENT_ID",
+    "MICROSOFT_CLIENT_SECRET",
+    "MICROSOFT_TENANT_ID",
+    "RESEND_API_KEY",
+    "RESEND_WEBHOOK_SECRET",
+    "STRIPE_SECRET_KEY",
+    "STRIPE_WEBHOOK_SECRET"
+  ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],

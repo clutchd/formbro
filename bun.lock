@@ -156,6 +156,7 @@
         "@ai-sdk/react": "^3.0.210",
         "@convex-dev/better-auth": "catalog:",
         "@formbro/convex": "workspace:*",
+        "@formbro/core": "workspace:*",
         "@formbro/react": "workspace:*",
         "@formbro/shared": "workspace:*",
         "@formbro/ui": "workspace:*",
