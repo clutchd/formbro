@@ -27,6 +27,12 @@ export function getFormMetadata({
   const description = formName
     ? "Made with Formbro.  Keep your forms simple, bro."
     : "This form doesn't exist or is no longer available.";
+  const ogImage = {
+    url: `${baseUrl}/og.jpg`,
+    width: 1200,
+    height: 630,
+    alt: APP_NAME,
+  };
 
   return {
     title,
@@ -36,13 +42,13 @@ export function getFormMetadata({
       title,
       description,
       url,
-      images: undefined,
+      images: [ogImage],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: undefined,
+      images: [ogImage],
     },
     robots: {
       index: false,

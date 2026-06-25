@@ -50,16 +50,7 @@ const WORKFLOW_STEPS = [
   },
 ];
 
-const INTEGRATIONS = [
-  "Email",
-  "Webhooks",
-  "SMS",
-  "PDFs",
-  "CRM",
-  "Sheets",
-  "Zapier",
-  "API",
-];
+const INTEGRATIONS = ["Email", "Webhooks", "SMS", "PDFs", "CRM", "Sheets", "Zapier", "API"];
 const POSITIONING_FEATURES = [
   "AI-assisted form drafts",
   "Fast publishing and submissions",
@@ -279,7 +270,7 @@ function HeroSection({
         <Badge status="neutral" className="mb-5 rounded-none">
           {TAGLINE.toUpperCase()}
         </Badge>
-        <h1 className="font-display max-w-3xl text-5xl leading-[0.95] font-bold tracking-tight text-balance sm:text-6xl lg:text-7xl">
+        <h1 className="max-w-3xl font-display text-5xl leading-[0.95] font-bold tracking-tight text-balance sm:text-6xl lg:text-7xl">
           Serious forms without the enterprise tax.
         </h1>
         <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
@@ -627,11 +618,7 @@ function LandingFooter() {
 
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild variant="outline" size="dense">
-            <Link
-              href="https://github.com/clutchd/formbro"
-              target="_blank"
-              rel="noreferrer"
-            >
+            <Link href="https://github.com/clutchd/formbro" target="_blank" rel="noreferrer">
               <RiGithubFill className="size-4" />
               GitHub
             </Link>
