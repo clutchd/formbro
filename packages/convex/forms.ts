@@ -97,6 +97,9 @@ export const get = query({
 
     const form = await ctx.db.get(args.formId);
     if (!form) return fail({ data: null, error: ERRORS.FORM_NOT_FOUND });
+    if (form.workspaceId !== args.workspaceId) {
+      return fail({ data: null, error: ERRORS.FORM_NOT_FOUND });
+    }
     return ok(form);
   },
 });

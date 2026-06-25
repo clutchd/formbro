@@ -261,7 +261,8 @@ export async function _createWorkspace({
   owner: WorkspaceMember;
   plan?: Plan | "unlimited";
 }) {
-  let slug = generateSlug(name);
+  const baseSlug = generateSlug(name) || nano();
+  let slug = baseSlug;
   let existingWithSlug = await ctx.db
     .query("workspaces")
     .withIndex("by_slug", (q) => q.eq("slug", slug))
@@ -269,7 +270,7 @@ export async function _createWorkspace({
 
   let counter = 1;
   while (existingWithSlug) {
-    slug = `${generateSlug(name)}-${counter}`;
+    slug = `${baseSlug}-${counter}`;
     existingWithSlug = await ctx.db
       .query("workspaces")
       .withIndex("by_slug", (q) => q.eq("slug", slug))
