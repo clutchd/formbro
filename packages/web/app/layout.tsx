@@ -1,14 +1,42 @@
 import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
+import { APP_DESCRIPTION, APP_NAME, APP_URL } from "@formbro/shared/brand";
 import { fonts } from "@formbro/ui/typography";
 import { Toaster } from "@/components/sonner";
 import { ThemeProvider } from "@/components/theme";
 import { PosthogProvider } from "@/lib/posthog";
 import "./globals.css";
 
+const ogImage = {
+  url: "/og.jpg",
+  width: 1200,
+  height: 630,
+  alt: APP_NAME,
+};
+
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_URL),
+  title: {
+    default: APP_NAME,
+    template: `%s | ${APP_NAME}`,
+  },
+  description: APP_DESCRIPTION,
   icons: {
     icon: "/favicon.ico",
+  },
+  openGraph: {
+    type: "website",
+    siteName: APP_NAME,
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    url: APP_URL,
+    images: [ogImage],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+    images: [ogImage],
   },
 };
 
