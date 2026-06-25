@@ -5,12 +5,8 @@ import { Button } from "@formbro/ui/button";
 import { Textarea } from "@formbro/ui/textarea";
 import { RiBardLine, RiCloseLine, RiSendPlane2Line, RiSparkling2Line } from "@remixicon/react";
 import { useEffect, useRef } from "react";
-import {
-  AiErrorNotice,
-  AiMessage,
-  AiThinkingIndicator,
-  shouldShowAiThinkingIndicator,
-} from "./form-ai/messages";
+import { AiErrorNotice, AiMessage, AiThinkingIndicator } from "./form-ai/messages";
+import { shouldShowAiThinkingIndicator } from "./form-ai/thinking";
 import { useFormAiSession } from "./form-ai/use-form-ai-session";
 
 export function FormAiSidebar({
@@ -96,9 +92,7 @@ export function FormAiSidebar({
             <AiMessage
               key={message.id}
               canUndo={Boolean(
-                onUndoAiChanges &&
-                  session.undoSnapshot &&
-                  message.id === latestAssistantMessageId,
+                onUndoAiChanges && session.undoSnapshot && message.id === latestAssistantMessageId,
               )}
               feedback={session.feedbackByMessageId[message.id]}
               feedbackRecorded={session.feedbackRecordedMessageIds.has(message.id)}
@@ -126,13 +120,7 @@ export function FormAiSidebar({
         <div ref={messagesEndRef} />
       </div>
 
-      <form
-        className="border-t p-3"
-        onSubmit={(event) => {
-          event.preventDefault();
-          submitPrompt();
-        }}
-      >
+      <div className="border-t p-3">
         <div className="rounded-lg border bg-background p-2 shadow-sm">
           <Textarea
             ref={inputRef}
@@ -144,7 +132,6 @@ export function FormAiSidebar({
             onChange={(event) => session.setInput(event.target.value)}
             onKeyDown={(event) => {
               if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
-                event.preventDefault();
                 submitPrompt();
               }
             }}
@@ -160,14 +147,19 @@ export function FormAiSidebar({
                 Stop
               </Button>
             ) : (
-              <Button type="submit" size="dense" disabled={!session.input.trim()}>
+              <Button
+                type="button"
+                size="dense"
+                disabled={!session.input.trim()}
+                onClick={submitPrompt}
+              >
                 <RiSendPlane2Line className="size-4" />
                 Send
               </Button>
             )}
           </div>
         </div>
-      </form>
+      </div>
     </aside>
   );
 }

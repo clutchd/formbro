@@ -1,22 +1,14 @@
 "use client";
 
-import {
-  applyFormSchemaEdit,
-  type FormSchemaEditInput,
-} from "@formbro/core/ai";
 import type { FormInput } from "@formbro/core/schema/form";
+import { applyFormSchemaEdit, type FormSchemaEditInput } from "@formbro/core/ai";
 import { FormBuilderCanvas } from "@formbro/react/builder";
 import { Form } from "@formbro/react/components/form";
 import { APP_NAME, TAGLINE } from "@formbro/shared/brand";
 import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
 import { Logo } from "@formbro/ui/logo";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@formbro/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbro/ui/tooltip";
 import {
   RiArrowRightLine,
   RiCheckboxCircleLine,
@@ -131,8 +123,7 @@ const BUILDER_TEMPLATES: [BuilderTemplate, ...BuilderTemplate[]] = [
             name: "Client intake intro",
             type: "description",
             category: "element",
-            label:
-              "Share the basics and we will turn them into a clean next step for your team.",
+            label: "Share the basics and we will turn them into a clean next step for your team.",
           },
         ],
         placements: [{ id: "client_heading" }, { id: "client_intro", afterId: "client_heading" }],
@@ -360,10 +351,7 @@ const BUILDER_TEMPLATES: [BuilderTemplate, ...BuilderTemplate[]] = [
             label: "Collect vendor identity, services, and payment details before setup.",
           },
         ],
-        placements: [
-          { id: "vendor_heading" },
-          { id: "vendor_intro", afterId: "vendor_heading" },
-        ],
+        placements: [{ id: "vendor_heading" }, { id: "vendor_intro", afterId: "vendor_heading" }],
       },
       {
         type: "add_fields",
@@ -987,8 +975,7 @@ function BuilderDemoHeader({
 }) {
   const isStreaming = streamState.status === "streaming";
   const fullScreenLabel = viewMode === "fullscreen" ? "Exit full screen" : "Full screen";
-  const toggleFullscreen =
-    viewMode === "fullscreen" ? onExitFullscreen : onEnterFullscreen;
+  const toggleFullscreen = viewMode === "fullscreen" ? onExitFullscreen : onEnterFullscreen;
   const FullScreenIcon = viewMode === "fullscreen" ? RiFullscreenExitLine : RiFullscreenLine;
 
   return (
@@ -998,7 +985,9 @@ function BuilderDemoHeader({
           <div className="font-mono text-[0.65rem] tracking-wider text-muted-foreground uppercase">
             Actual builder
           </div>
-          <div className="font-display text-base font-bold tracking-tight">Edit the real canvas</div>
+          <div className="font-display text-base font-bold tracking-tight">
+            Edit the real canvas
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Badge status="success" className="rounded-none">
@@ -1097,7 +1086,9 @@ function RealFormPreview({ schema }: { schema: FormInput }) {
           <div className="font-mono text-[0.65rem] tracking-wider text-muted-foreground uppercase">
             Public form preview
           </div>
-          <div className="font-display text-base font-bold tracking-tight">What respondents see</div>
+          <div className="font-display text-base font-bold tracking-tight">
+            What respondents see
+          </div>
         </div>
         <div className="flex gap-1.5">
           <span className="size-2 rounded-full bg-red-400" />

@@ -1,9 +1,9 @@
 "use client";
 
-import { useChat } from "@ai-sdk/react";
 import type { FormEditorAiMessageMetadata } from "@formbro/core/ai";
-import { isFieldRegistryType } from "@formbro/core/schema/editor";
 import type { FormInput } from "@formbro/core/schema/form";
+import { useChat } from "@ai-sdk/react";
+import { isFieldRegistryType } from "@formbro/core/schema/editor";
 import { DefaultChatTransport, type UIMessage } from "ai";
 import { usePostHog } from "posthog-js/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -70,7 +70,7 @@ function createFormAiTransport() {
       preconnect:
         "preconnect" in fetch && typeof fetch.preconnect === "function"
           ? fetch.preconnect.bind(fetch)
-          : () => { },
+          : () => {},
     },
   ) satisfies typeof fetch;
 
@@ -228,13 +228,7 @@ function getFeedbackSurveyShownProperties({
   });
 }
 
-export function useFormAiSession({
-  formId,
-  schema,
-}: {
-  formId: string;
-  schema: FormInput;
-}) {
+export function useFormAiSession({ formId, schema }: { formId: string; schema: FormInput }) {
   const posthog = usePostHog();
   const [input, setInput] = useState("");
   const [feedbackByMessageId, setFeedbackByMessageId] = useState<Record<string, AiFeedbackRating>>(

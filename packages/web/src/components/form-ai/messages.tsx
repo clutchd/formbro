@@ -1,7 +1,6 @@
 "use client";
 
-import type { ChatStatus, ToolUIPart, UIMessage } from "ai";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import type { ToolUIPart, UIMessage } from "ai";
 import {
   parseFinishFormSchemaEditOutput,
   parseFormSchemaEditInputPreview,
@@ -31,6 +30,7 @@ import {
   RiThumbUpLine,
   type RemixiconComponentType,
 } from "@remixicon/react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 export type FormEditorAiMessage = UIMessage<FormEditorAiMessageMetadata>;
 type FormEditorAiMessagePart = FormEditorAiMessage["parts"][number];
@@ -52,28 +52,12 @@ function hasVisibleAiMessageParts(message: FormEditorAiMessage) {
   return message.parts.some((part) => isVisibleTextPart(part) || isToolPart(part));
 }
 
-function isSchemaEditToolPart(part: FormEditorAiMessagePart) {
+function isSchemaEditToolPart(part: ToolUIPart) {
   return part.type === "tool-edit_form_schema" || part.type === "tool-apply_form_schema";
 }
 
-function isEditFormSchemaToolPart(part: FormEditorAiMessagePart) {
+function isEditFormSchemaToolPart(part: ToolUIPart) {
   return part.type === "tool-edit_form_schema";
-}
-
-export function shouldShowAiThinkingIndicator({
-  messages,
-  status,
-}: {
-  messages: FormEditorAiMessage[];
-  status: ChatStatus;
-}) {
-  if (status !== "submitted" && status !== "streaming") return false;
-
-  const latestMessage = messages.at(-1);
-  if (!latestMessage) return true;
-  if (latestMessage.role === "user") return true;
-
-  return latestMessage.role === "assistant" && !hasVisibleAiMessageParts(latestMessage);
 }
 
 function hasFinishedFormEdit(message: FormEditorAiMessage) {
@@ -92,7 +76,10 @@ function shouldShowAiMessageActions(message: FormEditorAiMessage) {
 function getLatestWorkingEditToolCallId(parts: FormEditorAiMessagePart[]) {
   const workingEditPart = [...parts]
     .reverse()
-    .find((part) => isToolPart(part) && isSchemaEditToolPart(part) && isWorkingToolState(part.state));
+    .find(
+      (part): part is ToolUIPart =>
+        isToolPart(part) && isSchemaEditToolPart(part) && isWorkingToolState(part.state),
+    );
 
   return workingEditPart?.toolCallId ?? null;
 }
@@ -169,7 +156,7 @@ function normalizeMarkdownText(text: string) {
     .replace(/^\s*(done|next|what changed|changed|refinements):\s*$/gim, "**$1**");
 }
 
-function renderInlineMarkdown(text: string, keyPrefix: string) {
+function InlineMarkdown({ keyPrefix, text }: { keyPrefix: string; text: string }) {
   const nodes: ReactNode[] = [];
   const tokenPattern = /(\*\*[^*]+\*\*|`[^`]+`)/g;
   let lastIndex = 0;
@@ -205,7 +192,7 @@ function renderInlineMarkdown(text: string, keyPrefix: string) {
     nodes.push(text.slice(lastIndex));
   }
 
-  return nodes;
+  return <>{nodes}</>;
 }
 
 function MarkdownLite({ text }: { text: string }) {
@@ -229,7 +216,7 @@ function MarkdownLite({ text }: { text: string }) {
       >
         {listItems.map((item, itemIndex) => (
           <li key={`${item}-${itemIndex}`}>
-            {renderInlineMarkdown(item, `list-${listIndex}-${itemIndex}`)}
+            <InlineMarkdown keyPrefix={`list-${listIndex}-${itemIndex}`} text={item} />
           </li>
         ))}
       </ListTag>,
@@ -264,7 +251,7 @@ function MarkdownLite({ text }: { text: string }) {
     if (headingMatch) {
       rows.push(
         <h3 key={`heading-${lineIndex}`} className="leading-snug font-semibold">
-          {renderInlineMarkdown(headingMatch[2] ?? "", `heading-${lineIndex}`)}
+          <InlineMarkdown keyPrefix={`heading-${lineIndex}`} text={headingMatch[2] ?? ""} />
         </h3>,
       );
       continue;
@@ -272,7 +259,7 @@ function MarkdownLite({ text }: { text: string }) {
 
     rows.push(
       <p key={`paragraph-${lineIndex}`} className="leading-relaxed">
-        {renderInlineMarkdown(line, `paragraph-${lineIndex}`)}
+        <InlineMarkdown keyPrefix={`paragraph-${lineIndex}`} text={line} />
       </p>,
     );
   }
@@ -369,12 +356,7 @@ export function AiMessage({
             );
           }
 
-          return (
-            <ToolCallActivity
-              key={`${message.id}-${part.toolCallId}`}
-              part={part}
-            />
-          );
+          return <ToolCallActivity key={`${message.id}-${part.toolCallId}`} part={part} />;
         }
 
         return null;
@@ -455,6 +437,12 @@ function FeedbackTextPrompt({
   const [response, setResponse] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const title = rating === "up" ? "What worked well?" : "What went wrong?";
+  const submitResponse = () => {
+    const text = response.trim();
+    if (!text) return;
+
+    onSubmit?.(messageId, text);
+  };
 
   useEffect(() => {
     onShown?.(messageId);
@@ -462,13 +450,7 @@ function FeedbackTextPrompt({
   }, [messageId, onShown]);
 
   return (
-    <form
-      className="w-full space-y-2 rounded-lg border bg-muted/20 p-3"
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSubmit?.(messageId, response);
-      }}
-    >
+    <div className="w-full space-y-2 rounded-lg border bg-muted/20 p-3">
       <label className="block text-sm font-medium" htmlFor={`ai-feedback-${messageId}`}>
         {title}
       </label>
@@ -480,16 +462,21 @@ function FeedbackTextPrompt({
         placeholder="Add a quick note"
         className="min-h-20 resize-none bg-background text-sm"
         onChange={(event) => setResponse(event.target.value)}
+        onKeyDown={(event) => {
+          if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+            submitResponse();
+          }
+        }}
       />
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" size="dense" onClick={() => onDismiss?.(messageId)}>
           Cancel
         </Button>
-        <Button type="submit" size="dense" disabled={!response.trim()}>
+        <Button type="button" size="dense" disabled={!response.trim()} onClick={submitResponse}>
           Send
         </Button>
       </div>
-    </form>
+    </div>
   );
 }
 
@@ -737,9 +724,7 @@ function operationOrderRank(operation: FormSchemaChangeSummary) {
   return 60;
 }
 
-function aggregateOperations(
-  operations: FormSchemaChangeSummary[],
-): FormSchemaChangeSummary[] {
+function aggregateOperations(operations: FormSchemaChangeSummary[]): FormSchemaChangeSummary[] {
   const groupedOperations: AggregatedSchemaOperation[] = [];
   const operationIndexByKey = new Map<string, number>();
 

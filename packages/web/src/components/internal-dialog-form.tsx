@@ -13,9 +13,9 @@ import {
   DialogTrigger,
 } from "@formbro/ui/dialog";
 import { type RemixiconComponentType } from "@remixicon/react";
-import { captureException } from "@sentry/nextjs";
 import * as React from "react";
 import { toast } from "sonner";
+import { captureClientException } from "@/lib/posthog";
 
 export function InternalDialogForm<
   T extends FormProps["schema"] = FormProps["schema"],
@@ -84,15 +84,11 @@ export function InternalDialogForm<
             },
             onSubmitError: ({ form, error }) => {
               if (shouldReportError(error)) {
-                captureException(error, {
-                  extra: {
-                    formId: form.id,
-                    formName: form.name,
-                    version: form.version,
-                  },
-                  tags: {
-                    type: "form_submission",
-                  },
+                captureClientException(error, {
+                  form_id: form.id,
+                  form_name: form.name,
+                  form_version: form.version,
+                  type: "form_submission",
                 });
               }
 

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
-import { AiMessage, shouldShowAiThinkingIndicator, type FormEditorAiMessage } from "./messages";
+import { AiMessage, type FormEditorAiMessage } from "./messages";
+import { shouldShowAiThinkingIndicator } from "./thinking";
 
 type AiMessageProps = Parameters<typeof AiMessage>[0];
 
@@ -8,13 +9,7 @@ function renderMessage(
   message: FormEditorAiMessage,
   props: Partial<Omit<AiMessageProps, "message">> = {},
 ) {
-  return renderToStaticMarkup(
-    <AiMessage
-      message={message}
-      onFeedback={() => {}}
-      {...props}
-    />,
-  );
+  return renderToStaticMarkup(<AiMessage message={message} onFeedback={() => {}} {...props} />);
 }
 
 describe("AiMessage", () => {
@@ -126,10 +121,12 @@ describe("AiMessage", () => {
     expect(html).toContain("Cancel");
     expect(html).toContain("Send");
 
-    expect(renderMessage(message, {
-      feedback: "up",
-      feedbackTextPrompt: { messageId: "assistant-message", rating: "up" },
-    })).toContain("What worked well?");
+    expect(
+      renderMessage(message, {
+        feedback: "up",
+        feedbackTextPrompt: { messageId: "assistant-message", rating: "up" },
+      }),
+    ).toContain("What worked well?");
   });
 
   test("highlights selected feedback and shows recorded acknowledgement", () => {
@@ -350,7 +347,9 @@ describe("AiMessage", () => {
 
     const html = renderMessage(message);
 
-    expect(html.indexOf("Updated form name")).toBeLessThan(html.indexOf("Client Intake Form is ready"));
+    expect(html.indexOf("Updated form name")).toBeLessThan(
+      html.indexOf("Client Intake Form is ready"),
+    );
   });
 
   test("hides feedback actions until the form edit is finished", () => {
