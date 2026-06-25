@@ -1,10 +1,10 @@
 import type z from "zod";
-import type { FormEvent } from "./schema/event";
-import type { FormLabel } from "./schema/label";
-import type { FormListener } from "./schema/listener";
-import type { FormRule } from "./schema/rule";
-import { type FormInput, FormSchema } from "./schema/form";
-import { FORMBRO_SCHEMA_VERSION } from "./schema/version";
+import type { FormEvent } from "./schema/event.js";
+import type { FormLabel } from "./schema/label.js";
+import type { FormListener } from "./schema/listener.js";
+import type { FormRule } from "./schema/rule.js";
+import { type FormInput, FormSchema } from "./schema/form.js";
+import { FORMBRO_SCHEMA_VERSION } from "./schema/version.js";
 
 export function compile(schema: FormInput) {
   const parsed = FormSchema.parse(schema);

@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { FieldRegistry } from "./registry";
-import { FormElementSchema, FormSchema, type FormInput, type FormOutput } from "./schema/form";
+import { FieldRegistry } from "./registry.js";
+import { FormElementSchema, FormSchema, type FormInput, type FormOutput } from "./schema/form.js";
 
 const fieldTypes = new Set<string>(FieldRegistry.map((field) => field.key));
 

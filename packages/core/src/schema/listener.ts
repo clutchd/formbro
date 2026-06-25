@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { IdSchema } from "./id";
+import { IdSchema } from "./id.js";
 
 export const ListenerSchema = z.discriminatedUnion("type", [
   z.object({

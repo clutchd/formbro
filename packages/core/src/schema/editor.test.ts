@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import { RegistryKeys } from "../registry";
+import { RegistryKeys } from "../registry.js";
 import {
   convertFormElementDraftType,
   createFormElementDraft,
   createFormElementId,
   getRegistryEditorProperties,
   getRegistryEditorPreview,
-} from "./editor";
+} from "./editor.js";
 
 describe("form editor schema helpers", () => {
   it("creates unique ids for draft elements", () => {

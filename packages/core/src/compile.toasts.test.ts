@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { _private } from "./compile";
+import { _private } from "./compile.js";
 
 describe("compile:toasts", () => {
   it("returns undefined when toasts are disabled", () => {

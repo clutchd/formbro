@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { _private } from "./compile";
-import { type FormInput, FormSchema } from "./schema/form";
+import { _private } from "./compile.js";
+import { type FormInput, FormSchema } from "./schema/form.js";
 
 const parseElements = (elements: FormInput["elements"]) =>
   FormSchema.parse({

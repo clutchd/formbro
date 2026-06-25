@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { ElementRegistry, RegistryKeys } from "../registry";
-import { IdSchema } from "./id";
+import { ElementRegistry, RegistryKeys } from "../registry.js";
+import { IdSchema } from "./id.js";
 
 export const BaseElementSchema = z.object({
   id: IdSchema,

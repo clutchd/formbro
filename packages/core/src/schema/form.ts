@@ -1,13 +1,13 @@
 import { z } from "zod";
-import type { CompiledField } from "../compile";
-import type { FieldRegistryKey } from "../registry";
-import type { ExtractFormData } from "./extract";
+import type { CompiledField } from "../compile.js";
+import type { FieldRegistryKey } from "../registry.js";
+import type { ExtractFormData } from "./extract.js";
 // import type { TanStackForm } from "@/forms/hooks/tanstack";
-import { ElementSchema } from "./element";
-import { FieldSchema } from "./field";
-import { IdSchema } from "./id";
-import { ListenerSchema } from "./listener";
-import { VersionSchema } from "./version";
+import { ElementSchema } from "./element.js";
+import { FieldSchema } from "./field.js";
+import { IdSchema } from "./id.js";
+import { ListenerSchema } from "./listener.js";
+import { VersionSchema } from "./version.js";
 
 const FormSubmitSchema = z
   .object({

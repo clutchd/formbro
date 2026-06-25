@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { syncEventSchema } from "./event";
+import { syncEventSchema } from "./event.js";
 
 const RULE_SCHEMAS = {
   required: z.object({

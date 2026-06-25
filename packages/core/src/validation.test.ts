@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { compile } from "./compile";
-import { validateFormSubmission } from "./validation";
+import { compile } from "./compile.js";
+import { validateFormSubmission } from "./validation.js";
 
 describe("validateFormSubmission", () => {
   const form = compile({

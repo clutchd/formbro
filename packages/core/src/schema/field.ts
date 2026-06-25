@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { FieldRegistry } from "../registry";
-import { BaseElementSchema } from "./element";
-import { LabelSchema } from "./label";
-import { RuleSchema, SupportedRuleSchema } from "./rule";
+import { FieldRegistry } from "../registry.js";
+import { BaseElementSchema } from "./element.js";
+import { LabelSchema } from "./label.js";
+import { RuleSchema, SupportedRuleSchema } from "./rule.js";
 
 const OrientationSchema = z
   .enum(["vertical", "horizontal", "responsive"])

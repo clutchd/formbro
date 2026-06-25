@@ -5,8 +5,8 @@ import {
   parseFinishFormSchemaEditOutput,
   parseFormSchemaEditInputPreview,
   parseFormSchemaEditOutput,
-} from "./ai";
-import { createDefaultFormSchema, type FormInput } from "./schema/form";
+} from "./ai.js";
+import { createDefaultFormSchema, type FormInput } from "./schema/form.js";
 
 const blankSchema: FormInput = {
   id: "demo",

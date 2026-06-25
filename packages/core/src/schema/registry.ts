@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RuleTypeSchema } from "./rule";
+import { RuleTypeSchema } from "./rule.js";
 
 const RegistryEditorPreviewSchema = z.object({
   control: z.enum([

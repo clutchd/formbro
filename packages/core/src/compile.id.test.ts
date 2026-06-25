@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { compile, _private } from "./compile";
+import { compile, _private } from "./compile.js";
 
 describe("compile:id", () => {
   it("uses authored form and element ids without deriving them from names", () => {

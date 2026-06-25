@@ -2,16 +2,16 @@ import type {
   FormRegistryEditor,
   FormRegistryEditorPreview,
   FormRegistryEditorProperty,
-} from "./registry";
-import type { FormRule, FormRuleType } from "./rule";
+} from "./registry.js";
+import type { FormRule, FormRuleType } from "./rule.js";
 import {
   FieldRegistry,
   type FieldRegistryItem,
   type RegistryItem,
   type RegistryKey,
   Registry,
-} from "../registry";
-import { FormElementSchema, type FormElementInput, type FormFieldInput } from "./form";
+} from "../registry.js";
+import { FormElementSchema, type FormElementInput, type FormFieldInput } from "./form.js";
 
 const fieldKeys = new Set(FieldRegistry.map((item) => item.key));
 const sharedFieldKeys = ["description", "placeholder", "default", "orientation"] as const;

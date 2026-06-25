@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { FormRegistryElement, FormRegistryField } from "./schema/registry";
+import type { FormRegistryElement, FormRegistryField } from "./schema/registry.js";
 
 function element<const TElement extends FormRegistryElement>(element: TElement) {
   return {

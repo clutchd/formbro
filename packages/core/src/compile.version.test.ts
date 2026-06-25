@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { _private } from "./compile";
-import { FORMBRO_SCHEMA_VERSION } from "./schema/version";
+import { _private } from "./compile.js";
+import { FORMBRO_SCHEMA_VERSION } from "./schema/version.js";
 
 describe("compile:version", () => {
   it("normalizes numeric versions to semantic versions", () => {
