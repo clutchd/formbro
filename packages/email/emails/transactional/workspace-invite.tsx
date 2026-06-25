@@ -2,7 +2,7 @@ import { APP_NAME } from "@formbro/shared/brand";
 import { Head, Heading, Html, Preview, Section, Text } from "@react-email/components";
 import Card from "../../components/card";
 import { CTA } from "../../components/cta";
-import Tailwind from "../../components/tailwind";
+import Tailwind, { type Theme } from "../../components/tailwind";
 
 export function WorkspaceInviteSubject({ workspaceName }: { workspaceName: string }) {
   return `Join ${workspaceName} on ${APP_NAME}`;
@@ -19,6 +19,7 @@ type WorkspaceInviteProps = {
   acceptUrl: string;
   expiresTime: number;
   inviterName: string;
+  theme?: Theme;
   workspaceName: string;
 };
 
@@ -26,12 +27,16 @@ export default function WorkspaceInviteComponent({
   acceptUrl,
   expiresTime,
   inviterName,
+  theme = "system",
   workspaceName,
 }: WorkspaceInviteProps) {
   return (
     <Html>
-      <Tailwind>
-        <Head />
+      <Tailwind mode={theme}>
+        <Head>
+          <meta name="color-scheme" content="light dark" />
+          <meta name="supported-color-schemes" content="light dark" />
+        </Head>
         <Preview>
           {inviterName} invited you to join {workspaceName} on {APP_NAME}.
         </Preview>
@@ -70,5 +75,6 @@ WorkspaceInviteComponent.PreviewProps = {
   acceptUrl: "https://formbro.com/invite/preview-token",
   expiresTime: Date.now() + 1000 * 60 * 60 * 24 * 7,
   inviterName: "Jane Doe",
+  theme: "system",
   workspaceName: "Acme Inc",
 } satisfies WorkspaceInviteProps;

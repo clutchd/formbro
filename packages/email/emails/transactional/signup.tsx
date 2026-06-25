@@ -2,17 +2,24 @@ import { APP_URL, TAGLINE } from "@formbro/shared/brand";
 import { Head, Heading, Html, Preview, Section, Text } from "@react-email/components";
 import Card from "../../components/card";
 import { CTA } from "../../components/cta";
-import Tailwind from "../../components/tailwind";
+import Tailwind, { type Theme } from "../../components/tailwind";
 
 export function SignupSubject() {
   return "Welcome to FormBro";
 }
 
-export default function SignupComponent() {
+type SignupProps = {
+  theme?: Theme;
+};
+
+export default function SignupComponent({ theme = "system" }: SignupProps = {}) {
   return (
     <Html>
-      <Tailwind>
-        <Head />
+      <Tailwind mode={theme}>
+        <Head>
+          <meta name="color-scheme" content="light dark" />
+          <meta name="supported-color-schemes" content="light dark" />
+        </Head>
         <Preview>
           Your FormBro workspace is ready. Create, publish, and manage your first form in minutes.
         </Preview>
@@ -43,3 +50,7 @@ export default function SignupComponent() {
     </Html>
   );
 }
+
+SignupComponent.PreviewProps = {
+  theme: "system",
+} satisfies SignupProps;

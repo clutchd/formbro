@@ -27,6 +27,11 @@ const config: StorybookConfig = {
 
     return mergeConfig(config, {
       plugins: [tailwindcss()],
+      resolve: {
+        alias: {
+          "next/image": path.resolve(here, "next-image.tsx"),
+        },
+      },
       server: {
         fs: {
           allow: [searchForWorkspaceRoot(process.cwd()), storybook, core, ui, web],
