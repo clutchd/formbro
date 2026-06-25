@@ -33,6 +33,20 @@ export default defineSchema({
     .index("by_workspace_and_user", ["workspaceId", "userAuthId"])
     .index("by_workspace_and_email", ["workspaceId", "userEmail"]),
 
+  workspaceInvites: defineTable({
+    workspaceId: v.id("workspaces"),
+    email: v.string(),
+    token: v.string(),
+    invitedBy: v.id("workspaceMembers"),
+    createdTime: v.number(),
+    expiresTime: v.number(),
+    acceptedTime: v.optional(v.number()),
+    revokedTime: v.optional(v.number()),
+  })
+    .index("by_token", ["token"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_workspace_and_email", ["workspaceId", "email"]),
+
   forms: defineTable({
     name: v.string(),
     slug: v.string(),

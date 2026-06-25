@@ -1,8 +1,17 @@
+import { APP_URL } from "@formbro/shared/brand";
+import { nano } from "@formbro/shared/nanoid";
 import { fail, ok } from "@formbro/shared/result";
 import { hasString, normalizeEmail } from "@formbro/shared/util";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { internalMutation, mutation, query, type MutationCtx } from "./_generated/server";
+import { api } from "./_generated/api";
+import {
+  internalMutation,
+  mutation,
+  query,
+  type MutationCtx,
+  type QueryCtx,
+} from "./_generated/server";
 import { ERRORS as ACCESS_ERRORS, getWorkspaceAccess } from "./access";
 import { getUser, resolveUserProfile } from "./auth";
 import { getWorkspaceSubscriptionState } from "./billing";
@@ -36,7 +45,45 @@ export const ERRORS = defineErrors({
       "Cannot delete a workspace with an active subscription. Cancel billing first in workspace settings.",
     status: "FORBIDDEN",
   },
+  EMAIL_REQUIRED: {
+    message: "Enter a valid email address.",
+    status: "BAD_REQUEST",
+  },
+  MEMBER_ALREADY_EXISTS: {
+    message: "That person is already a workspace member.",
+    status: "CONFLICT",
+  },
+  MEMBER_LIMIT_REACHED: {
+    message: "This workspace has reached its member limit.",
+    status: "FORBIDDEN",
+  },
+  INVITE_NOT_FOUND: {
+    message: "Workspace invite not found.",
+    status: "NOT_FOUND",
+  },
+  INVITE_EXPIRED: {
+    message: "This workspace invite has expired.",
+    status: "GONE",
+  },
+  INVITE_REVOKED: {
+    message: "This workspace invite has been canceled.",
+    status: "GONE",
+  },
+  INVITE_ACCEPTED: {
+    message: "This workspace invite has already been accepted.",
+    status: "CONFLICT",
+  },
+  INVITE_EMAIL_MISMATCH: {
+    message: "Sign in with the email address this invite was sent to.",
+    status: "FORBIDDEN",
+  },
+  REMOVE_OWNER_FORBIDDEN: {
+    message: "Workspace owners cannot be removed.",
+    status: "FORBIDDEN",
+  },
 });
+
+const WORKSPACE_INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 function buildCanonicalPath(input: { workspaceSlug: string; formSlug?: string }) {
   if (input.formSlug) {
@@ -44,6 +91,75 @@ function buildCanonicalPath(input: { workspaceSlug: string; formSlug?: string })
   }
 
   return `/dashboard/${input.workspaceSlug}`;
+}
+
+function buildWorkspaceInviteToken() {
+  return `${nano()}${nano()}${nano()}`;
+}
+
+function buildWorkspaceInviteUrl(token: string) {
+  return `${APP_URL}/invite/${encodeURIComponent(token)}`;
+}
+
+function isPendingInvite(
+  invite: Pick<Doc<"workspaceInvites">, "acceptedTime" | "expiresTime" | "revokedTime">,
+  now: number,
+) {
+  return !invite.acceptedTime && !invite.revokedTime && invite.expiresTime > now;
+}
+
+async function requireWorkspaceMember(ctx: QueryCtx | MutationCtx, workspaceId: Id<"workspaces">) {
+  const access = await getWorkspaceAccess(ctx, workspaceId);
+  if (!access.ok) return fail({ data: null, error: access.error });
+
+  const workspace = await ctx.db.get(workspaceId);
+  if (!workspace) return fail({ data: null, error: ERRORS.WORKSPACE_NOT_FOUND });
+
+  return ok({ ...access.data, workspace });
+}
+
+async function getActiveMemberCount(ctx: QueryCtx | MutationCtx, workspaceId: Id<"workspaces">) {
+  return (
+    await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
+      .collect()
+  ).length;
+}
+
+async function getPendingInviteCount(
+  ctx: QueryCtx | MutationCtx,
+  workspaceId: Id<"workspaces">,
+  now: number,
+  excludeInviteId?: Id<"workspaceInvites">,
+) {
+  const invites = await ctx.db
+    .query("workspaceInvites")
+    .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
+    .collect();
+
+  return invites.filter((invite) => invite._id !== excludeInviteId && isPendingInvite(invite, now))
+    .length;
+}
+
+async function hasWorkspaceMemberSeat(
+  ctx: QueryCtx | MutationCtx,
+  workspaceId: Id<"workspaces">,
+  now: number,
+  excludeInviteId?: Id<"workspaceInvites">,
+) {
+  const subscriptionState = await getWorkspaceSubscriptionState(ctx, workspaceId);
+  if (!subscriptionState.ok) return fail({ data: false, error: subscriptionState.error });
+
+  const memberLimit = subscriptionState.data.limits.members;
+  if (memberLimit === null) return ok(true);
+
+  const [activeMembers, pendingInvites] = await Promise.all([
+    getActiveMemberCount(ctx, workspaceId),
+    getPendingInviteCount(ctx, workspaceId, now, excludeInviteId),
+  ]);
+
+  return ok(activeMembers + pendingInvites < memberLimit);
 }
 
 export const context = query({
@@ -352,6 +468,237 @@ export const listMembers = query({
           role: member.role,
         })),
     );
+  },
+});
+
+export const listInvites = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, args) => {
+    const access = await getWorkspaceAccess(ctx, args.workspaceId);
+    if (!access.ok) return fail({ data: [], error: access.error });
+
+    const now = Date.now();
+    const invites = await ctx.db
+      .query("workspaceInvites")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
+      .collect();
+
+    return ok(
+      invites
+        .filter((invite) => isPendingInvite(invite, now))
+        .sort((left, right) => right.createdTime - left.createdTime)
+        .map((invite) => ({
+          _id: invite._id,
+          email: invite.email,
+          createdTime: invite.createdTime,
+          expiresTime: invite.expiresTime,
+        })),
+    );
+  },
+});
+
+export const getInvite = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const invite = await ctx.db
+      .query("workspaceInvites")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+
+    if (!invite) return fail({ data: null, error: ERRORS.INVITE_NOT_FOUND });
+
+    const workspace = await ctx.db.get(invite.workspaceId);
+    if (!workspace) return fail({ data: null, error: ERRORS.WORKSPACE_NOT_FOUND });
+
+    const now = Date.now();
+    const status = invite.acceptedTime
+      ? "accepted"
+      : invite.revokedTime
+        ? "revoked"
+        : invite.expiresTime <= now
+          ? "expired"
+          : "pending";
+
+    return ok({
+      email: invite.email,
+      expiresTime: invite.expiresTime,
+      status,
+      workspaceName: workspace.name,
+      workspaceSlug: workspace.slug,
+    });
+  },
+});
+
+export const inviteMember = mutation({
+  args: {
+    workspaceId: v.id("workspaces"),
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const workspaceAccess = await requireWorkspaceMember(ctx, args.workspaceId);
+    if (!workspaceAccess.ok) return fail({ data: null, error: workspaceAccess.error });
+
+    const email = normalizeEmail(args.email);
+    if (!hasString(email)) return fail({ data: null, error: ERRORS.EMAIL_REQUIRED });
+
+    const existingMember = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace_and_email", (q) =>
+        q.eq("workspaceId", args.workspaceId).eq("userEmail", email),
+      )
+      .unique();
+
+    if (existingMember) return fail({ data: null, error: ERRORS.MEMBER_ALREADY_EXISTS });
+
+    const now = Date.now();
+    const hasSeat = await hasWorkspaceMemberSeat(ctx, args.workspaceId, now);
+    if (!hasSeat.ok) return fail({ data: null, error: hasSeat.error });
+    if (!hasSeat.data) return fail({ data: null, error: ERRORS.MEMBER_LIMIT_REACHED });
+
+    const previousInvites = await ctx.db
+      .query("workspaceInvites")
+      .withIndex("by_workspace_and_email", (q) =>
+        q.eq("workspaceId", args.workspaceId).eq("email", email),
+      )
+      .collect();
+
+    await Promise.all(
+      previousInvites
+        .filter((invite) => isPendingInvite(invite, now))
+        .map((invite) => ctx.db.patch(invite._id, { revokedTime: now })),
+    );
+
+    const token = buildWorkspaceInviteToken();
+    const expiresTime = now + WORKSPACE_INVITE_TTL_MS;
+    const inviteId = await ctx.db.insert("workspaceInvites", {
+      workspaceId: args.workspaceId,
+      email,
+      token,
+      invitedBy: workspaceAccess.data.membership._id,
+      createdTime: now,
+      expiresTime,
+    });
+
+    await ctx.scheduler.runAfter(0, api.emails.transactional, {
+      email: {
+        template: "workspaceInvite",
+        to: email,
+        workspaceName: workspaceAccess.data.workspace.name,
+        inviterName: workspaceAccess.data.user.name,
+        acceptUrl: buildWorkspaceInviteUrl(token),
+        expiresTime,
+      },
+    });
+
+    return ok({
+      _id: inviteId,
+      email,
+      createdTime: now,
+      expiresTime,
+    });
+  },
+});
+
+export const cancelInvite = mutation({
+  args: {
+    workspaceId: v.id("workspaces"),
+    inviteId: v.id("workspaceInvites"),
+  },
+  handler: async (ctx, args) => {
+    const workspaceAccess = await requireWorkspaceMember(ctx, args.workspaceId);
+    if (!workspaceAccess.ok) return fail({ data: null, error: workspaceAccess.error });
+
+    const invite = await ctx.db.get(args.inviteId);
+    if (!invite || invite.workspaceId !== args.workspaceId) {
+      return fail({ data: null, error: ERRORS.INVITE_NOT_FOUND });
+    }
+
+    const revokedTime = Date.now();
+    await ctx.db.patch(invite._id, { revokedTime });
+    return ok({ inviteId: invite._id, revokedTime });
+  },
+});
+
+export const acceptInvite = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await getUser(ctx);
+    if (!identity.ok) return fail({ data: null, error: identity.error });
+
+    const invite = await ctx.db
+      .query("workspaceInvites")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+
+    if (!invite) return fail({ data: null, error: ERRORS.INVITE_NOT_FOUND });
+    if (invite.revokedTime) return fail({ data: null, error: ERRORS.INVITE_REVOKED });
+    if (invite.acceptedTime) return fail({ data: null, error: ERRORS.INVITE_ACCEPTED });
+
+    const now = Date.now();
+    if (invite.expiresTime <= now) return fail({ data: null, error: ERRORS.INVITE_EXPIRED });
+
+    const workspace = await ctx.db.get(invite.workspaceId);
+    if (!workspace) return fail({ data: null, error: ERRORS.WORKSPACE_NOT_FOUND });
+
+    const profile = await resolveUserProfile(ctx, identity.data);
+    if (normalizeEmail(profile.email) !== invite.email) {
+      return fail({ data: null, error: ERRORS.INVITE_EMAIL_MISMATCH });
+    }
+
+    const existingMembership = await ctx.db
+      .query("workspaceMembers")
+      .withIndex("by_workspace_and_user", (q) =>
+        q.eq("workspaceId", invite.workspaceId).eq("userAuthId", identity.data.subject),
+      )
+      .unique();
+
+    if (!existingMembership) {
+      const hasSeat = await hasWorkspaceMemberSeat(ctx, invite.workspaceId, now, invite._id);
+      if (!hasSeat.ok) return fail({ data: null, error: hasSeat.error });
+      if (!hasSeat.data) return fail({ data: null, error: ERRORS.MEMBER_LIMIT_REACHED });
+
+      await _addWorkspaceMember({
+        ctx,
+        workspaceId: invite.workspaceId,
+        member: {
+          authId: identity.data.subject,
+          email: profile.email,
+          name: profile.name,
+          avatarUrl: profile.image,
+        },
+        role: "member",
+      });
+    }
+
+    await ctx.db.patch(invite._id, { acceptedTime: now });
+
+    return ok({
+      workspaceId: workspace._id,
+      workspaceSlug: workspace.slug,
+    });
+  },
+});
+
+export const removeMember = mutation({
+  args: {
+    workspaceId: v.id("workspaces"),
+    memberId: v.id("workspaceMembers"),
+  },
+  handler: async (ctx, args) => {
+    const workspaceAccess = await requireWorkspaceMember(ctx, args.workspaceId);
+    if (!workspaceAccess.ok) return fail({ data: null, error: workspaceAccess.error });
+
+    const member = await ctx.db.get(args.memberId);
+    if (!member || member.workspaceId !== args.workspaceId) {
+      return fail({ data: null, error: ACCESS_ERRORS.WORKSPACE_ACCESS_REQUIRED });
+    }
+
+    if (member.role === "owner") {
+      return fail({ data: null, error: ERRORS.REMOVE_OWNER_FORBIDDEN });
+    }
+
+    await ctx.db.delete(member._id);
+    return ok({ memberId: member._id });
   },
 });
 

@@ -2,6 +2,9 @@
 
 import { Resend } from "@convex-dev/resend";
 import SignupComponent, { SignupSubject } from "@formbro/email/transactional/signup";
+import WorkspaceInviteComponent, {
+  WorkspaceInviteSubject,
+} from "@formbro/email/transactional/workspace-invite";
 import { render } from "@react-email/render";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
@@ -36,16 +39,22 @@ async function _send(
   return emailId;
 }
 
-const transactional_args = {
-  welcome: {
-    template: v.literal("welcome"),
-    to: v.string(),
-  },
-} as const;
+const welcomeEmail = v.object({
+  template: v.literal("welcome"),
+  to: v.string(),
+});
+const workspaceInviteEmail = v.object({
+  template: v.literal("workspaceInvite"),
+  to: v.string(),
+  workspaceName: v.string(),
+  inviterName: v.string(),
+  acceptUrl: v.string(),
+  expiresTime: v.number(),
+});
 
 export const transactional = action({
   args: {
-    email: v.union(...Object.values(transactional_args).map((arg) => v.object(arg))),
+    email: v.union(welcomeEmail, workspaceInviteEmail),
   },
   handler: async (ctx, { email }) => {
     let component: React.ReactElement;
@@ -55,6 +64,15 @@ export const transactional = action({
       case "welcome":
         component = SignupComponent();
         subject = SignupSubject();
+        break;
+      case "workspaceInvite":
+        component = WorkspaceInviteComponent({
+          acceptUrl: email.acceptUrl,
+          expiresTime: email.expiresTime,
+          inviterName: email.inviterName,
+          workspaceName: email.workspaceName,
+        });
+        subject = WorkspaceInviteSubject({ workspaceName: email.workspaceName });
         break;
     }
 

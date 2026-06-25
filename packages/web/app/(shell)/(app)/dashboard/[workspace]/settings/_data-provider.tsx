@@ -15,6 +15,7 @@ import { prewarmWorkspaceSettingsRoute } from "./_prewarm";
 
 const workspaceSettingsSegment = createSegmentData<{
   members: FunctionReturnType<typeof api.workspace.listMembers> | undefined;
+  invites: FunctionReturnType<typeof api.workspace.listInvites> | undefined;
   billing: FunctionReturnType<typeof api.workspace.billing> | undefined;
 }>("Workspace");
 
@@ -40,7 +41,11 @@ export function WorkspaceSettingsDataProvider({ children }: { children: ReactNod
     api.workspace.listMembers,
     workspace ? { workspaceId: workspace._id } : "skip",
   );
-  const value = useMemo(() => ({ members, billing }), [members, billing]);
+  const invites = useQuery(
+    api.workspace.listInvites,
+    workspace ? { workspaceId: workspace._id } : "skip",
+  );
+  const value = useMemo(() => ({ members, invites, billing }), [members, invites, billing]);
   return (
     <workspaceSettingsSegment.Provider value={value}>{children}</workspaceSettingsSegment.Provider>
   );
@@ -50,9 +55,14 @@ const useWorkspaceSettingsData = workspaceSettingsSegment.useData;
 
 export function WorkspaceSettingsContentBoundary({ children }: { children: ReactNode }) {
   const { forms } = useWorkspaceData();
-  const { billing, members } = useWorkspaceSettingsData();
+  const { billing, invites, members } = useWorkspaceSettingsData();
 
-  if (forms === undefined || billing === undefined || members === undefined) {
+  if (
+    forms === undefined ||
+    billing === undefined ||
+    members === undefined ||
+    invites === undefined
+  ) {
     return <Loading title="settings" />;
   }
 
@@ -76,13 +86,23 @@ export function WorkspaceSettingsContentBoundary({ children }: { children: React
     );
   }
 
+  if (!invites.ok) {
+    return (
+      <PageState
+        title="Invites unavailable"
+        description={getErrorMessage(invites.error)}
+        status="error"
+      />
+    );
+  }
+
   return children;
 }
 
 export function useRequiredWorkspaceSettingsData() {
   const { forms, workspace } = useWorkspaceData();
-  const { billing, members } = useWorkspaceSettingsData();
-  if (!workspace || forms === undefined || !billing?.ok || !members?.ok) {
+  const { billing, invites, members } = useWorkspaceSettingsData();
+  if (!workspace || forms === undefined || !billing?.ok || !members?.ok || !invites?.ok) {
     throw new Error("useRequiredWorkspaceSettingsData requires loaded settings data");
   }
 
@@ -91,5 +111,6 @@ export function useRequiredWorkspaceSettingsData() {
     forms,
     billing: billing.data,
     members: members.data,
+    invites: invites.data,
   };
 }
