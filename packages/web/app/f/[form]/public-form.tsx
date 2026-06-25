@@ -1,38 +1,29 @@
 "use client";
 
-import type { FunctionReturnType } from "convex/server";
+import type { Id } from "@formbro/convex/_generated/dataModel";
+import type { CompiledForm } from "@formbro/core/compile";
 import { api } from "@formbro/convex/_generated/api";
 import { getErrorMessage } from "@formbro/convex/errors";
-import { type FormInput, JsonParse } from "@formbro/core/schema/form";
 import { Form } from "@formbro/react/components/form";
-import {
-  RiAlertLine,
-  RiCheckboxCircleLine,
-  RiFileForbidLine,
-  RiLockLine,
-  RiTimeLine,
-} from "@remixicon/react";
+import { RiAlertLine, RiCheckboxCircleLine } from "@remixicon/react";
 import { useMutation } from "convex/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
 
-export function PublicForm({ form }: { form: FunctionReturnType<typeof api.forms.getPublic> }) {
+export function PublicForm({
+  compiledSchema,
+  formId,
+  schemaId,
+}: {
+  compiledSchema: CompiledForm;
+  formId: Id<"forms">;
+  schemaId: Id<"formSchemas">;
+}) {
   const submit = useMutation(api.submissions.create);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-
-  if (form == null) {
-    return (
-      <PageState
-        icon={<RiFileForbidLine className="size-5" />}
-        title="Form not found"
-        description="This form does not exist or may have been removed by its owner."
-        status="error"
-      />
-    );
-  }
 
   if (submitted) {
     return (
@@ -43,44 +34,6 @@ export function PublicForm({ form }: { form: FunctionReturnType<typeof api.forms
       />
     );
   }
-
-  if (form.data.status === "closed") {
-    return (
-      <PageState
-        icon={<RiLockLine className="size-5" />}
-        title="Form closed"
-        description="This form is no longer accepting new responses."
-        status="warning"
-      />
-    );
-  }
-
-  if (form.data.status === "draft" || !form.data.schema || form.data.schemaId == null) {
-    return (
-      <PageState
-        icon={<RiTimeLine className="size-5" />}
-        title="Coming soon"
-        description="This form is still being prepared and is not accepting responses yet."
-      />
-    );
-  }
-
-  let parsedSchema: FormInput;
-  try {
-    parsedSchema = JsonParse(form.data.schema);
-  } catch {
-    return (
-      <PageState
-        icon={<RiAlertLine className="size-5" />}
-        title="Form unavailable"
-        description="This form could not be loaded. Please try again later."
-        status="error"
-      />
-    );
-  }
-
-  const formId = form.data.id;
-  const schemaId = form.data.schemaId;
 
   return (
     <Page className="flex flex-1 flex-col justify-center py-10">
@@ -97,7 +50,7 @@ export function PublicForm({ form }: { form: FunctionReturnType<typeof api.forms
         </div>
       ) : null}
       <Form
-        schema={parsedSchema}
+        compiledSchema={compiledSchema}
         className="mx-auto w-full max-w-xl"
         onSuccess={() => {
           setSubmitError(null);

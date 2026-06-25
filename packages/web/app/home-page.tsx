@@ -17,7 +17,7 @@ import Link from "next/link";
 import { useState, type ComponentProps } from "react";
 import { FormBuilderCanvas } from "@/components/form-builder-canvas";
 import { ThemeIcon, useToggleTheme } from "@/components/theme";
-import { useDashboardPrewarmIntent } from "./(app)/dashboard/(dashboard)/_data-provider";
+import { useDashboardPrewarmIntent } from "./(shell)/(app)/dashboard/(dashboard)/_data-provider";
 
 type BuilderTemplate = {
   prompt: string;

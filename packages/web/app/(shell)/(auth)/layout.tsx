@@ -1,8 +1,8 @@
 import { Card } from "@formbro/ui/card";
 import { Logo } from "@formbro/ui/logo";
-import { AuthError } from "app/(auth)/auth-error";
 import Link from "next/link";
 import { type PropsWithChildren, Suspense } from "react";
+import { AuthError } from "./auth-error";
 
 export default function Layout({ children }: PropsWithChildren) {
   return (

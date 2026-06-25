@@ -1,5 +1,6 @@
 "use client";
 
+import type { CompiledForm } from "@formbro/core/compile";
 import type {
   FormAction,
   FormInput,
@@ -18,6 +19,7 @@ import { Page } from "./page";
 
 export type FormProps<T extends FormInput = FormInput, TData = unknown> = {
   schema: T;
+  compiledSchema?: never;
   className?: string;
   action?: FormAction<T, TData>;
   onMutate?: FormOnMutate<T>;
@@ -31,9 +33,18 @@ export type FormProps<T extends FormInput = FormInput, TData = unknown> = {
   children?: (formState: ReturnType<typeof useForm<T, TData>>) => React.ReactNode;
 };
 
+export type CompiledFormProps<TData = unknown> = Omit<
+  FormProps<FormInput, TData>,
+  "children" | "compiledSchema" | "schema"
+> & {
+  children?: (formState: ReturnType<typeof useForm<FormInput, TData>>) => React.ReactNode;
+  compiledSchema: CompiledForm;
+  schema?: never;
+};
+
 export function Form<T extends FormInput = FormInput, TData = unknown>({
-  schema,
   action,
+  compiledSchema,
   onMutate,
   onSuccess,
   onError,
@@ -44,17 +55,23 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   debug = false,
   children,
   onPercentChange,
+  schema,
   ...props
-}: FormProps<T, TData>) {
+}: FormProps<T, TData> | CompiledFormProps<TData>) {
+  if (!schema && !compiledSchema) {
+    throw new Error("Form schema is required");
+  }
+
   const state = useForm<T, TData>({
-    schema,
-    action,
-    onMutate,
-    onSuccess,
-    onError,
-    instrumentation,
+    action: action as FormAction<T, TData> | undefined,
+    compiledSchema,
+    onMutate: onMutate as FormOnMutate<T> | undefined,
+    onSuccess: onSuccess as FormOnSuccess<T, TData> | undefined,
+    onError: onError as FormOnError<T> | undefined,
+    instrumentation: instrumentation as UseFormInstrumentation<T, TData> | undefined,
     disabled,
     preview,
+    schema,
   });
 
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -73,10 +90,6 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
     setCurrentPageIndex(next);
     onPercentChange?.(computePercent(next));
   };
-
-  if (!schema) {
-    throw new Error("Form schema is required");
-  }
 
   if (!currentPage) {
     throw new Error("Page not found");

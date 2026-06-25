@@ -9,11 +9,7 @@ import {
   type RegistryItem,
   type RegistryKey,
 } from "@formbro/core/registry";
-import {
-  getRegistryEditorLayout as getCoreRegistryEditorLayout,
-  getRegistryEditorMetadata,
-  getRegistryRules,
-} from "@formbro/core/schema/editor";
+import { getRegistryEditorMetadata, getRegistryRules } from "@formbro/core/schema/editor";
 import { RegistryElementEditor, type EditorProps, type EditorTransformOption } from "./editor";
 import * as description from "./elements/description";
 import * as divider from "./elements/divider";
@@ -65,11 +61,6 @@ export function getRegistryVisual(type: string): RegistryComponentModule | null 
 export function getRegistryEditor(type: string): RegistryEditor | null {
   if (!(type in Registry)) return null;
   return getRegistryEditorMetadata(type as RegistryKey) ? RegistryElementEditor : null;
-}
-
-export function getRegistryEditorLayout(type: string): RegistryEditorLayout {
-  if (!(type in Registry)) return {};
-  return getCoreRegistryEditorLayout(type as RegistryKey);
 }
 
 export const editorTransformOptions: EditorTransformOption[] = registryItems.map((item) => {

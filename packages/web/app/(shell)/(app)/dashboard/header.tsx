@@ -1,10 +1,10 @@
 "use client";
 
 import { Logo } from "@formbro/ui/logo";
+import { useAppData } from "app/_data-provider";
 import Link from "next/link";
 import { Fragment, type ReactNode } from "react";
 import type { PrewarmIntentHandlers } from "@/lib/convex/route-prewarm";
-import { useAppData } from "../../_data-provider";
 import { useDashboardPrewarmIntent } from "./(dashboard)/_data-provider";
 import { AccountMenu } from "./account-menu";
 

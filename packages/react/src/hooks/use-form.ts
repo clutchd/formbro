@@ -43,25 +43,31 @@ export type UseFormInstrumentation<T extends FormInput = FormInput, TData = unkn
 };
 
 export function useForm<T extends FormInput = FormInput, TData = unknown>({
-  schema,
   action,
+  compiledSchema,
   onMutate,
   onSuccess,
   onError,
   instrumentation,
   disabled = false,
   preview = false,
+  schema,
 }: {
-  schema: T;
   action?: FormAction<T, TData>;
+  compiledSchema?: CompiledForm;
   onMutate?: FormOnMutate<T>;
   onSuccess?: FormOnSuccess<T, TData>;
   onError?: FormOnError<T>;
   instrumentation?: UseFormInstrumentation<T, TData>;
   disabled?: boolean;
   preview?: boolean;
+  schema?: T;
 }) {
-  const compiled = useMemo(() => compile(schema), [schema]);
+  const compiled = useMemo(() => {
+    if (compiledSchema) return compiledSchema;
+    if (!schema) throw new Error("Form schema is required");
+    return compile(schema);
+  }, [compiledSchema, schema]);
 
   const tanstack = useAppForm({
     defaultValues: compiled.defaults,

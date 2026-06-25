@@ -17,11 +17,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@formbro/ui/dialog";
-import { RiArrowGoBackLine, RiExternalLinkLine, RiRefreshLine } from "@remixicon/react";
+import { RiArrowGoBackLine, RiBardLine, RiExternalLinkLine, RiRefreshLine } from "@remixicon/react";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
+import { FormAiSidebar } from "@/components/form-ai-sidebar";
 import { FormBuilderCanvas } from "@/components/form-builder-canvas";
 import { Loading } from "@/components/loading";
 import { PageState } from "@/components/page-state";
@@ -254,6 +255,7 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
   const publishForm = useMutation(api.forms.publish);
   const [{ hasUnpublishedChanges, publishing, reverting, saveState, schema }, dispatch] =
     useReducer(editorReducer, initialEditorState);
+  const [aiOpen, setAiOpen] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const schemaRef = useRef<FormInput | null>(null);
   const loadedFormId = useRef<string | null>(null);
@@ -295,6 +297,13 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
   const updateSchema = useCallback((updater: (schema: FormInput) => FormInput) => {
     dispatch({ type: "schema-updated", updater });
   }, []);
+
+  const applyAiSchema = useCallback(
+    (nextSchema: FormInput) => {
+      updateSchema(() => nextSchema);
+    },
+    [updateSchema],
+  );
 
   useEffect(() => {
     if (!schema || loadedFormId.current !== formId) return;
@@ -454,6 +463,15 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
           />
         </div>
         <div className="flex flex-wrap items-center justify-end gap-1.5">
+          <Button
+            type="button"
+            variant={aiOpen ? "default" : "outline"}
+            size="dense"
+            onClick={() => setAiOpen((current) => !current)}
+          >
+            <RiBardLine className="size-4" />
+            <span className="hidden sm:inline">Ask AI</span>
+          </Button>
           <Button type="button" variant="outline" size="dense" asChild>
             <Link href={publicHref} target="_blank" rel="noopener noreferrer">
               <RiExternalLinkLine className="size-4" />
@@ -478,8 +496,17 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <FormBuilderCanvas schema={schema} onSchemaChange={updateSchema} />
+      <div className="relative flex min-h-0 flex-1">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <FormBuilderCanvas schema={schema} onSchemaChange={updateSchema} />
+        </div>
+        <FormAiSidebar
+          formId={formId}
+          open={aiOpen}
+          schema={schema}
+          onApplySchema={applyAiSchema}
+          onOpenChange={setAiOpen}
+        />
       </div>
     </div>
   );
