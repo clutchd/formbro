@@ -1,4 +1,4 @@
-import { APP_URL } from "@formbro/shared/brand";
+import { APP_URL, TAGLINE } from "@formbro/shared/brand";
 import { Head, Heading, Html, Preview, Section, Text } from "@react-email/components";
 import Card from "../../components/card";
 import { CTA } from "../../components/cta";
@@ -14,21 +14,26 @@ export default function SignupComponent() {
       <Tailwind>
         <Head />
         <Preview>
-          Thank you for signing up! Your dashboard is ready - and your first form is just seconds
-          away.
+          Your FormBro workspace is ready. Create, publish, and manage your first form in minutes.
         </Preview>
         <Card utmMedium="signup">
-          <Section className="text-center">
+          <Section>
             <Text className="dark:text-muted-foreground-dark m-0 font-mono text-xs tracking-wider text-muted-foreground uppercase">
-              You're in
+              Workspace ready
             </Text>
             <Heading className="mx-0 mt-3 mb-0 p-0 text-3xl font-bold">Welcome to FormBro</Heading>
+            <Text className="dark:text-muted-foreground-dark mt-3 mb-0 text-base leading-7 text-muted-foreground">
+              {TAGLINE}
+            </Text>
           </Section>
 
-          <Section className="mt-8 text-center">
+          <Section className="mt-8">
             <Text className="m-0 text-base leading-7">
-              Thank you for signing up! Your dashboard is ready - and your first form is just{" "}
-              <span className="italic underline">seconds</span> away.
+              Your dashboard is ready. Build a form, publish it, and start collecting responses
+              without turning a simple workflow into a project.
+            </Text>
+            <Text className="dark:text-muted-foreground-dark mt-5 mb-0 text-sm leading-6 text-muted-foreground">
+              Start with a clean form, share the link, and keep submissions organized in one place.
             </Text>
           </Section>
 

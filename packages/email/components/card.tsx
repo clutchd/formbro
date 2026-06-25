@@ -1,5 +1,5 @@
 import { APP_NAME, APP_URL, TAGLINE } from "@formbro/shared/brand";
-import { Body, Container, Link, Section } from "@react-email/components";
+import { Body, Container, Link, Section, Text } from "@react-email/components";
 import React from "react";
 
 export default function Card({
@@ -12,7 +12,13 @@ export default function Card({
   return (
     <Body className="dark:bg-background-dark dark:text-foreground-dark m-0 bg-background font-sans text-foreground">
       <Section className="dark:bg-background-dark w-full bg-background px-0 py-10">
-        <Container className="dark:text-card-foreground-dark dark:border-border-dark dark:bg-card-dark mx-auto my-10 max-w-[520px] rounded-xl border border-solid border-border bg-card px-10 py-14 text-card-foreground">
+        <Container className="mx-auto mb-6 max-w-[520px] px-8">
+          <Text className="m-0 font-mono text-xs tracking-wider text-muted-foreground uppercase">
+            {APP_NAME}
+          </Text>
+        </Container>
+
+        <Container className="dark:text-card-foreground-dark dark:border-border-dark dark:bg-card-dark mx-auto max-w-[520px] rounded-xl border border-solid border-border bg-card px-10 py-12 text-card-foreground shadow-sm">
           {children}
         </Container>
 
