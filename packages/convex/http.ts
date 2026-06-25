@@ -6,6 +6,7 @@ import { httpRouter } from "convex/server";
 import Stripe from "stripe";
 import { components, internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
+import { chat, options } from "./ai";
 import { authComponent, createAuth } from "./auth";
 import { resendClient } from "./emails";
 
@@ -65,6 +66,18 @@ http.route({
   path: "/webhooks/resend",
   method: "POST",
   handler: httpAction((ctx, request) => resendClient.handleResendEventWebhook(ctx, request)),
+});
+
+http.route({
+  path: "/ai/chat",
+  method: "OPTIONS",
+  handler: options,
+});
+
+http.route({
+  path: "/ai/chat",
+  method: "POST",
+  handler: chat,
 });
 
 http.route({

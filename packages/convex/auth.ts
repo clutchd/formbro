@@ -184,17 +184,19 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
 
 export const { onCreate, onUpdate, onDelete } = authComponent.triggersApi();
 
+export const TRUSTED_ORIGINS = [
+  "https://formbro.com",
+  "https://api.formbro.com",
+  "https://db.formbro.com",
+  "https://canary.formbro.com",
+  "http://localhost:3000",
+];
+
 export const createAuth = (ctx: GenericCtx<DataModel>) => {
   return betterAuth({
     secret: process.env.BETTER_AUTH_SECRET,
     baseURL: APP_URL,
-    trustedOrigins: [
-      "https://formbro.com",
-      "https://api.formbro.com",
-      "https://db.formbro.com",
-      "https://canary.formbro.com",
-      "http://localhost:3000",
-    ],
+    trustedOrigins: TRUSTED_ORIGINS,
     socialProviders: {
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID as string,

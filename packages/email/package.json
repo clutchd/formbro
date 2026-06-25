@@ -18,6 +18,7 @@
     "react-dom": "catalog:"
   },
   "devDependencies": {
+    "@react-email/ui": "6.5.0",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
     "react-email": "6.5.0",
