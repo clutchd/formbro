@@ -1,7 +1,6 @@
-import type { FormFieldInput, IFieldProps } from "@formbro/core/schema/form";
+import type { IFieldProps } from "@formbro/core/schema/form";
 import { Input } from "@formbro/ui/input";
 import { RiInputField } from "@remixicon/react";
-import { EditorInputPreview, FieldEditor, type EditorProps } from "../editor";
 import { useFieldContext } from "../hooks/tanstack-context";
 
 export const icon = RiInputField;
@@ -24,11 +23,3 @@ export const component = function ShortTextComponent({ schema, ariaInvalid }: IF
     />
   );
 };
-
-export function editor(props: EditorProps<FormFieldInput>) {
-  return (
-    <FieldEditor {...props}>
-      <EditorInputPreview element={props.element} fallbackPlaceholder="Type your answer" />
-    </FieldEditor>
-  );
-}

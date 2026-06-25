@@ -28,12 +28,14 @@ const FormToastsSchema = z
   ])
   .optional();
 
+export const FormElementSchema = z.union([ElementSchema, FieldSchema]);
+
 export const FormSchema = z
   .object({
     id: IdSchema,
     version: VersionSchema,
     name: z.string().min(1),
-    elements: z.array(z.union([ElementSchema, FieldSchema])),
+    elements: z.array(FormElementSchema),
     listeners: z.array(ListenerSchema).optional(),
     submit: FormSubmitSchema,
     toasts: FormToastsSchema,

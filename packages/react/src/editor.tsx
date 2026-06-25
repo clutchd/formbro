@@ -1,13 +1,28 @@
-import type { RegistryKey } from "@formbro/core/registry";
 import type { FormElementInput, FormFieldInput } from "@formbro/core/schema/form";
+import type {
+  FormRegistryEditorPreview,
+  FormRegistryEditorProperty,
+} from "@formbro/core/schema/registry";
 import type { FormRule, FormRuleType } from "@formbro/core/schema/rule";
+import { Registry, type RegistryKey } from "@formbro/core/registry";
+import {
+  getRegistryEditorProperties,
+  getRegistryEditorPreview,
+  isFieldRegistryType,
+} from "@formbro/core/schema/editor";
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { Input } from "@formbro/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbro/ui/select";
 import { Switch } from "@formbro/ui/switch";
 import { Textarea } from "@formbro/ui/textarea";
-import { RiArrowDownSLine, RiCloseLine, RiEditLine, RiSettings3Line } from "@remixicon/react";
+import {
+  RiArrowDownSLine,
+  RiCloseLine,
+  RiEditLine,
+  RiPageSeparator,
+  RiSettings3Line,
+} from "@remixicon/react";
 import * as React from "react";
 
 export type EditorTransformOption = {
@@ -17,6 +32,7 @@ export type EditorTransformOption = {
   label: string;
   rules?: readonly FormRuleType[];
 };
+
 export type EditorProps<TElement extends FormElementInput = FormElementInput> = {
   element: TElement;
   onChange: (element: FormElementInput) => void;
@@ -27,218 +43,39 @@ export type EditorProps<TElement extends FormElementInput = FormElementInput> = 
   transformOptions?: EditorTransformOption[];
 };
 
-type KeysOfUnion<T> = T extends T ? keyof T : never;
-type EditorSchemaPropertyKey = Extract<
-  KeysOfUnion<FormElementInput>,
-  "description" | "level" | "options" | "placeholder"
->;
-type EditorRulePropertyKey = Extract<FormRuleType, "max" | "min" | "required">;
-export type EditorPropertyKey = EditorSchemaPropertyKey | EditorRulePropertyKey;
-export type EditorPropertySection = "content" | "validation" | "behavior";
-export type EditorPropertyDefinition = {
-  key: string;
-  className?: string;
-  render: (context: EditorPropertyContext) => React.ReactElement;
-  section: EditorPropertySection;
-};
-export type EditorProperty =
-  | EditorPropertyKey
-  | (Omit<EditorPropertyDefinition, "section"> & {
-      section?: EditorPropertySection;
-    });
-
 export type EditorElement = FormElementInput;
+export type EditorProperty = FormRegistryEditorProperty;
 export type EditorPropertyContext = EditorProps<FormElementInput>;
 
-export const defaultFieldEditorProperties = [
-  "description",
-  "placeholder",
-] as const satisfies readonly EditorProperty[];
+function isRegistryKey(type: string): type is RegistryKey {
+  return type in Registry;
+}
 
-export const choiceFieldEditorProperties = [
-  "description",
-  "placeholder",
-  "options",
-] as const satisfies readonly EditorProperty[];
+function registryDisplay(type: string) {
+  return isRegistryKey(type) ? Registry[type].display : "Element";
+}
 
-const editorPropertyDefinitions = {
-  description: {
-    key: "description",
-    section: "content",
-    render: ({ element, onChange }) => {
-      const field = element as FormFieldInput;
+function editorPropertyValue(element: FormElementInput, key: string) {
+  return (element as Record<string, unknown>)[key];
+}
 
-      return (
-        <EditorPropertyField label="Helper text" htmlFor={`${element.id}-description`}>
-          <Input
-            id={`${element.id}-description`}
-            value={field.description ?? ""}
-            onChange={(event) =>
-              onChange(setFormElementInputValue(element, "description", event.target.value))
-            }
-            placeholder="Optional helper text"
-          />
-        </EditorPropertyField>
-      );
-    },
-  },
-  level: {
-    key: "level",
-    section: "content",
-    render: ({ element, onChange }) => {
-      const level = (element as { level?: unknown }).level;
-      const value = typeof level === "number" ? String(level) : "2";
+function editorStringValue(element: FormElementInput, key: string) {
+  const value = editorPropertyValue(element, key);
+  return typeof value === "string" ? value : "";
+}
 
-      return (
-        <EditorPropertyField label="Size" htmlFor={`${element.id}-level`}>
-          <Select
-            value={value}
-            onValueChange={(nextValue) =>
-              onChange(setFormElementInputValue(element, "level", Number(nextValue) as 1 | 2 | 3))
-            }
-          >
-            <SelectTrigger id={`${element.id}-level`} className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Large</SelectItem>
-              <SelectItem value="2">Medium</SelectItem>
-              <SelectItem value="3">Small</SelectItem>
-            </SelectContent>
-          </Select>
-        </EditorPropertyField>
-      );
-    },
-  },
-  max: {
-    key: "max",
-    section: "validation",
-    render: ({ element, onChange }) => {
-      const field = element as FormFieldInput;
-      const rule = getEditorFieldRule(field, "max");
-      const enabled = typeof rule?.value === "number";
-      const defaultValue = field.type === "number" ? 100 : 240;
+function editorSelectValue(element: FormElementInput, property: EditorProperty) {
+  const value = editorPropertyValue(element, property.key);
+  if (typeof value === "number" || typeof value === "string") return String(value);
+  return property.options?.[0]?.value ?? "";
+}
 
-      return (
-        <EditorRuleOption
-          checked={enabled}
-          label={field.type === "number" ? "Maximum value" : "Max characters"}
-          onCheckedChange={(checked) =>
-            onChange(setEditorNumberRule(field, "max", checked ? defaultValue : undefined))
-          }
-        >
-          {enabled ? (
-            <Input
-              value={String(rule.value)}
-              onChange={(event) =>
-                onChange(setEditorNumberRule(field, "max", Number(event.target.value || 0)))
-              }
-              className="h-8 w-20"
-              min={0}
-              type="number"
-              aria-label={field.type === "number" ? "Maximum value" : "Max characters"}
-            />
-          ) : null}
-        </EditorRuleOption>
-      );
-    },
-  },
-  min: {
-    key: "min",
-    section: "validation",
-    render: ({ element, onChange }) => {
-      const field = element as FormFieldInput;
-      const rule = getEditorFieldRule(field, "min");
-      const enabled = typeof rule?.value === "number";
-      const defaultValue = field.type === "number" ? 0 : 1;
-
-      return (
-        <EditorRuleOption
-          checked={enabled}
-          label={field.type === "number" ? "Minimum value" : "Min characters"}
-          onCheckedChange={(checked) =>
-            onChange(setEditorNumberRule(field, "min", checked ? defaultValue : undefined))
-          }
-        >
-          {enabled ? (
-            <Input
-              value={String(rule.value)}
-              onChange={(event) =>
-                onChange(setEditorNumberRule(field, "min", Number(event.target.value || 0)))
-              }
-              className="h-8 w-20"
-              min={0}
-              type="number"
-              aria-label={field.type === "number" ? "Minimum value" : "Min characters"}
-            />
-          ) : null}
-        </EditorRuleOption>
-      );
-    },
-  },
-  options: {
-    key: "options",
-    section: "content",
-    className: "md:col-span-2",
-    render: ({ element, onChange }) => {
-      const field = element as FormFieldInput;
-
-      return (
-        <EditorPropertyField label="Options" htmlFor={`${element.id}-options`}>
-          <Textarea
-            id={`${element.id}-options`}
-            value={getEditorOptionsText(field)}
-            onChange={(event) => onChange(setEditorOptions(field, event.target.value))}
-            className="min-h-28 font-mono text-sm"
-            placeholder={"Option 1\nOption 2\nOption 3"}
-          />
-        </EditorPropertyField>
-      );
-    },
-  },
-  placeholder: {
-    key: "placeholder",
-    section: "content",
-    render: ({ element, onChange }) => {
-      const field = element as FormFieldInput;
-
-      return (
-        <EditorPropertyField label="Placeholder" htmlFor={`${element.id}-placeholder`}>
-          <Input
-            id={`${element.id}-placeholder`}
-            value={field.placeholder ?? ""}
-            onChange={(event) =>
-              onChange(setFormElementInputValue(element, "placeholder", event.target.value))
-            }
-            placeholder="Input placeholder"
-          />
-        </EditorPropertyField>
-      );
-    },
-  },
-  required: {
-    key: "required",
-    section: "validation",
-    render: ({ element, onChange }) => {
-      const field = element as FormFieldInput;
-
-      return (
-        <EditorRuleOption
-          checked={isEditorFieldRequired(field)}
-          label="Required"
-          onCheckedChange={(checked) => onChange(setEditorFieldRequired(field, checked))}
-        />
-      );
-    },
-  },
-} satisfies Record<EditorPropertyKey, EditorPropertyDefinition>;
-
-export function editorLabelForElement(element: FormElementInput) {
+function editorLabelForElement(element: FormElementInput) {
   if ("label" in element && typeof element.label === "string") return element.label;
   return element.name;
 }
 
-export function setFormElementInputValue(
+function setFormElementInputValue(
   element: FormElementInput,
   key: string,
   value: unknown,
@@ -249,11 +86,32 @@ export function setFormElementInputValue(
   } as FormElementInput;
 }
 
-export function isEditorFieldRequired(element: FormFieldInput) {
+function setEditorSchemaValue(element: FormElementInput, property: EditorProperty, value: unknown) {
+  if (property.key === "label") {
+    const label = typeof value === "string" ? value : String(value ?? "");
+
+    return {
+      ...setFormElementInputValue(element, "label", label),
+      name: label || registryDisplay(element.type),
+    };
+  }
+
+  if (property.control === "select" && property.inputType === "number") {
+    return setFormElementInputValue(element, property.key, Number(value));
+  }
+
+  if (property.key === "level") {
+    return setFormElementInputValue(element, property.key, Number(value) as 1 | 2 | 3);
+  }
+
+  return setFormElementInputValue(element, property.key, value);
+}
+
+function isEditorFieldRequired(element: FormFieldInput) {
   return element.rules?.some((rule) => rule.type === "required" && rule.value) ?? false;
 }
 
-export function setEditorFieldRequired(element: FormFieldInput, required: boolean): FormFieldInput {
+function setEditorFieldRequired(element: FormFieldInput, required: boolean): FormFieldInput {
   const otherRules = element.rules?.filter((rule) => rule.type !== "required") ?? [];
   const rules = required
     ? ([{ type: "required", value: true }, ...otherRules] satisfies FormRule[])
@@ -265,16 +123,13 @@ export function setEditorFieldRequired(element: FormFieldInput, required: boolea
   };
 }
 
-export function getEditorFieldRule<TType extends FormRuleType>(
-  element: FormFieldInput,
-  type: TType,
-) {
+function getEditorFieldRule<TType extends FormRuleType>(element: FormFieldInput, type: TType) {
   return element.rules?.find(
     (rule): rule is Extract<FormRule, { type: TType }> => rule.type === type,
   );
 }
 
-export function setEditorNumberRule(
+function setEditorNumberRule(
   element: FormFieldInput,
   type: "max" | "min",
   value: number | undefined,
@@ -291,11 +146,11 @@ export function setEditorNumberRule(
   };
 }
 
-export function getEditorOptionsText(element: FormFieldInput) {
+function getEditorOptionsText(element: FormFieldInput) {
   return Array.isArray(element.options) ? element.options.join("\n") : "";
 }
 
-export function setEditorOptions(element: FormFieldInput, value: string): FormFieldInput {
+function setEditorOptions(element: FormFieldInput, value: string): FormFieldInput {
   const options = value.split("\n").flatMap((option) => {
     const trimmed = option.trim();
     return trimmed ? [trimmed] : [];
@@ -305,6 +160,241 @@ export function setEditorOptions(element: FormFieldInput, value: string): FormFi
     ...element,
     options: options.length > 0 ? options : ["Option 1"],
   };
+}
+
+export function RegistryElementEditor(props: EditorProps) {
+  const registryType = isRegistryKey(props.element.type) ? props.element.type : null;
+  const properties = registryType ? getRegistryEditorProperties(registryType) : [];
+  const preview = registryType ? getRegistryEditorPreview(registryType) : undefined;
+
+  if (props.selected) {
+    return <EditorPanel {...props} properties={properties} />;
+  }
+
+  return <EditorPreview {...props} preview={preview} />;
+}
+
+function EditorPreview({
+  element,
+  onChange,
+  onSelect,
+  preview,
+}: EditorProps & {
+  preview?: FormRegistryEditorPreview;
+}) {
+  if (isFieldRegistryType(element.type)) {
+    return (
+      <FieldEditorPreview
+        element={element as FormFieldInput}
+        onChange={onChange}
+        onSelect={onSelect}
+        preview={preview}
+      />
+    );
+  }
+
+  return (
+    <ElementEditorPreview
+      element={element}
+      onChange={onChange}
+      onSelect={onSelect}
+      preview={preview}
+    />
+  );
+}
+
+function FieldEditorPreview({
+  element,
+  onChange,
+  onSelect,
+  preview,
+}: {
+  element: FormFieldInput;
+  onChange: (element: FormElementInput) => void;
+  onSelect: () => void;
+  preview?: FormRegistryEditorPreview;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-1.5">
+        <EditorInlineTextInput
+          value={editorLabelForElement(element)}
+          placeholder="Question"
+          ariaLabel="Question label"
+          className="text-base font-semibold"
+          onFocus={onSelect}
+          onChange={(value) =>
+            onChange({
+              ...setFormElementInputValue(element, "label", value),
+              name: value || registryDisplay(element.type),
+            })
+          }
+        />
+        {isEditorFieldRequired(element) ? <span className="text-destructive">*</span> : null}
+      </div>
+      {element.description ? (
+        <p className="text-sm leading-6 text-muted-foreground">{element.description}</p>
+      ) : null}
+      <PreviewControl
+        element={element}
+        onChange={onChange}
+        onSelect={onSelect}
+        preview={preview ?? { control: "input", placeholder: "Type your answer" }}
+      />
+    </div>
+  );
+}
+
+function ElementEditorPreview({
+  element,
+  onChange,
+  onSelect,
+  preview,
+}: {
+  element: FormElementInput;
+  onChange: (element: FormElementInput) => void;
+  onSelect: () => void;
+  preview?: FormRegistryEditorPreview;
+}) {
+  return (
+    <PreviewControl
+      element={element}
+      onChange={onChange}
+      onSelect={onSelect}
+      preview={preview ?? { control: "description" }}
+    />
+  );
+}
+
+function PreviewControl({
+  element,
+  onChange,
+  onSelect,
+  preview,
+}: {
+  element: FormElementInput;
+  onChange: (element: FormElementInput) => void;
+  onSelect: () => void;
+  preview: FormRegistryEditorPreview;
+}) {
+  switch (preview.control) {
+    case "description":
+      return (
+        <Textarea
+          value={editorLabelForElement(element)}
+          rows={Math.max(1, editorLabelForElement(element).split("\n").length)}
+          onFocus={onSelect}
+          onChange={(event) =>
+            onChange({
+              ...setFormElementInputValue(element, "label", event.target.value),
+              name: event.target.value || registryDisplay(element.type),
+            })
+          }
+          aria-label="Description text"
+          className="min-h-0 resize-none overflow-hidden rounded-none border-0 bg-transparent px-0 py-0 text-sm leading-relaxed text-muted-foreground shadow-none focus-visible:outline-none"
+          placeholder={preview.placeholder ?? "Description"}
+        />
+      );
+    case "divider": {
+      const label = editorStringValue(element, "label");
+
+      return (
+        <div className="space-y-3">
+          <div className="h-px bg-border" />
+          {label ? (
+            <EditorInlineTextInput
+              value={label}
+              placeholder={preview.placeholder ?? "Divider label"}
+              ariaLabel="Divider label"
+              className="text-center text-sm text-muted-foreground"
+              onFocus={onSelect}
+              onChange={(value) => onChange(setFormElementInputValue(element, "label", value))}
+            />
+          ) : null}
+        </div>
+      );
+    }
+    case "heading": {
+      const level = editorPropertyValue(element, "level");
+
+      return (
+        <EditorInlineTextInput
+          value={editorLabelForElement(element)}
+          placeholder={preview.placeholder ?? "Heading"}
+          ariaLabel="Heading text"
+          className={twx(
+            "font-display font-bold tracking-tight text-foreground",
+            level === 1 && "text-2xl md:text-2xl",
+            (level ?? 2) === 2 && "text-xl md:text-xl",
+            level === 3 && "text-lg md:text-lg",
+          )}
+          onFocus={onSelect}
+          onChange={(value) =>
+            onChange({
+              ...setFormElementInputValue(element, "label", value),
+              name: value || registryDisplay(element.type),
+            })
+          }
+        />
+      );
+    }
+    case "input":
+      return (
+        <EditorInputPreview
+          element={element as FormFieldInput}
+          fallbackPlaceholder={preview.placeholder ?? "Type your answer"}
+          type={preview.inputType ?? "text"}
+        />
+      );
+    case "page_break": {
+      const pageTitle = editorStringValue(element, "label");
+
+      return (
+        <div className="py-3">
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 border-t border-dashed" />
+            <div className="flex max-w-full items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm shadow-sm">
+              <RiPageSeparator className="size-4 shrink-0 text-muted-foreground" />
+              <span className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
+                Page break
+              </span>
+              {pageTitle ? (
+                <>
+                  <span className="text-muted-foreground">/</span>
+                  <span className="max-w-64 truncate font-medium">{pageTitle}</span>
+                </>
+              ) : null}
+            </div>
+            <div className="h-px flex-1 border-t border-dashed" />
+          </div>
+          <button
+            type="button"
+            className="mt-2 block w-full cursor-pointer text-center text-xs text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            onClick={(event) => {
+              event.stopPropagation();
+              onSelect();
+            }}
+          >
+            {pageTitle ? "Edit next page title" : "Add optional next page title"}
+          </button>
+        </div>
+      );
+    }
+    case "select":
+      return (
+        <EditorSelectPreview
+          element={element as FormFieldInput}
+          fallbackPlaceholder={preview.placeholder ?? "Select an option"}
+        />
+      );
+    case "textarea":
+      return (
+        <EditorTextareaPreview
+          element={element as FormFieldInput}
+          fallbackPlaceholder={preview.placeholder ?? "Long answer"}
+        />
+      );
+  }
 }
 
 export function EditorInlineTextInput({
@@ -390,7 +480,6 @@ export function EditorSelectPreview({
 }
 
 export function EditorPanel<TElement extends FormElementInput>({
-  children,
   element,
   onChange,
   onDeselect,
@@ -398,7 +487,6 @@ export function EditorPanel<TElement extends FormElementInput>({
   properties,
   transformOptions,
 }: EditorProps<TElement> & {
-  children?: React.ReactNode;
   properties: readonly EditorProperty[];
 }) {
   const [requestedTab, setRequestedTab] = React.useState<"edit" | "options">("edit");
@@ -415,7 +503,7 @@ export function EditorPanel<TElement extends FormElementInput>({
 
   const editProperties = renderedProperties.filter((property) => property.section === "content");
   const optionProperties = renderedProperties.filter((property) => property.section !== "content");
-  const hasEditProperties = Boolean(children || editProperties.length > 0);
+  const hasEditProperties = editProperties.length > 0;
   const hasOptionProperties = optionProperties.length > 0;
   const activeTab = requestedTab === "options" && hasOptionProperties ? "options" : "edit";
 
@@ -458,13 +546,8 @@ export function EditorPanel<TElement extends FormElementInput>({
       </div>
       <div className="p-3">
         {activeTab === "edit" && hasEditProperties ? (
-          <div className="space-y-3">
-            {children}
-            {editProperties.length > 0 ? (
-              <div className="grid gap-3 md:grid-cols-2">
-                {editProperties.map((property) => property.content)}
-              </div>
-            ) : null}
+          <div className="grid gap-3 md:grid-cols-2">
+            {editProperties.map((property) => property.content)}
           </div>
         ) : null}
         {activeTab === "options" && hasOptionProperties ? (
@@ -475,118 +558,8 @@ export function EditorPanel<TElement extends FormElementInput>({
   );
 }
 
-export function FieldEditor({
-  children,
-  element,
-  onChange,
-  onDeselect,
-  onSelect,
-  onTransform,
-  properties,
-  selected,
-  settingsTitle = "Question",
-  transformOptions,
-}: EditorProps<FormFieldInput> & {
-  children: React.ReactNode;
-  properties?: readonly EditorProperty[];
-  settingsTitle?: string;
-}) {
-  const editorProperties = resolveFieldEditorProperties(element, properties, transformOptions);
-
-  if (selected) {
-    return (
-      <EditorPanel
-        element={element}
-        onChange={onChange}
-        onDeselect={onDeselect}
-        onSelect={onSelect}
-        onTransform={onTransform}
-        properties={editorProperties}
-        selected={selected}
-        transformOptions={transformOptions}
-      >
-        <EditorPropertyField label={settingsTitle} htmlFor={`${element.id}-label`}>
-          <Input
-            id={`${element.id}-label`}
-            value={editorLabelForElement(element)}
-            onChange={(event) => {
-              const value = event.target.value;
-              onChange({
-                ...setFormElementInputValue(element, "label", value),
-                name: value || element.name,
-              });
-            }}
-            placeholder="Question"
-          />
-        </EditorPropertyField>
-      </EditorPanel>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-1.5">
-        <EditorInlineTextInput
-          value={editorLabelForElement(element)}
-          placeholder="Question"
-          ariaLabel="Question label"
-          className="text-base font-semibold"
-          onFocus={onSelect}
-          onChange={(value) =>
-            onChange({
-              ...setFormElementInputValue(element, "label", value),
-              name: value || element.name,
-            })
-          }
-        />
-        {isEditorFieldRequired(element) ? <span className="text-destructive">*</span> : null}
-      </div>
-      {element.description ? (
-        <p className="text-sm leading-6 text-muted-foreground">{element.description}</p>
-      ) : null}
-      {children}
-    </div>
-  );
-}
-
-function resolveFieldEditorProperties(
-  element: FormFieldInput,
-  properties: readonly EditorProperty[] | undefined,
-  transformOptions: readonly EditorTransformOption[] | undefined,
-) {
-  return dedupeEditorProperties([
-    ...(properties ?? defaultFieldEditorProperties),
-    ...getRuleEditorProperties(element.type, transformOptions),
-  ]);
-}
-
-function getRuleEditorProperties(
-  type: string,
-  transformOptions: readonly EditorTransformOption[] | undefined,
-) {
-  const supportedRules = transformOptions?.find((option) => option.key === type)?.rules;
-  if (!supportedRules) return ["required"] as const;
-
-  return supportedRules.filter(isVisibleRuleProperty);
-}
-
-function isVisibleRuleProperty(rule: FormRuleType): rule is EditorRulePropertyKey {
-  return rule === "required" || rule === "min" || rule === "max";
-}
-
-function dedupeEditorProperties(properties: readonly EditorProperty[]) {
-  const seen = new Set<string>();
-  const next: EditorProperty[] = [];
-
-  for (const property of properties) {
-    const key = typeof property === "string" ? property : property.key;
-    if (seen.has(key)) continue;
-
-    seen.add(key);
-    next.push(property);
-  }
-
-  return next;
+export function FieldEditor(props: EditorProps<FormFieldInput>) {
+  return <RegistryElementEditor {...props} />;
 }
 
 export function EditorPanelTabs({
@@ -732,22 +705,161 @@ function EditorRuleOption({
 }
 
 function renderEditorProperty(property: EditorProperty, context: EditorPropertyContext) {
-  const definition =
-    typeof property === "string"
-      ? editorPropertyDefinitions[property]
-      : {
-          section: "content" as const,
-          ...property,
-        };
-  const content = definition.render(context);
-  const className = "className" in definition ? definition.className : undefined;
+  const content = renderEditorPropertyControl(property, context);
 
   return {
     content: (
-      <div key={definition.key} className={twx(className)}>
+      <div
+        key={property.key}
+        className={twx((property.span === "full" || property.key === "label") && "md:col-span-2")}
+      >
         {content}
       </div>
     ),
-    section: definition.section,
+    section: property.section ?? "content",
   };
+}
+
+function renderEditorPropertyControl(property: EditorProperty, context: EditorPropertyContext) {
+  switch (property.control) {
+    case "options":
+      return renderOptionsProperty(property, context);
+    case "rule":
+      return renderRuleProperty(property, context);
+    case "select":
+      return renderSelectProperty(property, context);
+    case "textarea":
+      return renderTextareaProperty(property, context);
+    case "text":
+      return renderTextProperty(property, context);
+  }
+}
+
+function renderOptionsProperty(
+  property: EditorProperty,
+  { element, onChange }: EditorPropertyContext,
+) {
+  const field = element as FormFieldInput;
+
+  return (
+    <EditorPropertyField label={property.label} htmlFor={`${element.id}-${property.key}`}>
+      <Textarea
+        id={`${element.id}-${property.key}`}
+        value={getEditorOptionsText(field)}
+        onChange={(event) => onChange(setEditorOptions(field, event.target.value))}
+        className="min-h-28 font-mono text-sm"
+        placeholder={property.placeholder ?? "Option 1\nOption 2\nOption 3"}
+      />
+    </EditorPropertyField>
+  );
+}
+
+function renderRuleProperty(
+  property: EditorProperty,
+  { element, onChange }: EditorPropertyContext,
+) {
+  const field = element as FormFieldInput;
+
+  if (property.key === "required") {
+    return (
+      <EditorRuleOption
+        checked={isEditorFieldRequired(field)}
+        label={property.label}
+        onCheckedChange={(checked) => onChange(setEditorFieldRequired(field, checked))}
+      />
+    );
+  }
+
+  if (property.key !== "min" && property.key !== "max") {
+    return (
+      <EditorRuleOption checked={false} label={property.label} onCheckedChange={() => undefined} />
+    );
+  }
+
+  const ruleType = property.key;
+  const rule = getEditorFieldRule(field, ruleType);
+  const enabled = typeof rule?.value === "number";
+  const defaultValue = typeof property.defaultValue === "number" ? property.defaultValue : 0;
+
+  return (
+    <EditorRuleOption
+      checked={enabled}
+      label={property.label}
+      onCheckedChange={(checked) =>
+        onChange(setEditorNumberRule(field, ruleType, checked ? defaultValue : undefined))
+      }
+    >
+      {enabled ? (
+        <Input
+          value={String(rule.value)}
+          onChange={(event) =>
+            onChange(setEditorNumberRule(field, ruleType, Number(event.target.value || 0)))
+          }
+          className="h-8 w-20"
+          min={0}
+          type="number"
+          aria-label={property.label}
+        />
+      ) : null}
+    </EditorRuleOption>
+  );
+}
+
+function renderSelectProperty(
+  property: EditorProperty,
+  { element, onChange }: EditorPropertyContext,
+) {
+  return (
+    <EditorPropertyField label={property.label} htmlFor={`${element.id}-${property.key}`}>
+      <Select
+        value={editorSelectValue(element, property)}
+        onValueChange={(value) => onChange(setEditorSchemaValue(element, property, value))}
+      >
+        <SelectTrigger id={`${element.id}-${property.key}`} className="w-full">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {property.options?.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </EditorPropertyField>
+  );
+}
+
+function renderTextareaProperty(
+  property: EditorProperty,
+  { element, onChange }: EditorPropertyContext,
+) {
+  return (
+    <EditorPropertyField label={property.label} htmlFor={`${element.id}-${property.key}`}>
+      <Textarea
+        id={`${element.id}-${property.key}`}
+        value={editorStringValue(element, property.key)}
+        onChange={(event) => onChange(setEditorSchemaValue(element, property, event.target.value))}
+        placeholder={property.placeholder}
+        className="min-h-24 resize-none"
+      />
+    </EditorPropertyField>
+  );
+}
+
+function renderTextProperty(
+  property: EditorProperty,
+  { element, onChange }: EditorPropertyContext,
+) {
+  return (
+    <EditorPropertyField label={property.label} htmlFor={`${element.id}-${property.key}`}>
+      <Input
+        id={`${element.id}-${property.key}`}
+        value={editorStringValue(element, property.key)}
+        onChange={(event) => onChange(setEditorSchemaValue(element, property, event.target.value))}
+        placeholder={property.placeholder}
+        type={property.inputType ?? "text"}
+      />
+    </EditorPropertyField>
+  );
 }

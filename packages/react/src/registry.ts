@@ -1,4 +1,20 @@
-import type { ElementRegistryKey, FieldRegistryKey } from "@formbro/core/registry";
+import type { FormRegistryEditorLayout } from "@formbro/core/schema/registry";
+import type * as React from "react";
+import {
+  ElementRegistry,
+  FieldRegistry,
+  Registry,
+  type ElementRegistryKey,
+  type FieldRegistryKey,
+  type RegistryItem,
+  type RegistryKey,
+} from "@formbro/core/registry";
+import {
+  getRegistryEditorLayout as getCoreRegistryEditorLayout,
+  getRegistryEditorMetadata,
+  getRegistryRules,
+} from "@formbro/core/schema/editor";
+import { RegistryElementEditor, type EditorProps, type EditorTransformOption } from "./editor";
 import * as description from "./elements/description";
 import * as divider from "./elements/divider";
 import * as email from "./elements/email";
@@ -25,3 +41,45 @@ export const FieldComponents = {
   single_select: single_select,
   short_text: short_text,
 } as const;
+
+type RegistryComponentModule =
+  | (typeof ElementComponents)[ElementRegistryKey]
+  | (typeof FieldComponents)[FieldRegistryKey];
+type RegistryEditor = (props: EditorProps) => React.ReactNode;
+export type RegistryEditorLayout = FormRegistryEditorLayout;
+
+export const registryItems = [...ElementRegistry, ...FieldRegistry] as RegistryItem[];
+
+export function getRegistryVisual(type: string): RegistryComponentModule | null {
+  if (type in ElementComponents) {
+    return ElementComponents[type as ElementRegistryKey];
+  }
+
+  if (type in FieldComponents) {
+    return FieldComponents[type as FieldRegistryKey];
+  }
+
+  return null;
+}
+
+export function getRegistryEditor(type: string): RegistryEditor | null {
+  if (!(type in Registry)) return null;
+  return getRegistryEditorMetadata(type as RegistryKey) ? RegistryElementEditor : null;
+}
+
+export function getRegistryEditorLayout(type: string): RegistryEditorLayout {
+  if (!(type in Registry)) return {};
+  return getCoreRegistryEditorLayout(type as RegistryKey);
+}
+
+export const editorTransformOptions: EditorTransformOption[] = registryItems.map((item) => {
+  const visual = getRegistryVisual(item.key);
+
+  return {
+    color: visual?.color,
+    icon: visual?.icon,
+    key: item.key as RegistryKey,
+    label: item.display,
+    rules: getRegistryRules(item),
+  };
+});

@@ -1,0 +1,85 @@
+import { describe, expect, it } from "bun:test";
+import { RegistryKeys } from "../registry";
+import {
+  convertFormElementDraftType,
+  createFormElementDraft,
+  createFormElementId,
+  getRegistryEditorProperties,
+  getRegistryEditorPreview,
+} from "./editor";
+
+describe("form editor schema helpers", () => {
+  it("creates unique ids for draft elements", () => {
+    const elements = [{ id: "short_text_abc", name: "Name", type: "short_text", label: "Name" }];
+
+    expect(createFormElementId({ elements, suffix: "abc", type: "short_text" })).toBe(
+      "short_text_abc_2",
+    );
+  });
+
+  it("creates draft elements from registry defaults", () => {
+    expect(createFormElementDraft({ id: "email", type: "email" })).toMatchObject({
+      id: "email",
+      label: "Email",
+      name: "Email",
+      placeholder: "you@example.com",
+      type: "email",
+    });
+
+    expect(createFormElementDraft({ id: "heading", type: "heading" })).toMatchObject({
+      id: "heading",
+      label: "New heading",
+      level: 2,
+      type: "heading",
+    });
+  });
+
+  it("converts element type while preserving useful author state", () => {
+    const converted = convertFormElementDraftType({
+      element: {
+        id: "question",
+        name: "Position",
+        type: "short_text",
+        label: "Position Applied For",
+        description: "Pick the closest role.",
+        placeholder: "Developer",
+        rules: [{ type: "required", value: true }],
+      },
+      type: "link",
+    });
+
+    expect(converted).toMatchObject({
+      id: "question",
+      label: "Position Applied For",
+      name: "Position Applied For",
+      description: "Pick the closest role.",
+      placeholder: "Developer",
+      rules: [{ type: "required", value: true }],
+      type: "link",
+    });
+  });
+
+  it("only preserves options for option-backed targets", () => {
+    const source = {
+      id: "choice",
+      name: "Choice",
+      type: "single_select",
+      label: "Favorite option",
+      options: ["A", "B"],
+    } as const;
+
+    expect(convertFormElementDraftType({ element: source, type: "single_select" })).toMatchObject({
+      options: ["A", "B"],
+    });
+    expect(convertFormElementDraftType({ element: source, type: "short_text" })).not.toHaveProperty(
+      "options",
+    );
+  });
+
+  it("declares editor preview and properties for every registry item", () => {
+    for (const type of RegistryKeys) {
+      expect(getRegistryEditorPreview(type)).toBeDefined();
+      expect(getRegistryEditorProperties(type).length).toBeGreaterThan(0);
+    }
+  });
+});

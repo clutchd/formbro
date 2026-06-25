@@ -1,7 +1,6 @@
-import type { FormFieldInput, IFieldProps } from "@formbro/core/schema/form";
+import type { IFieldProps } from "@formbro/core/schema/form";
 import { Input } from "@formbro/ui/input";
 import { RiHashtag } from "@remixicon/react";
-import { EditorInputPreview, FieldEditor, type EditorProps } from "../editor";
 import { useFieldContext } from "../hooks/tanstack-context";
 
 export const icon = RiHashtag;
@@ -24,11 +23,3 @@ export const component = function NumberComponent({ schema, ariaInvalid }: IFiel
     />
   );
 };
-
-export function editor(props: EditorProps<FormFieldInput>) {
-  return (
-    <FieldEditor {...props}>
-      <EditorInputPreview element={props.element} fallbackPlaceholder="0" type="number" />
-    </FieldEditor>
-  );
-}
