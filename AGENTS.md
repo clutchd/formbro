@@ -16,6 +16,35 @@ Use `bun run lint` only when you intend to apply formatting fixes. Use `bun run 
 
 `bun run build` may require a populated `.env` and deployment secrets because the web build is tied to Convex and Vercel deployment. Prefer `bun run verify` for portable agent checks that should work without production credentials.
 
+### Running the app locally
+
+The product is a Next.js web app (`packages/web`, port 3000) backed by a Convex deployment (`packages/convex`). Standard scripts live in each package's `package.json` (`bun run dev`, etc.); Bun loads the root `.env` via `--env-file=../../.env`.
+
+Backend: the injected `CONVEX_DEPLOYMENT` / `NEXT_PUBLIC_CONVEX_URL` point at a cloud dev deployment that has no functions deployed and cannot be pushed without a `CONVEX_DEPLOY_KEY` (or an interactive `convex login`). For a no-credentials local backend, run Convex in anonymous mode with the cloud vars unset:
+
+```
+cd packages/convex
+env -u CONVEX_DEPLOYMENT -u CONVEX_DEPLOY_KEY -u NEXT_PUBLIC_CONVEX_URL -u NEXT_PUBLIC_CONVEX_SITE_URL \
+  CONVEX_AGENT_MODE=anonymous bun convex dev
+```
+
+This serves the client API at `http://127.0.0.1:3210` and HTTP actions at `http://127.0.0.1:3211`. Deployment-side env vars (needed at module load, e.g. `RESEND_API_KEY`, `NEXT_PUBLIC_POSTHOG_KEY`) are set on the local deployment; add/refresh them with `convex env set --from-file <file>` (same unset+`CONVEX_AGENT_MODE=anonymous` prefix).
+
+- Gotcha (re-push loop): the Convex functions root is the whole `packages/convex` dir (`functions: "./"`). The local backend must NOT store its state there or `convex dev` loops forever printing "Filesystem changed during push, retrying...". Keep local state in the home dir at `~/.convex/anonymous-convex-backend-state/<deployment-name>` (the legacy location), not in a project-local `packages/convex/.convex/`.
+
+Web: run `bun run dev` in `packages/web`, but you MUST override the injected cloud Convex URLs with the local ones in that shell — Bun's `--env-file` does not override variables already present in the process env (the injected secrets), so without this every page 500s with `Could not find public function for 'auth:get'`:
+
+```
+cd packages/web
+env NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210 \
+  NEXT_PUBLIC_CONVEX_SITE_URL=http://127.0.0.1:3211 \
+  bun run dev
+```
+
+(The injected `BETTER_AUTH_URL` already points at the local web origin, so `APP_URL` resolves correctly without an override; only the cloud Convex URLs must be replaced with the local ones.)
+
+Auth is Google/Microsoft OAuth only — there is no password login, so the authenticated dashboard cannot be reached headlessly. The anonymous public form flow (`/f/<slug>`) exercises core functionality (render published form → submit → stored in `submissions`) without auth.
+
 ## Philosophy
 
 We have a few philosophies we should always honor:
