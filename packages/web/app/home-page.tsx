@@ -610,11 +610,7 @@ export function HomePage({ isAuthenticated }: { isAuthenticated: boolean }) {
   );
 }
 
-function LandingHeader({
-  isAuthenticated,
-}: {
-  isAuthenticated: boolean;
-}) {
+function LandingHeader({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
       <Link href="/" aria-label="FormBro home">
@@ -649,11 +645,7 @@ function LandingHeader({
   );
 }
 
-function HeroSection({
-  isAuthenticated,
-}: {
-  isAuthenticated: boolean;
-}) {
+function HeroSection({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <section className="relative mx-auto w-full max-w-7xl px-5 pt-10 pb-16 sm:px-8 lg:pt-16">
       <div className="absolute inset-x-0 top-0 -z-10 h-[560px] border-b bg-muted/30" />
@@ -693,11 +685,7 @@ function HeroSection({
   );
 }
 
-function PrimaryCta({
-  isAuthenticated,
-}: {
-  isAuthenticated: boolean;
-}) {
+function PrimaryCta({ isAuthenticated }: { isAuthenticated: boolean }) {
   return isAuthenticated ? (
     <Button asChild size="lg">
       <Link href="/dashboard">
