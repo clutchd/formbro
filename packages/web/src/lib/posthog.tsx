@@ -8,6 +8,37 @@ import { useEffect, useRef } from "react";
 import { useSession } from "@/lib/auth/client";
 
 const IDENTIFIED_USER_STORAGE_KEY = "formbro.posthog.identified_user_id";
+const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+let didInitializePosthog = false;
+
+function ensurePosthogInitialized() {
+  if (didInitializePosthog) return;
+  if (!posthogKey) {
+    throw new Error("NEXT_PUBLIC_POSTHOG_KEY is not set");
+  }
+
+  posthog.init(posthogKey, {
+    api_host: "/ingest",
+    capture_exceptions: {
+      capture_console_errors: false,
+      capture_unhandled_errors: true,
+      capture_unhandled_rejections: true,
+    },
+    defaults: "2026-01-30",
+    logs: {
+      captureConsoleLogs: false,
+      environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
+      serviceName: "formbro-web",
+      serviceVersion:
+        process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ??
+        process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF ??
+        "local",
+    },
+    person_profiles: "identified_only",
+    ui_host: "https://us.posthog.com",
+  });
+  didInitializePosthog = true;
+}
 
 function identifiedStorageGet() {
   try {
@@ -63,11 +94,13 @@ type AnalyticsUser = {
 };
 
 export function identifyAnalyticsUser(user: AnalyticsUser) {
+  ensurePosthogInitialized();
   posthog.identify(user.id, personProperties(user));
   identifiedStorageSet(user.id);
 }
 
 export function resetAnalytics() {
+  ensurePosthogInitialized();
   posthog.reset();
   identifiedStorageClear();
 }
@@ -106,6 +139,8 @@ function PosthogIdentity() {
 }
 
 export function PosthogProvider({ children }: PropsWithChildren) {
+  ensurePosthogInitialized();
+
   return (
     <Provider client={posthog}>
       <PosthogIdentity />
@@ -115,5 +150,6 @@ export function PosthogProvider({ children }: PropsWithChildren) {
 }
 
 export function captureClientException(error: unknown, properties?: Properties) {
+  ensurePosthogInitialized();
   posthog.captureException(error, properties);
 }
