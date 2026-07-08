@@ -30,7 +30,6 @@
     "better-auth": "catalog:",
     "convex": "catalog:",
     "next": "catalog:",
-    "next-themes": "0.4.6",
     "posthog-js": "1.369.5",
     "posthog-node": "^5.38.5",
     "react": "catalog:",

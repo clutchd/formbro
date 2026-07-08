@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
 import { APP_DESCRIPTION, APP_NAME, APP_URL } from "@formbro/shared/brand";
 import { fonts } from "@formbro/ui/typography";
+import Script from "next/script";
 import { Toaster } from "@/components/sonner";
 import { ThemeProvider } from "@/components/theme";
 import { PosthogProvider } from "@/lib/posthog";
@@ -13,6 +14,8 @@ const ogImage = {
   height: 630,
   alt: APP_NAME,
 };
+
+const themeInitScript = `(function(){var d=document.documentElement;function s(){return window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"}try{var t=localStorage.getItem("theme")||"system";var r=t==="system"?s():t;if(r==="light"||r==="dark"){d.classList.remove("light","dark");d.classList.add(r);d.style.colorScheme=r}}catch(e){}})();`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),
@@ -44,6 +47,11 @@ export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en" className={`${fonts.join(" ")} size-full antialiased`} suppressHydrationWarning>
       <body className="flex min-h-screen flex-1 flex-col">
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: themeInitScript }}
+        />
         <ThemeProvider>
           <PosthogProvider>
             {children}
