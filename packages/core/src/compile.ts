@@ -39,7 +39,7 @@ export type CompiledField = ReturnType<typeof compileField>;
 export type CompiledElement = Extract<ReturnType<typeof compileElement>, { category: "element" }>;
 export type CompiledAnyElement = CompiledElement | CompiledField;
 export type CompiledSection = ReturnType<typeof compileSection>;
-export type CompiledPage = ReturnType<typeof compilePages>[number];
+export type CompiledPage = ReturnType<typeof compilePage>;
 export type CompiledFieldEvent = "change" | "blur" | "submit" | "mount";
 export type CompiledListeners = ReturnType<typeof compileListeners>;
 export type CompiledValidator = {
@@ -228,104 +228,150 @@ function compileSection(key: string, separator?: CompiledElement) {
   };
 }
 
-function compilePages(elements: Array<CompiledAnyElement>) {
-  const firstPage = compilePage();
-  const pages = [firstPage];
-  let page = firstPage;
-  let section = compileSection("section-0");
-  let sectionIdx = 0;
+class PageCompiler {
+  private readonly pages: CompiledPage[];
+  private page: CompiledPage;
+  private section = compileSection("section-0");
+  private sectionIndex = 0;
 
-  const commitSection = (nextKey = `section-${sectionIdx + 1}`, separator?: CompiledElement) => {
-    const hasContent = section.header.length > 0 || section.body.length > 0;
+  constructor() {
+    const firstPage = compilePage();
+    this.pages = [firstPage];
+    this.page = firstPage;
+  }
 
-    if (hasContent) {
-      page.sections.push(separator ? { ...section, separator } : section);
-    } else if (separator) {
-      const prev = page.sections[page.sections.length - 1];
-      if (prev) prev.separator = separator;
-      else page.sections.push(compileSection(section.key, separator));
-    }
-
-    sectionIdx += 1;
-    section = compileSection(nextKey);
-  };
-
-  const commitPage = (label?: string) => {
-    if (page.elements.length === 0) {
-      page.label = label;
+  add(element: CompiledAnyElement) {
+    if (element.type === "page_break") {
+      this.startPage(element.label);
       return;
     }
 
-    commitSection();
-    page = compilePage();
-    page.label = label;
-    pages.push(page);
-    section = compileSection("section-0");
-    sectionIdx = 0;
-  };
+    this.page.elements.push(element);
 
-  for (const el of elements) {
-    if (el.type === "page_break") {
-      commitPage(el.label);
-      continue;
+    if (element.category === "field") {
+      this.page.fieldIds.push(element.id);
+      this.section.body.push(element);
+      return;
     }
 
-    page.elements.push(el);
+    this.addElementToSection(element);
+  }
 
-    if (el.category === "field") {
-      page.fieldIds.push(el.id);
-      section.body.push(el);
-    } else if (el.type === "heading") {
-      commitSection(el.id);
-      section.header.push(el);
-    } else if (el.type === "description") {
-      if (section.body.length > 0) {
-        commitSection(el.id);
+  finish() {
+    if (this.page.elements.length > 0) {
+      this.commitSection();
+    }
+
+    const lastPage = this.pages[this.pages.length - 1];
+    if (this.pages.length > 1 && lastPage?.elements.length === 0) {
+      this.pages.pop();
+    }
+
+    return this.pages;
+  }
+
+  private addElementToSection(element: CompiledElement) {
+    if (element.type === "heading") {
+      this.startSection(element.id);
+      this.section.header.push(element);
+      return;
+    }
+
+    if (element.type === "description") {
+      if (this.section.body.length > 0) {
+        this.startSection(element.id);
       }
-      section.header.push(el);
-    } else if (el.type === "divider") {
-      commitSection(el.id, el);
-    } else {
-      section.body.push(el);
+      this.section.header.push(element);
+      return;
     }
+
+    if (element.type === "divider") {
+      this.commitSection(element.id, element);
+      return;
+    }
+
+    this.section.body.push(element);
   }
 
-  if (page.elements.length > 0) {
-    commitSection();
+  private startPage(label?: string) {
+    if (this.page.elements.length === 0) {
+      this.page.label = label;
+      return;
+    }
+
+    this.commitSection();
+    this.page = compilePage();
+    this.page.label = label;
+    this.pages.push(this.page);
+    this.section = compileSection("section-0");
+    this.sectionIndex = 0;
   }
 
-  if (pages.length > 1 && pages[pages.length - 1]!.elements.length === 0) {
-    pages.pop();
+  private startSection(key: string) {
+    this.commitSection(key);
   }
 
-  return pages;
+  private commitSection(nextKey = this.nextSectionKey(), separator?: CompiledElement) {
+    const hasContent = this.section.header.length > 0 || this.section.body.length > 0;
+
+    if (hasContent) {
+      this.page.sections.push(separator ? { ...this.section, separator } : this.section);
+    } else if (separator) {
+      const previousSection = this.page.sections[this.page.sections.length - 1];
+      if (previousSection) {
+        previousSection.separator = separator;
+      } else {
+        this.page.sections.push(compileSection(this.section.key, separator));
+      }
+    }
+
+    this.sectionIndex += 1;
+    this.section = compileSection(nextKey);
+  }
+
+  private nextSectionKey() {
+    return `section-${this.sectionIndex + 1}`;
+  }
 }
 
-function compileToasts(toasts: z.output<typeof FormSchema>["toasts"]) {
-  const defaultToasts = {
-    success: "Form submitted successfully!",
-    error: "An error occurred while submitting the form",
-    loading: "Submitting Form...",
-  };
+function compilePages(elements: Array<CompiledAnyElement>) {
+  const pageCompiler = new PageCompiler();
 
-  return toasts === true
-    ? defaultToasts
-    : toasts
-      ? {
-          success:
-            typeof toasts.success === "boolean" && toasts.success === false
-              ? undefined
-              : (toasts.success ?? defaultToasts.success),
-          error:
-            typeof toasts.error === "boolean" && toasts.error === false
-              ? undefined
-              : (toasts.error ?? defaultToasts.error),
-          loading:
-            typeof toasts.loading === "boolean" && toasts.loading === false
-              ? undefined
-              : (toasts.loading ?? defaultToasts.loading),
-        }
-      : undefined;
+  for (const el of elements) {
+    pageCompiler.add(el);
+  }
+
+  return pageCompiler.finish();
+}
+
+const DEFAULT_TOASTS = {
+  success: "Form submitted successfully!",
+  error: "An error occurred while submitting the form",
+  loading: "Submitting Form...",
+};
+
+function compileToasts(toasts: z.output<typeof FormSchema>["toasts"]) {
+  if (!toasts) {
+    return undefined;
+  }
+
+  if (toasts === true) {
+    return { ...DEFAULT_TOASTS };
+  }
+
+  return {
+    success: compileToastMessage(toasts.success, DEFAULT_TOASTS.success),
+    error: compileToastMessage(toasts.error, DEFAULT_TOASTS.error),
+    loading: compileToastMessage(toasts.loading, DEFAULT_TOASTS.loading),
+  };
+}
+
+function compileToastMessage(message: string | false | undefined, fallback: string) {
+  if (message === false) {
+    return undefined;
+  }
+
+  return message ?? fallback;
 }
 
 function compileVersion(version: z.output<typeof FormSchema>["version"]): string {
