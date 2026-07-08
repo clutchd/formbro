@@ -1226,7 +1226,7 @@ function IntegrationsSection() {
   );
 }
 
-function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }) {
+export function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <section id="pricing" className="mx-auto max-w-7xl px-5 pb-20 sm:px-8">
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
