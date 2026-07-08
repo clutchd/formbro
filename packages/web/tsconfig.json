@@ -21,7 +21,9 @@
     "moduleDetection": "force",
     "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "app/*": ["./app/*"],
+      "src/*": ["./src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts", "next-env.d.ts", ".next/types/**/*.ts"],
