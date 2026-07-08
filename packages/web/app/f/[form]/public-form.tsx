@@ -5,8 +5,11 @@ import type { CompiledForm } from "@formbro/core/compile";
 import { api } from "@formbro/convex/_generated/api";
 import { getErrorMessage } from "@formbro/convex/errors";
 import { Form } from "@formbro/react/components/form";
-import { RiAlertLine, RiCheckboxCircleLine } from "@remixicon/react";
+import { APP_URL } from "@formbro/shared/brand";
+import { Button } from "@formbro/ui/button";
+import { RiAlertLine, RiArrowRightLine, RiCheckboxCircleLine } from "@remixicon/react";
 import { useMutation } from "convex/react";
+import Link from "next/link";
 import { usePostHog } from "posthog-js/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -82,6 +85,7 @@ export function PublicForm({
     status: "ready",
     workspaceSlug,
   };
+  const createFormHref = `${APP_URL}?utm_source=form&utm_medium=success&utm_campaign=${encodeURIComponent(formSlug ?? formId)}&utm_content=${encodeURIComponent(workspaceSlug ?? "unknown")}&utm_term=create_form`;
 
   if (submitted) {
     return (
@@ -89,7 +93,13 @@ export function PublicForm({
         icon={<RiCheckboxCircleLine className="size-5" />}
         title="Response recorded"
         description="Thank you. Your response has been submitted."
-      />
+      >
+        <Button asChild variant="outline">
+          <Link href={createFormHref} target="_blank" rel="noopener noreferrer">
+            Create your own form <RiArrowRightLine className="size-4" />
+          </Link>
+        </Button>
+      </PageState>
     );
   }
 
