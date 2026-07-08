@@ -55,7 +55,10 @@ Future builders should assign an ID once when an element is created and persist 
 
 ## Public API
 
+- `@formbro/core` - curated root entrypoint for the most common compile, registry, validation, AI edit, diff, and form schema APIs.
+- `@formbro/core/ai` - form schema edit helpers and AI edit input/output schemas.
 - `@formbro/core/compile` - `compile()`, compiled form types, and compiler output types.
+- `@formbro/core/diff` - form schema change summaries and change result helpers.
 - `@formbro/core/registry` - built-in field and element registry metadata.
 - `@formbro/core/validation` - synchronous validator builders and submission validation.
 - `@formbro/core/schema/form` - `FormSchema`, `FormInput`, `FormValues`, and form action types.
