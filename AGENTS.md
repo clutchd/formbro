@@ -6,6 +6,16 @@ Read the code to understand what's going on, yes even node_modules.
 
 FormBro is the open-source form platform for serious workflows.
 
+## Cursor Cloud specific instructions
+
+Use Bun 1.3.11. After checkout, run `bun install --frozen-lockfile`.
+
+For routine verification, run `bun run verify`. This checks lint and formatting without mutating files, runs the Bun test suites exposed through Turbo, and typechecks packages that expose a `typecheck` script.
+
+Use `bun run lint` only when you intend to apply formatting fixes. Use `bun run lint:check` in CI, reviews, and quick agent verification.
+
+`bun run build` may require a populated `.env` and deployment secrets because the web build is tied to Convex and Vercel deployment. Prefer `bun run verify` for portable agent checks that should work without production credentials.
+
 ## Philosophy
 
 We have a few philosophies we should always honor:
