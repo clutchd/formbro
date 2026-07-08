@@ -240,7 +240,7 @@ class PageCompiler {
     this.page = firstPage;
   }
 
-  add(element: CompiledAnyElement) {
+  addElement(element: CompiledAnyElement) {
     if (element.type === "page_break") {
       this.startPage(element.label);
       return;
@@ -272,14 +272,14 @@ class PageCompiler {
 
   private addElementToSection(element: CompiledElement) {
     if (element.type === "heading") {
-      this.startSection(element.id);
+      this.commitSection(element.id);
       this.section.header.push(element);
       return;
     }
 
     if (element.type === "description") {
       if (this.section.body.length > 0) {
-        this.startSection(element.id);
+        this.commitSection(element.id);
       }
       this.section.header.push(element);
       return;
@@ -307,26 +307,27 @@ class PageCompiler {
     this.sectionIndex = 0;
   }
 
-  private startSection(key: string) {
-    this.commitSection(key);
-  }
-
   private commitSection(nextKey = this.nextSectionKey(), separator?: CompiledElement) {
     const hasContent = this.section.header.length > 0 || this.section.body.length > 0;
 
     if (hasContent) {
       this.page.sections.push(separator ? { ...this.section, separator } : this.section);
     } else if (separator) {
-      const previousSection = this.page.sections[this.page.sections.length - 1];
-      if (previousSection) {
-        previousSection.separator = separator;
-      } else {
-        this.page.sections.push(compileSection(this.section.key, separator));
-      }
+      this.attachSeparator(separator);
     }
 
     this.sectionIndex += 1;
     this.section = compileSection(nextKey);
+  }
+
+  private attachSeparator(separator: CompiledElement) {
+    const previousSection = this.page.sections[this.page.sections.length - 1];
+    if (previousSection) {
+      previousSection.separator = separator;
+      return;
+    }
+
+    this.page.sections.push(compileSection(this.section.key, separator));
   }
 
   private nextSectionKey() {
@@ -338,7 +339,7 @@ function compilePages(elements: Array<CompiledAnyElement>) {
   const pageCompiler = new PageCompiler();
 
   for (const el of elements) {
-    pageCompiler.add(el);
+    pageCompiler.addElement(el);
   }
 
   return pageCompiler.finish();
