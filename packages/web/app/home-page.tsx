@@ -584,15 +584,19 @@ const PLANS = [
     name: "Basic",
     price: "$10",
     description: "Everything a lean team needs to run serious forms.",
+    ctaLabel: "Start Basic Trial",
+    ctaVariant: "outline",
     features: ["Unlimited seats", "10 forms", "1,000 submissions / month", "100GB storage"],
   },
   {
     name: "Pro",
     price: "$25",
     description: "More room for teams with heavier workflows.",
+    ctaLabel: "Start Pro Trial",
+    ctaVariant: "default",
     features: ["Unlimited seats", "100 forms", "10,000 submissions / month", "1TB storage"],
   },
-];
+] as const;
 
 export function HomePage() {
   const { authUser } = useAppData();
@@ -1220,7 +1224,7 @@ function IntegrationsSection() {
   );
 }
 
-function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }) {
+export function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <section id="pricing" className="mx-auto max-w-7xl px-5 pb-20 sm:px-8">
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -1239,7 +1243,7 @@ function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         {PLANS.map((plan) => (
-          <PlanCard key={plan.name} plan={plan} />
+          <PlanCard key={plan.name} isAuthenticated={isAuthenticated} plan={plan} />
         ))}
       </div>
 
@@ -1267,7 +1271,16 @@ function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }) {
   );
 }
 
-function PlanCard({ plan }: { plan: (typeof PLANS)[number] }) {
+function PlanCard({
+  isAuthenticated,
+  plan,
+}: {
+  isAuthenticated: boolean;
+  plan: (typeof PLANS)[number];
+}) {
+  const ctaHref = isAuthenticated ? "/dashboard" : "/sign-up";
+  const ctaLabel = isAuthenticated ? "Open Dashboard" : plan.ctaLabel;
+
   return (
     <article className="rounded-2xl border bg-card p-6 sm:p-8">
       <div className="flex items-start justify-between gap-4">
@@ -1290,6 +1303,11 @@ function PlanCard({ plan }: { plan: (typeof PLANS)[number] }) {
           </div>
         ))}
       </div>
+      <Button asChild variant={plan.ctaVariant} className="mt-8 w-full">
+        <Link href={ctaHref}>
+          {ctaLabel} <RiArrowRightLine className="size-4" />
+        </Link>
+      </Button>
     </article>
   );
 }
