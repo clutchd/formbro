@@ -1,10 +1,6 @@
 import type { FormLabel } from "@formbro/core/schema/label";
-import { twx } from "@formbro/shared/twx";
-import { FieldLegend } from "@formbro/ui/field";
-import { RiHeading } from "@remixicon/react";
-
-export const icon = RiHeading;
-export const color = "bg-purple-100 text-purple-600";
+import { FieldLegend } from "../components/primitives.js";
+import { cx } from "../utils/cx.js";
 
 export function component({ level = 2, label }: { level?: 1 | 2 | 3; label?: FormLabel }) {
   if (!label) return null;
@@ -24,7 +20,7 @@ export function component({ level = 2, label }: { level?: 1 | 2 | 3; label?: For
 
   return (
     <FieldLegend
-      className={twx("pt-4 font-display font-bold tracking-tight text-foreground", fontSize)}
+      className={cx("pt-4 font-display font-bold tracking-tight text-neutral-950", fontSize)}
     >
       {label}
     </FieldLegend>

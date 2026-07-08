@@ -1,12 +1,13 @@
-import type { IFieldProps } from "@formbro/core/schema/form";
-import { Input } from "@formbro/ui/input";
-import { RiMailLine } from "@remixicon/react";
-import { useFieldContext } from "../hooks/tanstack-context";
+import type { FieldComponentProps } from "../types.js";
+import { Input } from "../components/primitives.js";
+import { useFieldContext } from "../hooks/tanstack-context.js";
 
-export const icon = RiMailLine;
-export const color = "bg-blue-100 text-blue-600";
-
-export const component = function EmailComponent({ schema, ariaInvalid }: IFieldProps) {
+export const component = function EmailComponent({
+  ariaDescribedBy,
+  ariaInvalid,
+  ariaRequired,
+  schema,
+}: FieldComponentProps) {
   const field = useFieldContext<string>();
 
   return (
@@ -20,6 +21,8 @@ export const component = function EmailComponent({ schema, ariaInvalid }: IField
       onChange={(e) => field.handleChange(e.target.value)}
       onBlur={field.handleBlur}
       aria-invalid={ariaInvalid}
+      aria-required={ariaRequired}
+      aria-describedby={ariaDescribedBy}
     />
   );
 };

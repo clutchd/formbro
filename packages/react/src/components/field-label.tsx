@@ -1,5 +1,5 @@
-import { FieldLabel as RootFieldLabel } from "@formbro/ui/field";
 import * as React from "react";
+import { FieldLabel as RootFieldLabel } from "./primitives.js";
 
 export function FieldLabel({
   htmlFor,

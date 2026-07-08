@@ -1,6 +1,6 @@
 import { type CompiledListeners } from "@formbro/core/compile";
 import * as slugLib from "slugify";
-import type { TanStackFieldProps, TanStackForm } from "../hooks/tanstack";
+import type { TanStackFieldProps, TanStackForm } from "../hooks/tanstack.js";
 
 type ListenerFormApi = Pick<TanStackForm, "setFieldValue">;
 

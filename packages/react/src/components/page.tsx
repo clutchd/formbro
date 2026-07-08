@@ -1,14 +1,14 @@
 import type { CompiledPage } from "@formbro/core/compile";
-import { FieldGroup, FieldLegend, FieldSet } from "@formbro/ui/field";
 import * as React from "react";
-import type { TanStackFieldProps, TanStackForm } from "../hooks/tanstack";
-import { ElementComponents } from "../registry";
-import { Field } from "./field";
+import type { TanStackFieldProps, TanStackForm } from "../hooks/tanstack.js";
+import { getElementComponent } from "../registry.js";
+import { Field } from "./field.js";
+import { FieldGroup, FieldLegend, FieldSet } from "./primitives.js";
 
 type PageElement = CompiledPage["sections"][number]["header"][number];
 
 function renderElement(element: PageElement) {
-  const Component = ElementComponents[element.type as keyof typeof ElementComponents]?.component;
+  const Component = getElementComponent(element.type);
 
   if (!Component) {
     return null;

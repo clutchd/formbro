@@ -1,12 +1,13 @@
-import type { IFieldProps } from "@formbro/core/schema/form";
-import { Textarea } from "@formbro/ui/textarea";
-import { RiText } from "@remixicon/react";
-import { useFieldContext } from "../hooks/tanstack-context";
+import type { FieldComponentProps } from "../types.js";
+import { Textarea } from "../components/primitives.js";
+import { useFieldContext } from "../hooks/tanstack-context.js";
 
-export const icon = RiText;
-export const color = "bg-orange-100 text-orange-600";
-
-export const component = function LongTextComponent({ schema, ariaInvalid }: IFieldProps) {
+export const component = function LongTextComponent({
+  ariaDescribedBy,
+  ariaInvalid,
+  ariaRequired,
+  schema,
+}: FieldComponentProps) {
   const field = useFieldContext<string>();
 
   return (
@@ -19,6 +20,8 @@ export const component = function LongTextComponent({ schema, ariaInvalid }: IFi
       onChange={(e) => field.handleChange(e.target.value)}
       onBlur={field.handleBlur}
       aria-invalid={ariaInvalid}
+      aria-required={ariaRequired}
+      aria-describedby={ariaDescribedBy}
     />
   );
 };

@@ -7,13 +7,13 @@ import { Input } from "@formbro/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbro/ui/select";
 import { RiCloseLine, RiSendPlaneLine } from "@remixicon/react";
 import { useState } from "react";
-import { EditorPanelTabs } from "../editor";
 import {
   handleKeyboardSelect,
   submitEditorId,
   submitLabel,
   type SubmitConfig,
 } from "./canvas-utils";
+import { EditorPanelTabs } from "./editor";
 
 export function SubmitButtonEditorBlock({
   density = "default",

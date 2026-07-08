@@ -11,8 +11,8 @@ import {
 } from "@formbro/core/schema/form";
 import { buildValidators } from "@formbro/core/validation";
 import { useCallback, useMemo } from "react";
-import { buildListeners } from "../utils/build-listeners";
-import { useAppForm } from "./tanstack";
+import { buildListeners } from "../utils/build-listeners.js";
+import { useAppForm } from "./tanstack.js";
 
 function stringifyValues<T extends FormInput>(value: Record<string, unknown>) {
   return Object.fromEntries(

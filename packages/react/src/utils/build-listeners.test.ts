@@ -1,6 +1,6 @@
 import type { CompiledListeners } from "@formbro/core/compile";
 import { describe, expect, it } from "bun:test";
-import { buildListeners } from "./build-listeners";
+import { buildListeners } from "./build-listeners.js";
 
 type ListenerFormApi = Parameters<typeof buildListeners>[0];
 type BuiltListeners = ReturnType<typeof buildListeners>;

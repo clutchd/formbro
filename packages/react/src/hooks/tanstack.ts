@@ -2,11 +2,11 @@ import type {
   AppFieldExtendedReactFormApi,
   FormAsyncValidateOrFn,
   FormValidateOrFn,
-} from "@tanstack/react-form-nextjs";
-import { createFormHook } from "@tanstack/react-form-nextjs";
-import { SubmitButton } from "../components/submit-button";
-import { fieldContext, formContext } from "../hooks/tanstack-context";
-import { FieldComponents } from "../registry";
+} from "@tanstack/react-form";
+import { createFormHook } from "@tanstack/react-form";
+import { SubmitButton } from "../components/submit-button.js";
+import { fieldContext, formContext } from "../hooks/tanstack-context.js";
+import { FieldComponents } from "../registry.js";
 
 const fieldComponents = Object.fromEntries(
   Object.entries(FieldComponents).map(([key, mod]) => [key, mod.component]),

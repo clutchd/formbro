@@ -8,19 +8,12 @@ import type {
   FormOnMutate,
   FormOnSuccess,
 } from "@formbro/core/schema/form";
-import { twx } from "@formbro/shared/twx";
-import { Button } from "@formbro/ui/button";
-import { Progress } from "@formbro/ui/progress";
-import {
-  RiArrowLeftLine,
-  RiArrowRightLine,
-  RiCheckboxCircleLine,
-  RiErrorWarningLine,
-} from "@remixicon/react";
 import * as React from "react";
 import { useEffect, useState } from "react";
-import { type UseFormInstrumentation, useForm } from "../hooks/use-form";
-import { Page } from "./page";
+import { type UseFormInstrumentation, useForm } from "../hooks/use-form.js";
+import { cx } from "../utils/cx.js";
+import { Page } from "./page.js";
+import { Button, Progress } from "./primitives.js";
 
 export type FormProps<T extends FormInput = FormInput, TData = unknown> = {
   schema: T;
@@ -143,7 +136,7 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   };
 
   return (
-    <form onSubmit={handleSubmit} className={twx("text-wrap", className)} {...props}>
+    <form onSubmit={handleSubmit} className={cx("text-wrap", className)} {...props}>
       <state.tanstack.AppForm>
         <Page
           tanstack={state.tanstack}
@@ -158,19 +151,19 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
               variant="outline"
               onClick={handlePrev}
               disabled={isFirstPage}
-              className={twx(
+              className={cx(
                 "cursor-pointer transition-opacity",
                 isFirstPage && "pointer-events-none opacity-0!",
               )}
             >
-              <RiArrowLeftLine className="size-4" />
+              <span aria-hidden="true">{"<"}</span>
               <span>Back</span>
             </Button>
             <div className="flex-1" />
             {!isLastPage ? (
               <Button type="button" onClick={handleNext} className="cursor-pointer">
                 <span>Continue</span>
-                <RiArrowRightLine className="size-4" />
+                <span aria-hidden="true">{">"}</span>
               </Button>
             ) : (
               <FormSubmitArea previewValidationStatus={previewValidationStatus} preview={preview}>
@@ -211,19 +204,17 @@ function FormSubmitArea({
     <div className="space-y-2">
       {preview && previewValidationStatus ? (
         <div
-          className={twx(
+          className={cx(
             "flex items-center gap-2 rounded-md border px-3 py-2 text-sm",
             previewValidationStatus === "valid"
-              ? "border-green-300 bg-green-50 text-green-950 dark:border-green-400/40 dark:bg-green-400/10 dark:text-green-200"
-              : "border-destructive-border bg-destructive/5 text-destructive",
+              ? "border-green-300 bg-green-50 text-green-950"
+              : "border-red-300 bg-red-50 text-red-950",
           )}
           aria-live="polite"
         >
-          {previewValidationStatus === "valid" ? (
-            <RiCheckboxCircleLine className="size-4 shrink-0" />
-          ) : (
-            <RiErrorWarningLine className="size-4 shrink-0" />
-          )}
+          <span aria-hidden="true" className="shrink-0">
+            {previewValidationStatus === "valid" ? "OK" : "!"}
+          </span>
           <span className="font-medium">
             {previewValidationStatus === "valid"
               ? "Preview validation passed."
