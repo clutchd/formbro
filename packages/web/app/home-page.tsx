@@ -18,20 +18,17 @@ import {
   RiSparklingLine,
   type RemixiconComponentType,
 } from "@remixicon/react";
-import { useAppData } from "app/_data-provider";
 import Link from "next/link";
 import {
   useEffect,
   useRef,
   useState,
-  type ComponentProps,
   type Dispatch,
   type RefObject,
   type SetStateAction,
 } from "react";
 import { FormBuilderCanvas } from "@/components/form-builder/builder";
 import { ThemeIcon, useToggleTheme } from "@/components/theme";
-import { useDashboardPrewarmIntent } from "./(shell)/(app)/dashboard/(dashboard)/_data-provider";
 
 type BuilderTemplate = {
   id: string;
@@ -49,7 +46,6 @@ type BuilderDemoStreamState = {
   status: "idle" | "streaming";
   summary: string | null;
 };
-type LinkIntent = ComponentProps<typeof Link>;
 
 const HERO_STATS = [
   { label: "LICENSE", value: "MIT" },
@@ -598,22 +594,12 @@ const PLANS = [
   },
 ] as const;
 
-export function HomePage() {
-  const { authUser } = useAppData();
-  const isAuthenticated = Boolean(authUser?.ok && authUser.data);
-  const dashboardPrewarmIntent = useDashboardPrewarmIntent({ eager: true });
-
+export function HomePage({ isAuthenticated }: { isAuthenticated: boolean }) {
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
-      <LandingHeader
-        isAuthenticated={isAuthenticated}
-        dashboardPrewarmIntent={dashboardPrewarmIntent}
-      />
+      <LandingHeader isAuthenticated={isAuthenticated} />
       <main>
-        <HeroSection
-          isAuthenticated={isAuthenticated}
-          dashboardPrewarmIntent={dashboardPrewarmIntent}
-        />
+        <HeroSection isAuthenticated={isAuthenticated} />
         <WorkflowSection />
         <PositioningSection />
         <IntegrationsSection />
@@ -626,10 +612,8 @@ export function HomePage() {
 
 function LandingHeader({
   isAuthenticated,
-  dashboardPrewarmIntent,
 }: {
   isAuthenticated: boolean;
-  dashboardPrewarmIntent: LinkIntent;
 }) {
   return (
     <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
@@ -649,7 +633,7 @@ function LandingHeader({
       </nav>
       {isAuthenticated ? (
         <Button asChild variant="outline">
-          <Link {...dashboardPrewarmIntent}>Dashboard</Link>
+          <Link href="/dashboard">Dashboard</Link>
         </Button>
       ) : (
         <div className="flex items-center gap-2">
@@ -667,10 +651,8 @@ function LandingHeader({
 
 function HeroSection({
   isAuthenticated,
-  dashboardPrewarmIntent,
 }: {
   isAuthenticated: boolean;
-  dashboardPrewarmIntent: LinkIntent;
 }) {
   return (
     <section className="relative mx-auto w-full max-w-7xl px-5 pt-10 pb-16 sm:px-8 lg:pt-16">
@@ -690,10 +672,7 @@ function HeroSection({
         </p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <PrimaryCta
-            isAuthenticated={isAuthenticated}
-            dashboardPrewarmIntent={dashboardPrewarmIntent}
-          />
+          <PrimaryCta isAuthenticated={isAuthenticated} />
           <SecondaryCta isAuthenticated={isAuthenticated} />
         </div>
 
@@ -716,14 +695,12 @@ function HeroSection({
 
 function PrimaryCta({
   isAuthenticated,
-  dashboardPrewarmIntent,
 }: {
   isAuthenticated: boolean;
-  dashboardPrewarmIntent: LinkIntent;
 }) {
   return isAuthenticated ? (
     <Button asChild size="lg">
-      <Link {...dashboardPrewarmIntent}>
+      <Link href="/dashboard">
         Open dashboard <RiArrowRightLine className="size-4" />
       </Link>
     </Button>
