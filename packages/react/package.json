@@ -74,6 +74,7 @@
   "scripts": {
     "build": "bun run --cwd ../core build && tsc -p tsconfig.build.json",
     "test": "bun test",
+    "typecheck": "tsc -p tsconfig.json",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
