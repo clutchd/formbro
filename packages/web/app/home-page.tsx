@@ -709,7 +709,10 @@ function HeroSection({
         </div>
       </div>
 
-      <BuilderDemo />
+      <BuilderDemo
+        isAuthenticated={isAuthenticated}
+        dashboardPrewarmIntent={dashboardPrewarmIntent}
+      />
     </section>
   );
 }
@@ -748,7 +751,13 @@ function SecondaryCta({ isAuthenticated }: { isAuthenticated: boolean }) {
   );
 }
 
-function BuilderDemo() {
+function BuilderDemo({
+  isAuthenticated,
+  dashboardPrewarmIntent,
+}: {
+  isAuthenticated: boolean;
+  dashboardPrewarmIntent: LinkIntent;
+}) {
   const [templateIndex, setTemplateIndex] = useState(0);
   const activeTemplate = BUILDER_TEMPLATES[templateIndex] ?? BUILDER_TEMPLATES[0];
   const [schema, setSchema] = useState<FormInput>(INITIAL_BUILDER_SCHEMA);
@@ -892,6 +901,8 @@ function BuilderDemo() {
         ) : (
           <BuilderDemoWorkbench
             builderCanvasViewportRef={builderCanvasViewportRef}
+            dashboardPrewarmIntent={dashboardPrewarmIntent}
+            isAuthenticated={isAuthenticated}
             prompt={activeTemplate.prompt}
             schema={schema}
             streamState={streamState}
@@ -912,6 +923,8 @@ function BuilderDemo() {
         >
           <BuilderDemoWorkbench
             builderCanvasViewportRef={builderCanvasViewportRef}
+            dashboardPrewarmIntent={dashboardPrewarmIntent}
+            isAuthenticated={isAuthenticated}
             prompt={activeTemplate.prompt}
             schema={schema}
             streamState={streamState}
@@ -928,6 +941,8 @@ function BuilderDemo() {
 
 function BuilderDemoWorkbench({
   builderCanvasViewportRef,
+  dashboardPrewarmIntent,
+  isAuthenticated,
   prompt,
   schema,
   streamState,
@@ -938,6 +953,8 @@ function BuilderDemoWorkbench({
   onSchemaChange,
 }: {
   builderCanvasViewportRef: RefObject<HTMLDivElement | null>;
+  dashboardPrewarmIntent: LinkIntent;
+  isAuthenticated: boolean;
   prompt: string;
   schema: FormInput;
   streamState: BuilderDemoStreamState;
@@ -957,6 +974,8 @@ function BuilderDemoWorkbench({
     >
       <div className="flex min-h-0 flex-col border-b bg-muted/40 lg:border-r lg:border-b-0">
         <BuilderDemoHeader
+          dashboardPrewarmIntent={dashboardPrewarmIntent}
+          isAuthenticated={isAuthenticated}
           prompt={prompt}
           streamState={streamState}
           viewMode={viewMode}
@@ -979,6 +998,8 @@ function BuilderDemoWorkbench({
 }
 
 function BuilderDemoHeader({
+  dashboardPrewarmIntent,
+  isAuthenticated,
   prompt,
   streamState,
   viewMode,
@@ -986,6 +1007,8 @@ function BuilderDemoHeader({
   onExitFullscreen,
   onGenerate,
 }: {
+  dashboardPrewarmIntent: LinkIntent;
+  isAuthenticated: boolean;
   prompt: string;
   streamState: BuilderDemoStreamState;
   viewMode: "fullscreen" | "inline";
@@ -997,6 +1020,9 @@ function BuilderDemoHeader({
   const fullScreenLabel = viewMode === "fullscreen" ? "Exit full screen" : "Full screen";
   const toggleFullscreen = viewMode === "fullscreen" ? onExitFullscreen : onEnterFullscreen;
   const FullScreenIcon = viewMode === "fullscreen" ? RiFullscreenExitLine : RiFullscreenLine;
+  const builderCtaIntent: LinkIntent = isAuthenticated
+    ? dashboardPrewarmIntent
+    : { href: "/sign-up" };
 
   return (
     <div className="border-b bg-card p-3">
@@ -1054,6 +1080,12 @@ function BuilderDemoHeader({
             <RiSparklingLine className="size-4" />
           )}
           {isStreaming ? "Generating draft" : "Generate another draft"}
+        </Button>
+        <Button asChild variant="outline" size="dense" className="mt-2 w-full">
+          <Link {...builderCtaIntent}>
+            {isAuthenticated ? "Save in dashboard" : "Save and publish this form"}
+            <RiArrowRightLine className="size-4" />
+          </Link>
         </Button>
       </div>
     </div>
