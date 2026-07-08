@@ -8,6 +8,7 @@ export function Auth({
   footerLinkText,
   footerLinkHref,
   callbackURL,
+  supportingText,
 }: {
   title: string;
   subtitle: string;
@@ -15,6 +16,7 @@ export function Auth({
   footerLinkText: string;
   footerLinkHref: string;
   callbackURL?: string;
+  supportingText?: string;
 }) {
   return (
     <>
@@ -25,6 +27,9 @@ export function Auth({
 
       <div className="w-full space-y-3">
         <AuthLinks callbackURL={callbackURL} />
+        {supportingText ? (
+          <p className="text-center text-xs leading-5 text-muted-foreground">{supportingText}</p>
+        ) : null}
       </div>
 
       <p className="text-sm text-muted-foreground">

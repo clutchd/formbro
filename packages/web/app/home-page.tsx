@@ -657,7 +657,7 @@ function LandingHeader({
             <Link href="/sign-in">Sign in</Link>
           </Button>
           <Button asChild>
-            <Link href="/sign-up">Start trial</Link>
+            <Link href="/sign-up">Start free trial</Link>
           </Button>
         </div>
       )}
