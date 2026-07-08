@@ -60,11 +60,14 @@ describe("convex:route-prewarm", () => {
 
     await prewarmWorkspaceFormRoute(convex, "workspace-slug", "form-slug");
 
-    assert.equal(calls.length, 2);
-    assert.equal(calls[0]?.name, "workspace:context");
-    assert.deepEqual(calls[0]?.args, { workspaceSlug: "workspace-slug", formSlug: "form-slug" });
-    assert.equal(calls[1]?.name, "forms:list");
-    assert.deepEqual(calls[1]?.args, { workspaceId: "workspace-id" });
+    assert.deepEqual(calls, [
+      {
+        name: "workspace:context",
+        args: { workspaceSlug: "workspace-slug", formSlug: "form-slug" },
+      },
+      { name: "forms:list", args: { workspaceId: "workspace-id" } },
+      { name: "forms:getDraft", args: { formId: "form-id" } },
+    ]);
   });
 
   it("prewarms settings route data from workspace context", async () => {
