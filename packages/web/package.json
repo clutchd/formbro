@@ -40,6 +40,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "4.2.2",
     "@tsconfig/node22": "catalog:",
+    "@typescript/native-preview": "catalog:",
     "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
