@@ -1,8 +1,13 @@
 import { z } from "zod";
-import type { CompiledField, CompiledForm, CompiledValidator, CompiledValidators } from "./compile";
-import type { FormRule } from "./schema/rule";
-import { Registry } from "./registry";
-import { SYNC_EVENTS } from "./schema/event";
+import type {
+  CompiledField,
+  CompiledForm,
+  CompiledValidator,
+  CompiledValidators,
+} from "./compile.js";
+import type { FormRule } from "./schema/rule.js";
+import { Registry } from "./registry.js";
+import { SYNC_EVENTS } from "./schema/event.js";
 
 type SyncFormEvent = (typeof SYNC_EVENTS)[number];
 

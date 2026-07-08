@@ -19,8 +19,7 @@ npm install @formbro/core zod
 ## Quick Start
 
 ```ts
-import { compile } from "@formbro/core/compile";
-import type { FormInput, FormValues } from "@formbro/core/schema/form";
+import { compile, type FormInput, type FormValues } from "@formbro/core";
 
 const schema = {
   id: "contact_form",
@@ -56,8 +55,12 @@ Future builders should assign an ID once when an element is created and persist 
 
 ## Public API
 
+- `@formbro/core` - curated root entrypoint for the most common compile, registry, validation, AI edit, diff, and form schema APIs.
+- `@formbro/core/ai` - form schema edit helpers and AI edit input/output schemas.
 - `@formbro/core/compile` - `compile()`, compiled form types, and compiler output types.
+- `@formbro/core/diff` - form schema change summaries and change result helpers.
 - `@formbro/core/registry` - built-in field and element registry metadata.
+- `@formbro/core/validation` - synchronous validator builders and submission validation.
 - `@formbro/core/schema/form` - `FormSchema`, `FormInput`, `FormValues`, and form action types.
 - `@formbro/core/schema/*` - supporting Zod schemas and schema-derived types.
 

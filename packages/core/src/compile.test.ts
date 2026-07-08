@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { compile, _private } from "./compile";
-import { FORMBRO_SCHEMA_VERSION } from "./schema/version";
+import { compile, _private } from "./compile.js";
+import { FORMBRO_SCHEMA_VERSION } from "./schema/version.js";
 
 describe("compile", () => {
   it("interpolates the schema and compiles runtime state", () => {

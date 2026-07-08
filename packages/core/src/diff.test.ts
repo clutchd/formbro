@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import type { FormInput } from "./schema/form";
-import { summarizeFormSchemaChangeResult, summarizeFormSchemaChanges } from "./diff";
+import type { FormInput } from "./schema/form.js";
+import { summarizeFormSchemaChangeResult, summarizeFormSchemaChanges } from "./diff.js";
 
 const baseSchema = {
   id: "contact",

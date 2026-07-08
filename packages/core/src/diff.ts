@@ -1,5 +1,5 @@
-import type { FormInput } from "./schema/form";
-import { FieldRegistry } from "./registry";
+import type { FormInput } from "./schema/form.js";
+import { FieldRegistry } from "./registry.js";
 
 type FormElement = FormInput["elements"][number];
 type ElementDiff = {

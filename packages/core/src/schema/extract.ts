@@ -1,5 +1,5 @@
-import type { FormInput } from "./form";
-import { FieldRegistry } from "../registry";
+import type { FormInput } from "./form.js";
+import { FieldRegistry } from "../registry.js";
 
 type FieldElementType = (typeof FieldRegistry)[number]["key"];
 

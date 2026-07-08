@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { createDefaultFormSchema, FormSchema, JsonParse, JsonSerialize } from "./form";
+import { createDefaultFormSchema, FormSchema, JsonParse, JsonSerialize } from "./form.js";
 
 describe("FormSchema", () => {
   it("parses valid schema input", () => {
