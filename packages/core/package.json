@@ -38,6 +38,7 @@
     "build": "tsc -p tsconfig.build.json",
     "bench": "bun run bench/compile.bench.ts",
     "test": "bun test",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit",
     "prepublishOnly": "bun run build"
   },
   "devDependencies": {

@@ -77,6 +77,10 @@
     "typecheck": "tsc -p tsconfig.json",
     "prepublishOnly": "bun run build"
   },
+  "scripts": {
+    "test": "bun test",
+    "typecheck": "tsc -p tsconfig.json"
+  },
   "dependencies": {
     "@tanstack/react-form": "1.28.3",
     "slugify": "1.6.9"

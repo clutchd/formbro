@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun --env-file=../../.env convex dev",
-    "studio": "bun convex dashboard"
+    "studio": "bun convex dashboard",
+    "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@convex-dev/better-auth": "catalog:",
