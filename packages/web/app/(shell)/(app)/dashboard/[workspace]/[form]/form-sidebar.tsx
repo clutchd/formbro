@@ -2,7 +2,7 @@ import { SidebarContent, SidebarMenu, SidebarMenuButton } from "@formbro/ui/side
 import { RiFileAiLine, RiInboxLine, RiSettings2Line, RiShareLine } from "@remixicon/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRequiredWorkspaceFormData } from "./_data-provider";
+import { useRequiredWorkspaceFormData, useWorkspaceFormPrewarmIntent } from "./_data-provider";
 import { useFormSubmissionsPrewarmIntent } from "./submissions/_data-provider";
 
 export function FormSidebar() {
@@ -11,6 +11,7 @@ export function FormSidebar() {
   const workspaceSlug = workspace.slug;
   const formSlug = form.slug;
   const formPath = `/dashboard/${workspaceSlug}/${formSlug}`;
+  const editorPrewarm = useWorkspaceFormPrewarmIntent(workspaceSlug, formSlug);
   const submissionsPrewarm = useFormSubmissionsPrewarmIntent(workspaceSlug, formSlug);
 
   return (
@@ -22,7 +23,7 @@ export function FormSidebar() {
             className="data-[active=true]:bg-accent"
             isActive={pathname === formPath}
           >
-            <Link prefetch href={formPath}>
+            <Link {...editorPrewarm}>
               <RiFileAiLine /> Editor
             </Link>
           </SidebarMenuButton>
