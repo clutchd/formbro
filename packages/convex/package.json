@@ -9,6 +9,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@better-auth/agent-auth": "^0.6.2",
     "@convex-dev/better-auth": "catalog:",
     "@convex-dev/resend": "0.2.4",
     "@convex-dev/stripe": "0.1.4",

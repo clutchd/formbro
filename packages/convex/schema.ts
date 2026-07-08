@@ -4,6 +4,31 @@ import { PLANS } from "./billingUtils";
 
 export const SubmissionValue = v.union(v.string());
 
+const agentWorkspaceBindingStatus = v.union(
+  v.literal("active"),
+  v.literal("suspended"),
+  v.literal("revoked"),
+);
+const x402PaymentScheme = v.union(
+  v.literal("exact"),
+  v.literal("upto"),
+  v.literal("batch-settlement"),
+);
+const x402PaymentStatus = v.union(
+  v.literal("required"),
+  v.literal("verified"),
+  v.literal("settled"),
+  v.literal("failed"),
+);
+const agentUsageEventType = v.union(
+  v.literal("form.created"),
+  v.literal("form.updated"),
+  v.literal("submission.created"),
+  v.literal("submission.read"),
+  v.literal("ai.edit"),
+  v.literal("api.request"),
+);
+
 export default defineSchema({
   workspaces: defineTable({
     name: v.string(),
@@ -32,6 +57,78 @@ export default defineSchema({
     .index("by_user", ["userAuthId"])
     .index("by_workspace_and_user", ["workspaceId", "userAuthId"])
     .index("by_workspace_and_email", ["workspaceId", "userEmail"]),
+
+  agentWorkspaceBindings: defineTable({
+    workspaceId: v.id("workspaces"),
+    betterAuthAgentId: v.string(),
+    betterAuthHostId: v.optional(v.string()),
+    status: agentWorkspaceBindingStatus,
+    createdBy: v.id("workspaceMembers"),
+    createdTime: v.number(),
+    revokedTime: v.optional(v.number()),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_better_auth_agent", ["betterAuthAgentId"])
+    .index("by_better_auth_host", ["betterAuthHostId"])
+    .index("by_workspace_and_agent", ["workspaceId", "betterAuthAgentId"])
+    .index("by_workspace_and_status", ["workspaceId", "status"]),
+
+  x402PaymentConfigs: defineTable({
+    workspaceId: v.id("workspaces"),
+    scheme: x402PaymentScheme,
+    network: v.string(),
+    asset: v.string(),
+    payTo: v.string(),
+    amount: v.string(),
+    assetName: v.optional(v.string()),
+    assetVersion: v.optional(v.string()),
+    facilitatorUrl: v.optional(v.string()),
+    maxTimeoutSeconds: v.number(),
+    createdBy: v.id("workspaceMembers"),
+    createdTime: v.number(),
+    disabledTime: v.optional(v.number()),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_workspace_and_network", ["workspaceId", "network"]),
+
+  x402PaymentEvents: defineTable({
+    workspaceId: v.id("workspaces"),
+    betterAuthAgentId: v.optional(v.string()),
+    betterAuthHostId: v.optional(v.string()),
+    requestId: v.string(),
+    status: x402PaymentStatus,
+    resourceUrl: v.string(),
+    scheme: x402PaymentScheme,
+    network: v.string(),
+    asset: v.string(),
+    amount: v.string(),
+    payer: v.optional(v.string()),
+    transaction: v.optional(v.string()),
+    errorReason: v.optional(v.string()),
+    occurredTime: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_better_auth_agent", ["betterAuthAgentId"])
+    .index("by_better_auth_host", ["betterAuthHostId"])
+    .index("by_request", ["requestId"])
+    .index("by_workspace_occurred", ["workspaceId", "occurredTime"]),
+
+  agentUsageEvents: defineTable({
+    workspaceId: v.id("workspaces"),
+    betterAuthAgentId: v.optional(v.string()),
+    betterAuthHostId: v.optional(v.string()),
+    x402PaymentEventId: v.optional(v.id("x402PaymentEvents")),
+    requestId: v.string(),
+    eventType: agentUsageEventType,
+    route: v.string(),
+    units: v.number(),
+    occurredTime: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_better_auth_agent", ["betterAuthAgentId"])
+    .index("by_better_auth_host", ["betterAuthHostId"])
+    .index("by_request", ["requestId"])
+    .index("by_workspace_occurred", ["workspaceId", "occurredTime"]),
 
   workspaceInvites: defineTable({
     workspaceId: v.id("workspaces"),
