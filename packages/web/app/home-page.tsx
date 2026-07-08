@@ -50,12 +50,29 @@ type BuilderDemoStreamState = {
   summary: string | null;
 };
 type LinkIntent = ComponentProps<typeof Link>;
+type HeroCopy = {
+  badge: string;
+  title: string;
+  description: string;
+};
 
 const HERO_STATS = [
   { label: "LICENSE", value: "MIT" },
   { label: "TRIAL", value: "7 DAYS" },
   { label: "SETUP", value: "MINUTES" },
 ];
+const DEFAULT_HERO_COPY: HeroCopy = {
+  badge: TAGLINE.toUpperCase(),
+  title: "Serious forms without the enterprise tax.",
+  description:
+    "Create, publish, and automate forms for intake, approvals, field ops, and onboarding. FormBro stays simple on the surface while giving teams the control to run serious workflows.",
+};
+const FORM_REFERRAL_HERO_COPY: HeroCopy = {
+  badge: "POWERED BY FORMBRO",
+  title: "Create forms like the one you just used.",
+  description:
+    "Start with a polished form in minutes, publish it for any workflow, and keep every submission organized from day one.",
+};
 
 const WORKFLOW_STEPS = [
   {
@@ -598,10 +615,11 @@ const PLANS = [
   },
 ] as const;
 
-export function HomePage() {
+export function HomePage({ isFormReferral = false }: { isFormReferral?: boolean }) {
   const { authUser } = useAppData();
   const isAuthenticated = Boolean(authUser?.ok && authUser.data);
   const dashboardPrewarmIntent = useDashboardPrewarmIntent({ eager: true });
+  const heroCopy = isFormReferral ? FORM_REFERRAL_HERO_COPY : DEFAULT_HERO_COPY;
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
@@ -611,6 +629,7 @@ export function HomePage() {
       />
       <main>
         <HeroSection
+          copy={heroCopy}
           isAuthenticated={isAuthenticated}
           dashboardPrewarmIntent={dashboardPrewarmIntent}
         />
@@ -666,9 +685,11 @@ function LandingHeader({
 }
 
 function HeroSection({
+  copy,
   isAuthenticated,
   dashboardPrewarmIntent,
 }: {
+  copy: HeroCopy;
   isAuthenticated: boolean;
   dashboardPrewarmIntent: LinkIntent;
 }) {
@@ -678,16 +699,12 @@ function HeroSection({
 
       <div className="max-w-4xl">
         <Badge status="neutral" className="mb-5 rounded-none">
-          {TAGLINE.toUpperCase()}
+          {copy.badge}
         </Badge>
         <h1 className="max-w-3xl font-display text-5xl leading-[0.95] font-bold tracking-tight text-balance sm:text-6xl lg:text-7xl">
-          Serious forms without the enterprise tax.
+          {copy.title}
         </h1>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-          Create, publish, and automate forms for intake, approvals, field ops, and onboarding.
-          FormBro stays simple on the surface while giving teams the control to run serious
-          workflows.
-        </p>
+        <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">{copy.description}</p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <PrimaryCta

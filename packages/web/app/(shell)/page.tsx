@@ -7,6 +7,13 @@ export const metadata: Metadata = {
   description: APP_DESCRIPTION,
 };
 
-export default function Home() {
-  return <HomePage />;
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ utm_source?: string | string[] }>;
+}) {
+  const utmSource = (await searchParams).utm_source;
+  const isFormReferral = (Array.isArray(utmSource) ? utmSource[0] : utmSource) === "form";
+
+  return <HomePage isFormReferral={isFormReferral} />;
 }
