@@ -1173,9 +1173,7 @@ function PositioningSection() {
           <div key={feature.title} className="rounded-lg border bg-card p-5">
             <RiCheckboxCircleLine className="mb-5 size-5 text-brand" />
             <h3 className="font-display text-xl font-bold tracking-tight">{feature.title}</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              {feature.description}
-            </p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{feature.description}</p>
           </div>
         ))}
       </div>

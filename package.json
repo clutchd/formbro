@@ -13,8 +13,8 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "lint": "oxlint --fix && oxfmt",
-    "lint:check": "oxlint && oxfmt --check",
+    "lint": "oxlint --fix packages --ignore-pattern 'packages/convex/_generated/**' && oxfmt",
+    "lint:check": "oxlint --quiet packages --ignore-pattern 'packages/convex/_generated/**' && oxfmt --check",
     "test": "turbo test",
     "typecheck": "turbo typecheck",
     "verify": "bun run lint:check && bun run test && bun run typecheck"

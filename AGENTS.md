@@ -10,7 +10,7 @@ FormBro is the open-source form platform for serious workflows.
 
 Use Bun 1.3.11. After checkout, run `bun install --frozen-lockfile`.
 
-For routine verification, run `bun run verify`. This checks lint and formatting without mutating files, runs the Bun test suites exposed through Turbo, and typechecks the packages with TypeScript configs.
+For routine verification, run `bun run verify`. This checks lint and formatting without mutating files, runs the Bun test suites exposed through Turbo, and typechecks packages that expose a `typecheck` script.
 
 Use `bun run lint` only when you intend to apply formatting fixes. Use `bun run lint:check` in CI, reviews, and quick agent verification.
 
