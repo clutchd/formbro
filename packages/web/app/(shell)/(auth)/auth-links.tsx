@@ -3,8 +3,11 @@
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { Spinner } from "@formbro/ui/spinner";
+import { usePostHog } from "posthog-js/react";
 import { useState } from "react";
 import { signIn } from "@/lib/auth/client";
+
+type OAuthProvider = "google" | "microsoft";
 
 function AuthLink({
   onClick,
@@ -76,17 +79,28 @@ function MicrosoftIcon({ className }: { className?: string }) {
 }
 
 export function AuthLinks({ callbackURL = "/dashboard" }: { callbackURL?: string }) {
+  const posthog = usePostHog();
+
+  function startSocialSignIn(provider: OAuthProvider) {
+    posthog.capture("oauth_started", {
+      callback_url: callbackURL,
+      provider,
+    });
+
+    return signIn.social({ provider, callbackURL });
+  }
+
   return (
     <>
       <AuthLink
-        onClick={() => signIn.social({ provider: "google", callbackURL })}
+        onClick={() => startSocialSignIn("google")}
         icon={<GoogleIcon className="size-5" />}
       >
         Continue with Google
       </AuthLink>
 
       <AuthLink
-        onClick={() => signIn.social({ provider: "microsoft", callbackURL })}
+        onClick={() => startSocialSignIn("microsoft")}
         icon={<MicrosoftIcon className="size-5" />}
       >
         Continue with Microsoft

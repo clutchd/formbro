@@ -20,7 +20,9 @@ import {
 } from "@remixicon/react";
 import { useAppData } from "app/_data-provider";
 import Link from "next/link";
+import { usePostHog } from "posthog-js/react";
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -50,6 +52,13 @@ type BuilderDemoStreamState = {
   summary: string | null;
 };
 type LinkIntent = ComponentProps<typeof Link>;
+type MarketingCtaProperties = {
+  audience: "anonymous" | "authenticated";
+  href: string;
+  label: string;
+  location: string;
+  plan?: string;
+};
 
 const HERO_STATS = [
   { label: "LICENSE", value: "MIT" },
@@ -110,6 +119,17 @@ const BUILDER_DEMO_BASE_SCHEMA: FormInput = {
   elements: [],
   submit: { label: "Submit", size: "full-width" },
 };
+
+function useMarketingCtaCapture() {
+  const posthog = usePostHog();
+
+  return useCallback(
+    (properties: MarketingCtaProperties) => {
+      posthog.capture("marketing_cta_clicked", properties);
+    },
+    [posthog],
+  );
+}
 
 const BUILDER_TEMPLATES: [BuilderTemplate, ...BuilderTemplate[]] = [
   {
@@ -631,6 +651,8 @@ function LandingHeader({
   isAuthenticated: boolean;
   dashboardPrewarmIntent: LinkIntent;
 }) {
+  const captureMarketingCta = useMarketingCtaCapture();
+
   return (
     <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
       <Link href="/" aria-label="FormBro home">
@@ -649,15 +671,51 @@ function LandingHeader({
       </nav>
       {isAuthenticated ? (
         <Button asChild variant="outline">
-          <Link {...dashboardPrewarmIntent}>Dashboard</Link>
+          <Link
+            {...dashboardPrewarmIntent}
+            onClick={() =>
+              captureMarketingCta({
+                audience: "authenticated",
+                href: "/dashboard",
+                label: "Dashboard",
+                location: "header",
+              })
+            }
+          >
+            Dashboard
+          </Link>
         </Button>
       ) : (
         <div className="flex items-center gap-2">
           <Button asChild variant="link" className="hidden sm:inline-flex">
-            <Link href="/sign-in">Sign in</Link>
+            <Link
+              href="/sign-in"
+              onClick={() =>
+                captureMarketingCta({
+                  audience: "anonymous",
+                  href: "/sign-in",
+                  label: "Sign in",
+                  location: "header",
+                })
+              }
+            >
+              Sign in
+            </Link>
           </Button>
           <Button asChild>
-            <Link href="/sign-up">Start trial</Link>
+            <Link
+              href="/sign-up"
+              onClick={() =>
+                captureMarketingCta({
+                  audience: "anonymous",
+                  href: "/sign-up",
+                  label: "Start trial",
+                  location: "header",
+                })
+              }
+            >
+              Start trial
+            </Link>
           </Button>
         </div>
       )}
@@ -721,15 +779,37 @@ function PrimaryCta({
   isAuthenticated: boolean;
   dashboardPrewarmIntent: LinkIntent;
 }) {
+  const captureMarketingCta = useMarketingCtaCapture();
+
   return isAuthenticated ? (
     <Button asChild size="lg">
-      <Link {...dashboardPrewarmIntent}>
+      <Link
+        {...dashboardPrewarmIntent}
+        onClick={() =>
+          captureMarketingCta({
+            audience: "authenticated",
+            href: "/dashboard",
+            label: "Open dashboard",
+            location: "hero_primary",
+          })
+        }
+      >
         Open dashboard <RiArrowRightLine className="size-4" />
       </Link>
     </Button>
   ) : (
     <Button asChild size="lg">
-      <Link href="/sign-up">
+      <Link
+        href="/sign-up"
+        onClick={() =>
+          captureMarketingCta({
+            audience: "anonymous",
+            href: "/sign-up",
+            label: "Start free trial",
+            location: "hero_primary",
+          })
+        }
+      >
         Start free trial <RiArrowRightLine className="size-4" />
       </Link>
     </Button>
@@ -737,13 +817,39 @@ function PrimaryCta({
 }
 
 function SecondaryCta({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const captureMarketingCta = useMarketingCtaCapture();
+
   return isAuthenticated ? (
     <Button asChild variant="outline" size="lg">
-      <Link href="#builder">Try the builder</Link>
+      <Link
+        href="#builder"
+        onClick={() =>
+          captureMarketingCta({
+            audience: "authenticated",
+            href: "#builder",
+            label: "Try the builder",
+            location: "hero_secondary",
+          })
+        }
+      >
+        Try the builder
+      </Link>
     </Button>
   ) : (
     <Button asChild variant="outline" size="lg">
-      <Link href="/sign-in">Sign in</Link>
+      <Link
+        href="/sign-in"
+        onClick={() =>
+          captureMarketingCta({
+            audience: "anonymous",
+            href: "/sign-in",
+            label: "Sign in",
+            location: "hero_secondary",
+          })
+        }
+      >
+        Sign in
+      </Link>
     </Button>
   );
 }
@@ -1225,6 +1331,10 @@ function IntegrationsSection() {
 }
 
 export function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }) {
+  const captureMarketingCta = useMarketingCtaCapture();
+  const launchHref = isAuthenticated ? "/dashboard" : "/sign-up";
+  const launchLabel = isAuthenticated ? "Open dashboard" : "Start free trial";
+
   return (
     <section id="pricing" className="mx-auto max-w-7xl px-5 pb-20 sm:px-8">
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -1261,8 +1371,18 @@ export function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }
           size="lg"
           className="mt-6 bg-background text-foreground hover:bg-background/90 sm:mt-0"
         >
-          <Link href={isAuthenticated ? "/dashboard" : "/sign-up"}>
-            {isAuthenticated ? "Open dashboard" : "Start free trial"}
+          <Link
+            href={launchHref}
+            onClick={() =>
+              captureMarketingCta({
+                audience: isAuthenticated ? "authenticated" : "anonymous",
+                href: launchHref,
+                label: launchLabel,
+                location: "pricing_launch",
+              })
+            }
+          >
+            {launchLabel}
             <RiArrowRightLine className="size-4" />
           </Link>
         </Button>
@@ -1278,6 +1398,7 @@ function PlanCard({
   isAuthenticated: boolean;
   plan: (typeof PLANS)[number];
 }) {
+  const captureMarketingCta = useMarketingCtaCapture();
   const ctaHref = isAuthenticated ? "/dashboard" : "/sign-up";
   const ctaLabel = isAuthenticated ? "Open Dashboard" : plan.ctaLabel;
 
@@ -1304,7 +1425,18 @@ function PlanCard({
         ))}
       </div>
       <Button asChild variant={plan.ctaVariant} className="mt-8 w-full">
-        <Link href={ctaHref}>
+        <Link
+          href={ctaHref}
+          onClick={() =>
+            captureMarketingCta({
+              audience: isAuthenticated ? "authenticated" : "anonymous",
+              href: ctaHref,
+              label: ctaLabel,
+              location: "pricing_plan",
+              plan: plan.name,
+            })
+          }
+        >
           {ctaLabel} <RiArrowRightLine className="size-4" />
         </Link>
       </Button>
