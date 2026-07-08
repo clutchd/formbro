@@ -62,8 +62,10 @@ export function Field({
             </span>
           </FieldLabel>
         );
+        const descriptionId = `${schema.id}-description`;
+        const errorId = `${schema.id}-error`;
         const Description = schema.description && (
-          <FieldDescription>{schema.description}</FieldDescription>
+          <FieldDescription id={descriptionId}>{schema.description}</FieldDescription>
         );
 
         const hasErrors = field.state.meta.errors.length > 0;
@@ -94,13 +96,7 @@ export function Field({
                 schema={schema}
                 ariaInvalid={errored}
                 ariaRequired={schema.required}
-                ariaDescribedBy={
-                  errored
-                    ? `${schema.id}-error`
-                    : schema.description
-                      ? `${schema.id}-description`
-                      : undefined
-                }
+                ariaDescribedBy={errored ? errorId : schema.description ? descriptionId : undefined}
               />
             </div>
             <div
@@ -123,7 +119,7 @@ export function Field({
                       <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border border-red-700 text-xs leading-none text-red-700">
                         !
                       </span>
-                      <FieldError errors={field.state.meta.errors} />
+                      <FieldError id={errorId} errors={field.state.meta.errors} />
                     </>
                   )
                 ))}
