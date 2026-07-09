@@ -50,7 +50,7 @@ function mergeSubmissionColumns(rows: SubmissionRow[]): SubmissionColumn[] {
     }
   }
 
-  return [...columns.values()].toSorted((left, right) => {
+  return [...columns.values()].sort((left, right) => {
     const firstSeenDiff = left.firstSeenSubmittedTime - right.firstSeenSubmittedTime;
     return firstSeenDiff !== 0 ? firstSeenDiff : left.label.localeCompare(right.label);
   });

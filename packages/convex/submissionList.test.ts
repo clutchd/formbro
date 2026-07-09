@@ -37,7 +37,7 @@ const compiledForm = compile({
     {
       id: "interests",
       name: "Interests",
-      type: "checkbox",
+      type: "single_select",
       label: "Interests",
     },
   ],
@@ -49,17 +49,20 @@ describe("buildSubmissionListPage", () => {
       [
         submission("newest", 200, {
           email: "new@example.com",
-          interests: ["Product", "Engineering"],
+          interests: "Product",
         }),
         submission("oldest", 100, { email: "old@example.com" }),
       ],
       new Map([[schemaId, compiledForm]]),
     );
 
-    expect(rows.map((row) => row.id)).toEqual(["newest", "oldest"]);
+    expect(rows.map((row) => row.id)).toEqual([
+      "newest" as Id<"submissions">,
+      "oldest" as Id<"submissions">,
+    ]);
     expect(rows[0]?.values).toEqual({
       email: "new@example.com",
-      interests: "Product, Engineering",
+      interests: "Product",
     });
     expect(rows[0]?.columnHints).toEqual([
       {
@@ -72,7 +75,7 @@ describe("buildSubmissionListPage", () => {
       {
         id: "interests",
         label: "Interests",
-        type: "checkbox",
+        type: "single_select",
         firstSeenSubmittedTime: 100,
         lastSeenSubmittedTime: 200,
       },

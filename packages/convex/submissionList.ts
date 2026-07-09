@@ -36,7 +36,7 @@ export function buildSubmissionListPage(
 ): SubmissionListRow[] {
   const columns = new Map<string, SubmissionColumn>();
 
-  for (const submission of submissions.toReversed()) {
+  for (const submission of [...submissions].reverse()) {
     const form = formsBySchemaId.get(submission.schemaId);
     const time = submission.submittedTime;
 
@@ -73,7 +73,7 @@ export function buildSubmissionListPage(
     }
   }
 
-  const columnHints = [...columns.values()].toSorted((left, right) => {
+  const columnHints = [...columns.values()].sort((left, right) => {
     const firstSeenDiff = left.firstSeenSubmittedTime - right.firstSeenSubmittedTime;
     return firstSeenDiff !== 0 ? firstSeenDiff : left.label.localeCompare(right.label);
   });
