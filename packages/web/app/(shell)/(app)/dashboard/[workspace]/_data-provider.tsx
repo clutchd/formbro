@@ -14,11 +14,14 @@ import { useRoutePrewarm, type RoutePrewarmOptions } from "@/lib/convex/route-pr
 import { createSegmentData } from "@/lib/data-segment";
 import { prewarmWorkspaceRoute } from "./_prewarm";
 
+type WorkspaceData = Extract<
+  FunctionReturnType<typeof api.workspace.context>,
+  { ok: true }
+>["data"]["workspace"];
+
 const workspaceSegment = createSegmentData<{
   context: FunctionReturnType<typeof api.workspace.context> | undefined;
-  workspace:
-    | Extract<FunctionReturnType<typeof api.workspace.context>, { ok: true }>["data"]["workspace"]
-    | undefined;
+  workspace: WorkspaceData | undefined;
   form:
     | Extract<FunctionReturnType<typeof api.workspace.context>, { ok: true }>["data"]["form"]
     | undefined;
@@ -40,9 +43,24 @@ export function useWorkspacePrewarmIntent(
   );
 }
 
+function WorkspaceAnalyticsGroup({ workspace }: { workspace: WorkspaceData }) {
+  const posthog = usePostHog();
+  const { _id, billingStatus, name, plan, slug } = workspace;
+
+  useEffect(() => {
+    posthog.group("workspace", _id, {
+      billing_status: billingStatus ?? "inactive",
+      name,
+      plan: plan ?? "free",
+      slug,
+    });
+  }, [posthog, _id, billingStatus, name, plan, slug]);
+
+  return null;
+}
+
 export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const posthog = usePostHog();
   const router = useRouter();
   const { workspace: workspaceSlug, form: formSlug } = useParams<{
     workspace: string;
@@ -73,30 +91,17 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const shouldRedirect =
     contextData !== null && !contextData.isCanonical && pathname !== contextData.canonicalPath;
 
-  useEffect(() => {
-    if (!workspaceData) return;
-
-    posthog.group("workspace", workspaceData._id, {
-      billing_status: workspaceData.billingStatus ?? "inactive",
-      name: workspaceData.name,
-      plan: workspaceData.plan ?? "free",
-      slug: workspaceData.slug,
-    });
-  }, [
-    posthog,
-    workspaceData?._id,
-    workspaceData?.billingStatus,
-    workspaceData?.name,
-    workspaceData?.plan,
-    workspaceData?.slug,
-  ]);
-
   if (shouldRedirect) {
     router.replace(contextData.canonicalPath);
     return <Loading title="workspace" />;
   }
 
-  return <workspaceSegment.Provider value={value}>{children}</workspaceSegment.Provider>;
+  return (
+    <workspaceSegment.Provider value={value}>
+      {workspaceData ? <WorkspaceAnalyticsGroup workspace={workspaceData} /> : null}
+      {children}
+    </workspaceSegment.Provider>
+  );
 }
 
 export function WorkspaceContentBoundary({ children }: { children: ReactNode }) {
