@@ -46,9 +46,7 @@ export function buildSubmissionListPage(
         id: field.id,
         label: field.label ?? field.name,
         type: field.type,
-        firstSeenSubmittedTime: existing
-          ? Math.min(existing.firstSeenSubmittedTime, time)
-          : time,
+        firstSeenSubmittedTime: existing ? Math.min(existing.firstSeenSubmittedTime, time) : time,
         lastSeenSubmittedTime: existing ? Math.max(existing.lastSeenSubmittedTime, time) : time,
       });
     }

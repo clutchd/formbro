@@ -12,6 +12,7 @@ import { prewarmFormSubmissionsRoute } from "./_prewarm";
 
 type SubmissionRow = FunctionReturnType<typeof api.submissions.list>["page"][number];
 type SubmissionColumn = SubmissionRow["columnHints"][number];
+const EMPTY_SUBMISSION_ROWS: SubmissionRow[] = [];
 
 const formSubmissionsSegment = createSegmentData<{
   canLoadMore: boolean;
@@ -76,7 +77,7 @@ export function FormSubmissionsDataProvider({ children }: { children: ReactNode 
     args: { formId: form._id },
     initialNumItems: 50,
   });
-  const rows = pagination.data ?? [];
+  const rows = pagination.data ?? EMPTY_SUBMISSION_ROWS;
   const columns = useMemo(() => mergeSubmissionColumns(rows), [rows]);
   const value = useMemo(
     () => ({
@@ -88,7 +89,15 @@ export function FormSubmissionsDataProvider({ children }: { children: ReactNode 
       rows,
       status: pagination.status,
     }),
-    [columns, pagination, rows],
+    [
+      pagination.canLoadMore,
+      columns,
+      pagination.error,
+      pagination.isLoading,
+      pagination.loadMore,
+      rows,
+      pagination.status,
+    ],
   );
   return (
     <formSubmissionsSegment.Provider value={value}>{children}</formSubmissionsSegment.Provider>
