@@ -8,7 +8,7 @@ FormBro is the open-source form platform for serious workflows.
 
 ## Cursor Cloud specific instructions
 
-Use Bun 1.3.11. After checkout, run `bun install --frozen-lockfile`.
+Use Bun 1.3.11. After checkout, run `bun install --frozen-lockfile`. Bun lives at `~/.bun/bin/bun` (added to `~/.bashrc`, so interactive shells find it on `PATH`; non-interactive scripts may need the full path).
 
 For routine verification, run `bun run verify`. This checks lint and formatting without mutating files, runs the Bun test suites exposed through Turbo, and typechecks packages that expose a `typecheck` script.
 
@@ -30,7 +30,7 @@ env -u CONVEX_DEPLOYMENT -u CONVEX_DEPLOY_KEY -u NEXT_PUBLIC_CONVEX_URL -u NEXT_
 
 This serves the client API at `http://127.0.0.1:3210` and HTTP actions at `http://127.0.0.1:3211`. Deployment-side env vars (needed at module load, e.g. `RESEND_API_KEY`, `NEXT_PUBLIC_POSTHOG_KEY`) are set on the local deployment; add/refresh them with `convex env set --from-file <file>` (same unset+`CONVEX_AGENT_MODE=anonymous` prefix).
 
-- Gotcha (re-push loop): the Convex functions root is the whole `packages/convex` dir (`functions: "./"`). The local backend must NOT store its state there or `convex dev` loops forever printing "Filesystem changed during push, retrying...". Keep local state in the home dir at `~/.convex/anonymous-convex-backend-state/<deployment-name>` (the legacy location), not in a project-local `packages/convex/.convex/`.
+- Gotcha (re-push loop): the Convex functions root is the whole `packages/convex` dir (`functions: "./"`). The local backend must NOT store its state there or `convex dev` loops forever printing "Filesystem changed during push, retrying...". Keep local state in the home dir at `~/.convex/anonymous-convex-backend-state/<deployment-name>` (the legacy location), not in a project-local `packages/convex/.convex/`. The Convex CLI (1.40) picks the legacy dir only if it already exists; otherwise it creates project-local state under `packages/convex/.convex/local/default/` and loops. The snapshot already has state in the legacy dir (deployment `anonymous-agent`), so a fresh `convex dev` reuses it and does not loop. If the local DB is ever reset and the loop returns, stop `convex dev`, move `packages/convex/.convex/local/default/*` to `~/.convex/anonymous-convex-backend-state/anonymous-agent/`, delete `packages/convex/.convex`, then restart.
 
 Web: run `bun run dev` in `packages/web`, but you MUST override the injected cloud Convex URLs with the local ones in that shell — Bun's `--env-file` does not override variables already present in the process env (the injected secrets), so without this every page 500s with `Could not find public function for 'auth:get'`:
 
@@ -43,7 +43,9 @@ env NEXT_PUBLIC_CONVEX_URL=http://127.0.0.1:3210 \
 
 (The injected `BETTER_AUTH_URL` already points at the local web origin, so `APP_URL` resolves correctly without an override; only the cloud Convex URLs must be replaced with the local ones.)
 
-Auth is Google/Microsoft OAuth only — there is no password login, so the authenticated dashboard cannot be reached headlessly. The anonymous public form flow (`/f/<slug>`) exercises core functionality (render published form → submit → stored in `submissions`) without auth.
+Browser gotcha (must use the `localhost` hostname, not `127.0.0.1`): open the app via the `localhost` host on port 3000, NOT via the `127.0.0.1` host. Next.js 16 dev blocks cross-origin `/_next/*` dev resources; via the `127.0.0.1` host it treats them as cross-origin, the client runtime fails to load, and the page never hydrates. Symptom: pages render (SSR) but are dead — the public form's Submit button stays disabled and client mutations silently do nothing (no error). The `localhost` host is same-origin and hydrates normally.
+
+Auth is Google/Microsoft OAuth only — there is no password login, so the authenticated dashboard cannot be reached headlessly. The anonymous public form flow (`/f/<slug>`) exercises core functionality (render published form → submit → stored in `submissions`) without auth. There is no seed/creation path without auth, so seeding a published form requires a temporary `internalMutation` (insert `workspaces` + `forms` with `status: "open"` + a `formSchemas` row with `status: "published"`, then set `forms.publishedSchemaId`), run via `convex run`. The snapshot's local DB already contains a published demo form at `/f/hello-world-demo` for quick verification.
 
 ## Philosophy
 
