@@ -3,6 +3,7 @@
 import type { Id } from "@formbro/convex/_generated/dataModel";
 import type { FormInput } from "@formbro/core/schema/form";
 import { api } from "@formbro/convex/_generated/api";
+import { hasActiveWorkspaceSubscriptionStatus } from "@formbro/convex/billingUtils";
 import { getErrorMessage } from "@formbro/convex/errors";
 import { twx } from "@formbro/shared/twx";
 import { Badge, badgeVariants } from "@formbro/ui/badge";
@@ -17,7 +18,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@formbro/ui/dialog";
-import { RiArrowGoBackLine, RiBardLine, RiExternalLinkLine, RiRefreshLine } from "@remixicon/react";
+import {
+  RiArrowGoBackLine,
+  RiBankCardLine,
+  RiBardLine,
+  RiExternalLinkLine,
+  RiRefreshLine,
+} from "@remixicon/react";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { usePostHog } from "posthog-js/react";
@@ -27,6 +34,7 @@ import { FormAiSidebar } from "@/components/form-ai-sidebar";
 import { FormBuilderCanvas } from "@/components/form-builder/builder";
 import { Loading } from "@/components/loading";
 import { PageState } from "@/components/page-state";
+import { useWorkspaceSettingsPrewarmIntent } from "../settings/_data-provider";
 import { useRequiredWorkspaceFormData } from "./_data-provider";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -244,13 +252,40 @@ function DraftStatusBadge({
 }
 
 export default function WorkspaceFormPage() {
-  const { form } = useRequiredWorkspaceFormData();
+  const { form, workspace } = useRequiredWorkspaceFormData();
+  const canPublish = hasActiveWorkspaceSubscriptionStatus(workspace);
 
-  return <FormDraftEditor formId={form._id} formSlug={form.slug} />;
+  return (
+    <FormDraftEditor
+      billingCtaLabel={
+        workspace.stripeSubscriptionId ? "Choose plan to publish" : "Start trial to publish"
+      }
+      canPublish={canPublish}
+      formId={form._id}
+      formSlug={form.slug}
+      workspaceId={workspace._id}
+      workspaceSlug={workspace.slug}
+    />
+  );
 }
 
-function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: string }) {
+function FormDraftEditor({
+  billingCtaLabel,
+  canPublish,
+  formId,
+  formSlug,
+  workspaceId,
+  workspaceSlug,
+}: {
+  billingCtaLabel: string;
+  canPublish: boolean;
+  formId: Id<"forms">;
+  formSlug: string;
+  workspaceId: string;
+  workspaceSlug: string;
+}) {
   const posthog = usePostHog();
+  const settingsPrewarm = useWorkspaceSettingsPrewarmIntent(workspaceSlug);
   const draft = useQuery(api.forms.getDraft, { formId });
   const revertDraft = useMutation(api.forms.revertDraft);
   const saveDraft = useMutation(api.forms.saveDraft);
@@ -271,6 +306,18 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
   useEffect(() => {
     schemaRef.current = schema;
   }, [schema]);
+
+  useEffect(() => {
+    if (canPublish) return;
+
+    posthog.capture("subscription_paywall_viewed", {
+      form_id: formId,
+      form_slug: formSlug,
+      surface: "form_publish",
+      workspace_id: workspaceId,
+      workspace_slug: workspaceSlug,
+    });
+  }, [canPublish, formId, formSlug, posthog, workspaceId, workspaceSlug]);
 
   useEffect(() => {
     if (!draft?.ok) return;
@@ -527,27 +574,49 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
             <RiBardLine className="size-4" />
             <span className="hidden sm:inline">Ask AI</span>
           </Button>
-          <Button type="button" variant="outline" size="dense" asChild>
-            <Link href={publicHref} target="_blank" rel="noopener noreferrer">
-              <RiExternalLinkLine className="size-4" />
-              <span className="hidden sm:inline">Open</span>
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            size="dense"
-            onClick={publish}
-            disabled={publishing || saveState === "saving"}
-          >
-            {publishing ? (
-              <>
-                <RiRefreshLine className="size-4 animate-spin" />
-                Publishing
-              </>
-            ) : (
-              "Publish"
-            )}
-          </Button>
+          {draft.data.publishedSchemaId ? (
+            <Button type="button" variant="outline" size="dense" asChild>
+              <Link href={publicHref} target="_blank" rel="noopener noreferrer">
+                <RiExternalLinkLine className="size-4" />
+                <span className="hidden sm:inline">Open</span>
+              </Link>
+            </Button>
+          ) : null}
+          {canPublish ? (
+            <Button
+              type="button"
+              size="dense"
+              onClick={publish}
+              disabled={publishing || saveState === "saving"}
+            >
+              {publishing ? (
+                <>
+                  <RiRefreshLine className="size-4 animate-spin" />
+                  Publishing
+                </>
+              ) : (
+                "Publish"
+              )}
+            </Button>
+          ) : (
+            <Button type="button" size="dense" asChild>
+              <Link
+                {...settingsPrewarm}
+                onClick={() => {
+                  posthog.capture("subscription_cta_clicked", {
+                    form_id: formId,
+                    form_slug: formSlug,
+                    surface: "form_publish",
+                    workspace_id: workspaceId,
+                    workspace_slug: workspaceSlug,
+                  });
+                }}
+              >
+                <RiBankCardLine className="size-4" />
+                {billingCtaLabel}
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 

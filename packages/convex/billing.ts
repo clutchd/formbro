@@ -17,11 +17,11 @@ import {
   billingIntervalValidator,
   canDeleteWorkspace,
   getStripePriceIdForPlan,
+  getWorkspaceLimits,
   getWorkspacePlanLabel,
   hasActiveWorkspaceSubscriptionStatus,
   normalizeWorkspacePlan,
   resolvePlanFromStripePriceId,
-  WORKSPACE_LIMITS,
   WORKSPACE_TRIAL_DAYS,
   workspacePlanValidator,
 } from "./billingUtils";
@@ -108,7 +108,7 @@ export async function getWorkspaceSubscriptionState(
     workspaceBillingStatus: workspace.billingStatus,
     plan,
   });
-  const limits = WORKSPACE_LIMITS[plan];
+  const limits = getWorkspaceLimits({ hasActiveSubscription, plan });
 
   return ok({
     workspace,

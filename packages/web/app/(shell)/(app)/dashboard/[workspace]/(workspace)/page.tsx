@@ -80,20 +80,53 @@ function FormListRow({
   );
 }
 
-function SubscriptionPaywall({
+function BillingCta({
+  label,
   settingsPrewarm,
+  surface,
   workspaceId,
   workspaceSlug,
 }: {
+  label: string;
   settingsPrewarm: ReturnType<typeof useWorkspaceSettingsPrewarmIntent>;
+  surface: string;
+  workspaceId: string;
+  workspaceSlug: string;
+}) {
+  const posthog = usePostHog();
+
+  return (
+    <Button asChild>
+      <Link
+        {...settingsPrewarm}
+        onClick={() => {
+          posthog.capture("subscription_cta_clicked", {
+            surface,
+            workspace_id: workspaceId,
+            workspace_slug: workspaceSlug,
+          });
+        }}
+      >
+        <RiBankCardLine className="size-4" />
+        {label}
+      </Link>
+    </Button>
+  );
+}
+
+function FreeDraftOffer({
+  trialEligible,
+  workspaceId,
+  workspaceSlug,
+}: {
+  trialEligible: boolean;
   workspaceId: string;
   workspaceSlug: string;
 }) {
   const posthog = usePostHog();
 
   useEffect(() => {
-    posthog.capture("subscription_paywall_viewed", {
-      surface: "workspace_dashboard",
+    posthog.capture("free_draft_offer_viewed", {
       workspace_id: workspaceId,
       workspace_slug: workspaceSlug,
     });
@@ -101,16 +134,20 @@ function SubscriptionPaywall({
 
   return (
     <PageState
-      icon={<RiBankCardLine />}
-      title="Subscription required"
-      description="Choose a plan to create forms and start collecting submissions."
+      icon={<RiFileAiLine />}
+      title="Create your first draft"
+      description={
+        trialEligible
+          ? "Build and save one private form for free. Start a 7-day trial when you are ready to publish."
+          : "Build and save one private form before choosing a plan to publish."
+      }
     >
-      <Button asChild>
-        <Link {...settingsPrewarm}>
-          <RiBankCardLine className="size-4" />
-          Manage Billing
-        </Link>
-      </Button>
+      <CreateForm>
+        <Button>
+          <RiFileAiLine className="size-4" />
+          Create free draft
+        </Button>
+      </CreateForm>
     </PageState>
   );
 }
@@ -124,10 +161,14 @@ export default function FormsDashboardContent() {
     return <Loading title="forms" />;
   }
 
-  if (workspace && !hasActiveWorkspaceSubscriptionStatus(workspace)) {
+  const hasActiveSubscription = workspace ? hasActiveWorkspaceSubscriptionStatus(workspace) : false;
+  const trialEligible = !workspace?.stripeSubscriptionId;
+  const billingCtaLabel = trialEligible ? "Start 7-day trial" : "Choose a plan";
+
+  if (forms.length === 0 && workspace && !hasActiveSubscription) {
     return (
-      <SubscriptionPaywall
-        settingsPrewarm={settingsPrewarm}
+      <FreeDraftOffer
+        trialEligible={trialEligible}
         workspaceId={workspace._id}
         workspaceSlug={workspace.slug}
       />
@@ -153,9 +194,20 @@ export default function FormsDashboardContent() {
           <TypographyH1>All Forms</TypographyH1>
           <TypographySubheading>
             {forms.length} form{forms.length === 1 ? "" : "s"}
+            {!hasActiveSubscription ? " · Publish with a plan" : ""}
           </TypographySubheading>
         </div>
-        <CreateForm />
+        {hasActiveSubscription ? (
+          <CreateForm />
+        ) : workspace ? (
+          <BillingCta
+            label={billingCtaLabel}
+            settingsPrewarm={settingsPrewarm}
+            surface="free_draft_limit"
+            workspaceId={workspace._id}
+            workspaceSlug={workspace.slug}
+          />
+        ) : null}
       </div>
       {forms.map((form) => (
         <FormListRow
