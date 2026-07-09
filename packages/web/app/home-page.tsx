@@ -18,7 +18,6 @@ import {
   RiSparklingLine,
   type RemixiconComponentType,
 } from "@remixicon/react";
-import { useAppData } from "app/_data-provider";
 import Link from "next/link";
 import {
   useEffect,
@@ -50,6 +49,9 @@ type BuilderDemoStreamState = {
   summary: string | null;
 };
 type LinkIntent = ComponentProps<typeof Link>;
+
+const DASHBOARD_HREF = "/dashboard";
+const DASHBOARD_LINK_INTENT = { href: DASHBOARD_HREF } satisfies LinkIntent;
 
 const HERO_STATS = [
   { label: "LICENSE", value: "MIT" },
@@ -598,11 +600,23 @@ const PLANS = [
   },
 ] as const;
 
-export function HomePage() {
-  const { authUser } = useAppData();
-  const isAuthenticated = Boolean(authUser?.ok && authUser.data);
+export function AnonymousHomePage() {
+  return <HomePage isAuthenticated={false} dashboardPrewarmIntent={DASHBOARD_LINK_INTENT} />;
+}
+
+export function AuthenticatedHomePage() {
   const dashboardPrewarmIntent = useDashboardPrewarmIntent({ eager: true });
 
+  return <HomePage isAuthenticated dashboardPrewarmIntent={dashboardPrewarmIntent} />;
+}
+
+function HomePage({
+  isAuthenticated,
+  dashboardPrewarmIntent,
+}: {
+  isAuthenticated: boolean;
+  dashboardPrewarmIntent: LinkIntent;
+}) {
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
       <LandingHeader
