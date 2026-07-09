@@ -79,7 +79,8 @@ export function FormSubmissionsDataProvider({ children }: { children: ReactNode 
   const columns = useMemo(() => mergeSubmissionColumns(rows), [rows]);
   const canLoadMore = pagination.status === "CanLoadMore";
   const isLoading = pagination.status === "LoadingFirstPage" || pagination.status === "LoadingMore";
-  const status = pagination.status === "LoadingFirstPage" ? "pending" : "success";
+  const status: "pending" | "success" =
+    pagination.status === "LoadingFirstPage" ? "pending" : "success";
   const value = useMemo(
     () => ({
       canLoadMore,
