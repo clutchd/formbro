@@ -23,12 +23,12 @@ Use Better Auth Agent Auth as the agent identity layer, not FormBro-specific API
 
 ### Initial capability policy
 
-| Capability | Product scope | Approval | x402-metered | Autonomous default |
-| --- | --- | --- | --- | --- |
-| `workspace.create` | Approving user | Session | Yes | Never |
-| `form.create` | Exact `workspaceId` | Session | Yes | Never |
-| `form.update_schema` | Exact `workspaceId` and owned `formId` | Session | Yes | Never |
-| `form.publish` | Exact `workspaceId` and owned `formId` | Session | Yes | Never |
+| Capability           | Product scope                          | Approval | x402-metered | Autonomous default |
+| -------------------- | -------------------------------------- | -------- | ------------ | ------------------ |
+| `workspace.create`   | Approving user                         | Session  | Yes          | Never              |
+| `form.create`        | Exact `workspaceId`                    | Session  | Yes          | Never              |
+| `form.update_schema` | Exact `workspaceId` and owned `formId` | Session  | Yes          | Never              |
+| `form.publish`       | Exact `workspaceId` and owned `formId` | Session  | Yes          | Never              |
 
 Public form submission remains on its existing anonymous path. Submission reads, exports, and autonomous agents should be added only after pagination, data-loss-prevention, and host ownership policies exist.
 
