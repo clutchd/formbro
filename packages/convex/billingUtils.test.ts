@@ -40,7 +40,7 @@ describe("submission limits", () => {
         hasActiveSubscription: true,
         incomingBytes: 100,
         limits: WORKSPACE_LIMITS.basic,
-        monthlySubmissionsUsed: WORKSPACE_LIMITS.basic.monthlySubmissions,
+        monthlySubmissionsUsed: WORKSPACE_LIMITS.basic.monthlySubmissions ?? 0,
         storageUsedBytes: 0,
       }),
     ).toBe("monthly_submission_limit");
