@@ -19,6 +19,7 @@ import type * as errors from "../errors.js";
 import type * as forms from "../forms.js";
 import type * as http from "../http.js";
 import type * as lib from "../lib.js";
+import type * as submissionList from "../submissionList.js";
 import type * as submissions from "../submissions.js";
 import type * as system_forms__init from "../system/forms/_init.js";
 import type * as system_forms_create_form from "../system/forms/create_form.js";
@@ -44,6 +45,7 @@ declare const fullApi: ApiFromModules<{
   forms: typeof forms;
   http: typeof http;
   lib: typeof lib;
+  submissionList: typeof submissionList;
   submissions: typeof submissions;
   "system/forms/_init": typeof system_forms__init;
   "system/forms/create_form": typeof system_forms_create_form;
