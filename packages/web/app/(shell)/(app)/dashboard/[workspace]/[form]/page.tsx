@@ -292,14 +292,14 @@ function PublishCheckoutReturn({
   canPublish,
   formId,
   formSlug,
-  onPublish,
+  resumePublish,
   workspaceId,
   workspaceSlug,
 }: {
   canPublish: boolean;
   formId: Id<"forms">;
   formSlug: string;
-  onPublish: () => Promise<void>;
+  resumePublish: () => Promise<void>;
   workspaceId: string;
   workspaceSlug: string;
 }) {
@@ -354,7 +354,7 @@ function PublishCheckoutReturn({
     toast.info("Subscription active", {
       description: "Publishing your saved draft now.",
     });
-    void onPublish();
+    void resumePublish();
   }, [
     canPublish,
     checkoutStatus,
@@ -362,7 +362,7 @@ function PublishCheckoutReturn({
     formId,
     formSlug,
     isPublishReturn,
-    onPublish,
+    resumePublish,
     workspaceId,
     workspaceSlug,
   ]);
@@ -774,7 +774,7 @@ function FormDraftEditor({
           canPublish={canPublish}
           formId={formId}
           formSlug={formSlug}
-          onPublish={publish}
+          resumePublish={publish}
           workspaceId={workspaceId}
           workspaceSlug={workspaceSlug}
         />
