@@ -2,7 +2,6 @@
 
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@formbro/convex/_generated/api";
-import { getErrorMessage } from "@formbro/convex/errors";
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { Card } from "@formbro/ui/card";
@@ -32,6 +31,7 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type Column,
@@ -45,8 +45,8 @@ import {
 import { type CSSProperties, type Dispatch, type SetStateAction, useMemo, useState } from "react";
 import { Loading } from "@/components/loading";
 import { Page } from "@/components/page";
-import { PageState } from "@/components/page-state";
 import { useRequiredWorkspaceFormData } from "../_data-provider";
+import { escapeCsvCell } from "./_csv";
 import { useFormSubmissionsData } from "./_data-provider";
 
 type SubmissionRow = FunctionReturnType<typeof api.submissions.list>["page"][number];
@@ -111,11 +111,6 @@ function formatTableDate(value: number) {
 
 function formatCsvDate(value: number) {
   return new Date(value).toISOString();
-}
-
-function escapeCsvCell(value: string) {
-  if (!/[",\n\r]/.test(value)) return value;
-  return `"${value.replace(/"/g, '""')}"`;
 }
 
 function getCsvLabel(column: SubmissionColumn, columns: SubmissionColumn[]) {
@@ -237,6 +232,7 @@ function ColumnHeader({
           <DropdownMenuSeparator />
           <div className="px-2 py-1.5">
             <Input
+              aria-label={`Filter ${title}`}
               placeholder="Filter values..."
               value={filterValue}
               onChange={(event) => column.setFilterValue(event.target.value)}
@@ -374,6 +370,11 @@ function SubmissionsTable({
       minSize: columnSize.fieldMin,
       maxSize: columnSize.fieldMax,
     },
+    initialState: {
+      pagination: {
+        pageSize: 50,
+      },
+    },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
@@ -394,6 +395,7 @@ function SubmissionsTable({
     },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
   });
 
@@ -413,6 +415,7 @@ function SubmissionsTable({
     <div className="flex min-w-0 flex-col gap-2 overflow-hidden">
       <div className="flex shrink-0 flex-col gap-2 lg:flex-row lg:items-center">
         <Input
+          aria-label="Search loaded submissions"
           placeholder="Search loaded submissions..."
           value={globalFilter}
           onChange={(event) => setGlobalFilter(event.target.value)}
@@ -529,19 +532,42 @@ function SubmissionsTable({
           loaded rows
           {filteredRowCount !== data.rows.length ? ` (${data.rows.length} loaded)` : null}.
         </div>
-        {canLoadMore || isLoadingMore ? (
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
             variant="outline"
             size="dense"
-            onClick={onLoadMore}
-            disabled={isLoadingMore}
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
           >
-            {isLoadingMore ? "Loading older submissions..." : "Load 50 older submissions"}
+            Previous
           </Button>
-        ) : (
-          <span>All {data.rows.length} submissions loaded.</span>
-        )}
+          <span className="min-w-24 text-center">
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="dense"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </Button>
+          {canLoadMore || isLoadingMore ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="dense"
+              onClick={onLoadMore}
+              disabled={isLoadingMore}
+            >
+              {isLoadingMore ? "Loading older submissions…" : "Load 50 older submissions"}
+            </Button>
+          ) : (
+            <span>All {data.rows.length} submissions loaded.</span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -549,22 +575,11 @@ function SubmissionsTable({
 
 export default function FormSubmissionsPage() {
   const { form } = useRequiredWorkspaceFormData();
-  const { canLoadMore, columns, error, isLoading, loadMore, rows, status } =
-    useFormSubmissionsData();
+  const { canLoadMore, columns, isLoading, loadMore, rows, status } = useFormSubmissionsData();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   if (status === "pending" && rows.length === 0) {
     return <Loading title="submissions" />;
-  }
-
-  if (status === "error") {
-    return (
-      <PageState
-        title="Submissions unavailable"
-        description={getErrorMessage(error)}
-        status="error"
-      />
-    );
   }
 
   const data = { columns, rows };

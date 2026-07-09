@@ -3,7 +3,7 @@
 import type { FunctionReturnType } from "convex/server";
 import type { ReactNode } from "react";
 import { api } from "@formbro/convex/_generated/api";
-import { useConvex, usePaginatedQuery_experimental } from "convex/react";
+import { useConvex, usePaginatedQuery } from "convex/react";
 import { useMemo } from "react";
 import { type RoutePrewarmOptions, useRoutePrewarm } from "@/lib/convex/route-prewarm";
 import { createSegmentData } from "@/lib/data-segment";
@@ -12,16 +12,14 @@ import { prewarmFormSubmissionsRoute } from "./_prewarm";
 
 type SubmissionRow = FunctionReturnType<typeof api.submissions.list>["page"][number];
 type SubmissionColumn = SubmissionRow["columnHints"][number];
-const EMPTY_SUBMISSION_ROWS: SubmissionRow[] = [];
 
 const formSubmissionsSegment = createSegmentData<{
   canLoadMore: boolean;
   columns: SubmissionColumn[];
-  error: Error | undefined;
   isLoading: boolean;
   loadMore: (numItems: number) => void;
   rows: SubmissionRow[];
-  status: "pending" | "success" | "error";
+  status: "pending" | "success";
 }>("FormSubmissions");
 
 function mergeSubmissionColumns(rows: SubmissionRow[]): SubmissionColumn[] {
@@ -72,32 +70,26 @@ export function useFormSubmissionsPrewarmIntent(
 
 export function FormSubmissionsDataProvider({ children }: { children: ReactNode }) {
   const { form } = useRequiredWorkspaceFormData();
-  const pagination = usePaginatedQuery_experimental({
-    query: api.submissions.list,
-    args: { formId: form._id },
-    initialNumItems: 50,
-  });
-  const rows = pagination.data ?? EMPTY_SUBMISSION_ROWS;
+  const pagination = usePaginatedQuery(
+    api.submissions.list,
+    { formId: form._id },
+    { initialNumItems: 50 },
+  );
+  const rows = pagination.results;
   const columns = useMemo(() => mergeSubmissionColumns(rows), [rows]);
+  const canLoadMore = pagination.status === "CanLoadMore";
+  const isLoading = pagination.status === "LoadingFirstPage" || pagination.status === "LoadingMore";
+  const status = pagination.status === "LoadingFirstPage" ? "pending" : "success";
   const value = useMemo(
     () => ({
-      canLoadMore: pagination.canLoadMore,
+      canLoadMore,
       columns,
-      error: pagination.error,
-      isLoading: pagination.isLoading,
+      isLoading,
       loadMore: pagination.loadMore,
       rows,
-      status: pagination.status,
+      status,
     }),
-    [
-      pagination.canLoadMore,
-      columns,
-      pagination.error,
-      pagination.isLoading,
-      pagination.loadMore,
-      rows,
-      pagination.status,
-    ],
+    [canLoadMore, columns, isLoading, pagination.loadMore, rows, status],
   );
   return (
     <formSubmissionsSegment.Provider value={value}>{children}</formSubmissionsSegment.Provider>
