@@ -4,12 +4,13 @@ import { APP_DESCRIPTION, APP_NAME } from "@formbro/shared/brand";
 export const FORMBRO_AGENT_CAPABILITIES = [
   {
     name: "workspace.create",
-    description: "Create a FormBro workspace for an agent-owned workflow.",
+    description: "Create a FormBro workspace owned by the approving user.",
     approvalStrength: "session",
     input: {
       type: "object",
+      additionalProperties: false,
       properties: {
-        name: { type: "string" },
+        name: { type: "string", minLength: 1, maxLength: 100 },
       },
       required: ["name"],
     },
@@ -21,9 +22,10 @@ export const FORMBRO_AGENT_CAPABILITIES = [
     requiredConstraints: ["workspaceId"],
     input: {
       type: "object",
+      additionalProperties: false,
       properties: {
-        workspaceId: { type: "string" },
-        name: { type: "string" },
+        workspaceId: { type: "string", minLength: 1 },
+        name: { type: "string", minLength: 1, maxLength: 100 },
       },
       required: ["workspaceId", "name"],
     },
@@ -35,9 +37,10 @@ export const FORMBRO_AGENT_CAPABILITIES = [
     requiredConstraints: ["workspaceId"],
     input: {
       type: "object",
+      additionalProperties: false,
       properties: {
-        workspaceId: { type: "string" },
-        formId: { type: "string" },
+        workspaceId: { type: "string", minLength: 1 },
+        formId: { type: "string", minLength: 1 },
         schema: { type: "object" },
       },
       required: ["workspaceId", "formId", "schema"],
@@ -50,75 +53,12 @@ export const FORMBRO_AGENT_CAPABILITIES = [
     requiredConstraints: ["workspaceId"],
     input: {
       type: "object",
+      additionalProperties: false,
       properties: {
-        workspaceId: { type: "string" },
-        formId: { type: "string" },
+        workspaceId: { type: "string", minLength: 1 },
+        formId: { type: "string", minLength: 1 },
       },
       required: ["workspaceId", "formId"],
-    },
-  },
-  {
-    name: "submission.create",
-    description: "Submit a response to an open form.",
-    approvalStrength: "none",
-    input: {
-      type: "object",
-      properties: {
-        formId: { type: "string" },
-        schemaId: { type: "string" },
-        data: { type: "object" },
-      },
-      required: ["formId", "schemaId", "data"],
-    },
-  },
-  {
-    name: "submission.read",
-    description: "Read submissions from an approved workspace form.",
-    approvalStrength: "session",
-    requiredConstraints: ["workspaceId"],
-    input: {
-      type: "object",
-      properties: {
-        workspaceId: { type: "string" },
-        formId: { type: "string" },
-      },
-      required: ["workspaceId", "formId"],
-    },
-  },
-  {
-    name: "x402.payment.configure",
-    description: "Configure x402 payment requirements for an approved workspace.",
-    approvalStrength: "session",
-    requiredConstraints: ["workspaceId"],
-    input: {
-      type: "object",
-      properties: {
-        workspaceId: { type: "string" },
-        scheme: { enum: ["exact", "upto", "batch-settlement"] },
-        network: { type: "string" },
-        asset: { type: "string" },
-        payTo: { type: "string" },
-        amount: { type: "string" },
-      },
-      required: ["workspaceId", "scheme", "network", "asset", "payTo", "amount"],
-    },
-  },
-  {
-    name: "x402.payment.record",
-    description: "Record an x402 settlement for a paid agent request.",
-    approvalStrength: "none",
-    input: {
-      type: "object",
-      properties: {
-        requestId: { type: "string" },
-        resourceUrl: { type: "string" },
-        network: { type: "string" },
-        asset: { type: "string" },
-        amount: { type: "string" },
-        transaction: { type: "string" },
-        payer: { type: "string" },
-      },
-      required: ["requestId", "resourceUrl", "network", "asset", "amount"],
     },
   },
 ] satisfies Capability[];
@@ -126,7 +66,10 @@ export const FORMBRO_AGENT_CAPABILITIES = [
 export const formbroAgentAuthOptions = {
   providerName: APP_NAME,
   providerDescription: APP_DESCRIPTION,
-  modes: ["delegated", "autonomous"],
+  modes: ["delegated"],
+  approvalMethods: ["device_authorization"],
+  allowDynamicHostRegistration: false,
+  defaultHostCapabilities: [],
   deviceAuthorizationPage: "/device/capabilities",
   requireAuthForCapabilities: true,
   capabilities: FORMBRO_AGENT_CAPABILITIES,
