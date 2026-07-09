@@ -2,7 +2,6 @@ import { api } from "@formbro/convex/_generated/api";
 import { getPlanDetails, PLANS, type Plan } from "@formbro/convex/billingUtils";
 import { getErrorMessage } from "@formbro/convex/errors";
 import { formatUsd } from "@formbro/convex/lib";
-import { APP_URL } from "@formbro/shared/brand";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
@@ -12,10 +11,11 @@ import { Spinner } from "@formbro/ui/spinner";
 import { displayFont, tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { RiCheckboxCircleLine } from "@remixicon/react";
 import { useAction } from "convex/react";
-import { redirect } from "next/navigation";
+import { redirect, useSearchParams } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+import { buildCheckoutReturnUrls, getPublishCheckoutContext } from "@/lib/publish-checkout";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
 function BillingIntervalToggle({
@@ -170,21 +170,32 @@ function PlanCard({
 export function PlansPanel() {
   const { billing, workspace } = useRequiredWorkspaceSettingsData();
   const posthog = usePostHog();
+  const searchParams = useSearchParams();
   const createSubscriptionCheckout = useAction(api.billing.createSubscriptionCheckout);
   const isUnlimited = billing.plan === "unlimited";
   const [interval, setInterval] = useState<"monthly" | "annual">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
-
-  const settingsUrl = `${APP_URL}/dashboard/${workspace.slug}/settings`;
+  const publishContext = getPublishCheckoutContext(searchParams);
 
   const handleSelectPlan = useCallback(
     async (plan: Plan) => {
       setLoadingPlan(plan);
+      const checkoutContext = getPublishCheckoutContext(searchParams);
+      const returnUrls = buildCheckoutReturnUrls(
+        checkoutContext ?? { workspaceSlug: workspace.slug },
+      );
       const analyticsProperties = {
         billing_interval: interval,
         plan,
+        surface: checkoutContext ? "form_publish" : "workspace_settings",
         workspace_id: billing.workspaceId,
         workspace_slug: workspace.slug,
+        ...(checkoutContext
+          ? {
+              form_id: checkoutContext.formId,
+              form_slug: checkoutContext.formSlug,
+            }
+          : {}),
       };
       posthog.capture("subscription_checkout_started", analyticsProperties);
 
@@ -192,8 +203,8 @@ export function PlansPanel() {
         workspaceId: billing.workspaceId,
         plan,
         interval,
-        successUrl: `${settingsUrl}?checkout=success`,
-        cancelUrl: `${settingsUrl}?checkout=cancelled`,
+        successUrl: returnUrls.successUrl,
+        cancelUrl: returnUrls.cancelUrl,
       }).catch((error: unknown) => {
         const errorMessage = getErrorMessage(error);
         posthog.capture("subscription_checkout_failed", {
@@ -230,7 +241,7 @@ export function PlansPanel() {
       createSubscriptionCheckout,
       interval,
       posthog,
-      settingsUrl,
+      searchParams,
       workspace.slug,
     ],
   );
@@ -238,6 +249,12 @@ export function PlansPanel() {
   return (
     <section className="space-y-5 lg:col-span-2">
       <TypographySubheading className={twx(tuiFont, "mb-3")}>Plans</TypographySubheading>
+
+      {publishContext ? (
+        <p className="text-sm text-muted-foreground">
+          Your draft is saved. Choose a plan to continue publishing it.
+        </p>
+      ) : null}
 
       <BillingIntervalToggle interval={interval} onChange={setInterval} />
 
