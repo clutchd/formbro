@@ -58,13 +58,12 @@ async function syncSubscriptionAndCapture(
   });
 
   await Promise.all(
-    analyticsEvents.map(({ event: analyticsEvent, insertId }) =>
+    analyticsEvents.map(({ deduplicationKey, event: analyticsEvent }) =>
       ctx.scheduler.runAfter(0, internal.analytics.capture, {
+        deduplicationKey,
         distinctId: result.data.ownerAuthId,
         event: analyticsEvent,
         properties: {
-          $groups: { workspace: result.data.workspaceId },
-          $insert_id: insertId,
           billing_interval: subscription.metadata.interval,
           plan: subscription.metadata.plan,
           ...(previousStatus ? { previous_status: previousStatus } : {}),
@@ -74,6 +73,8 @@ async function syncSubscriptionAndCapture(
           workspace_id: result.data.workspaceId,
           workspace_slug: result.data.workspaceSlug,
         },
+        timestamp: new Date(event.created * 1_000).toISOString(),
+        workspaceId: result.data.workspaceId,
       }),
     ),
   );

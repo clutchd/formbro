@@ -11,12 +11,12 @@ describe("getSubscriptionLifecycleEvents", () => {
       }),
     ).toEqual([
       {
+        deduplicationKey: "evt_trial:subscription_started",
         event: "subscription_started",
-        insertId: "evt_trial:subscription_started",
       },
       {
+        deduplicationKey: "evt_trial:trial_started",
         event: "trial_started",
-        insertId: "evt_trial:trial_started",
       },
     ]);
   });
@@ -31,12 +31,12 @@ describe("getSubscriptionLifecycleEvents", () => {
       }),
     ).toEqual([
       {
+        deduplicationKey: "evt_conversion:subscription_status_changed",
         event: "subscription_status_changed",
-        insertId: "evt_conversion:subscription_status_changed",
       },
       {
+        deduplicationKey: "evt_conversion:trial_converted",
         event: "trial_converted",
-        insertId: "evt_conversion:trial_converted",
       },
     ]);
   });
@@ -51,9 +51,19 @@ describe("getSubscriptionLifecycleEvents", () => {
       }),
     ).toEqual([
       {
+        deduplicationKey: "evt_cancelled:subscription_cancelled",
         event: "subscription_cancelled",
-        insertId: "evt_cancelled:subscription_cancelled",
       },
     ]);
+  });
+
+  it("ignores subscription updates that do not change status", () => {
+    expect(
+      getSubscriptionLifecycleEvents({
+        eventId: "evt_metadata",
+        eventType: "customer.subscription.updated",
+        status: "active",
+      }),
+    ).toEqual([]);
   });
 });

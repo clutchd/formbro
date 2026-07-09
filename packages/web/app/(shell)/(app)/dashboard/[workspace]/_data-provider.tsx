@@ -54,6 +54,10 @@ function WorkspaceAnalyticsGroup({ workspace }: { workspace: WorkspaceData }) {
       plan: plan ?? "free",
       slug,
     });
+
+    return () => {
+      posthog.resetGroups();
+    };
   }, [posthog, _id, billingStatus, name, plan, slug]);
 
   return null;

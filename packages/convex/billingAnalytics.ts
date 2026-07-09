@@ -11,8 +11,8 @@ type SubscriptionLifecycleInput = {
 };
 
 type SubscriptionLifecycleEvent = {
+  deduplicationKey: string;
   event: string;
-  insertId: string;
 };
 
 export function getSubscriptionLifecycleEvents({
@@ -25,36 +25,40 @@ export function getSubscriptionLifecycleEvents({
 
   if (eventType === "customer.subscription.created") {
     events.push({
+      deduplicationKey: `${eventId}:subscription_started`,
       event: "subscription_started",
-      insertId: `${eventId}:subscription_started`,
     });
 
     if (status === "trialing") {
       events.push({
+        deduplicationKey: `${eventId}:trial_started`,
         event: "trial_started",
-        insertId: `${eventId}:trial_started`,
       });
     }
   }
 
-  if (eventType === "customer.subscription.updated") {
+  if (
+    eventType === "customer.subscription.updated" &&
+    previousStatus &&
+    previousStatus !== status
+  ) {
     events.push({
+      deduplicationKey: `${eventId}:subscription_status_changed`,
       event: "subscription_status_changed",
-      insertId: `${eventId}:subscription_status_changed`,
     });
 
     if (previousStatus === "trialing" && status === "active") {
       events.push({
+        deduplicationKey: `${eventId}:trial_converted`,
         event: "trial_converted",
-        insertId: `${eventId}:trial_converted`,
       });
     }
   }
 
   if (eventType === "customer.subscription.deleted") {
     events.push({
+      deduplicationKey: `${eventId}:subscription_cancelled`,
       event: "subscription_cancelled",
-      insertId: `${eventId}:subscription_cancelled`,
     });
   }
 

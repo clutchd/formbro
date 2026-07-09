@@ -118,10 +118,18 @@ export const create = mutation({
       return fail({ data: null, error: ERRORS.SUBMISSION_INVALID });
     }
 
-    const firstWorkspaceSubmission = await ctx.db
-      .query("submissions")
-      .withIndex("by_workspace", (q) => q.eq("workspaceId", form.workspaceId))
-      .first();
+    const workspace = await ctx.db.get(form.workspaceId);
+    const firstWorkspaceSubmission =
+      workspace && workspace.firstSubmissionTime === undefined
+        ? await ctx.db
+            .query("submissions")
+            .withIndex("by_workspace", (q) => q.eq("workspaceId", form.workspaceId))
+            .first()
+        : null;
+    const isFirstWorkspaceSubmission =
+      Boolean(workspace) &&
+      workspace?.firstSubmissionTime === undefined &&
+      firstWorkspaceSubmission === null;
     const submittedTime = Date.now();
     const data = {
       formId: form._id,
@@ -138,15 +146,17 @@ export const create = mutation({
       bytes,
     });
 
-    if (!firstWorkspaceSubmission) {
-      const workspace = await ctx.db.get(form.workspaceId);
-      if (workspace) {
+    if (workspace && workspace.firstSubmissionTime === undefined) {
+      await ctx.db.patch(workspace._id, {
+        firstSubmissionTime: firstWorkspaceSubmission?.submittedTime ?? submittedTime,
+      });
+
+      if (isFirstWorkspaceSubmission) {
         await ctx.scheduler.runAfter(0, internal.analytics.capture, {
+          deduplicationKey: `first_submission_received:${workspace._id}`,
           distinctId: workspace.ownerAuthId,
           event: "first_submission_received",
           properties: {
-            $groups: { workspace: workspace._id },
-            $insert_id: `first_submission_received:${workspace._id}`,
             bytes,
             form_id: form._id,
             form_slug: form.slug,
@@ -154,6 +164,8 @@ export const create = mutation({
             workspace_id: workspace._id,
             workspace_slug: workspace.slug,
           },
+          timestamp: new Date(submittedTime).toISOString(),
+          workspaceId: workspace._id,
         });
       }
     }

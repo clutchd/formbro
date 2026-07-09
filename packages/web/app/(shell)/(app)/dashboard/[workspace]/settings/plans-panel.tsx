@@ -194,10 +194,21 @@ export function PlansPanel() {
         interval,
         successUrl: `${settingsUrl}?checkout=success`,
         cancelUrl: `${settingsUrl}?checkout=cancelled`,
+      }).catch((error: unknown) => {
+        const errorMessage = getErrorMessage(error);
+        posthog.capture("subscription_checkout_failed", {
+          ...analyticsProperties,
+          error_message: errorMessage,
+        });
+        toast.error("Failed to start checkout", {
+          description: errorMessage,
+        });
+        return null;
       });
 
+      setLoadingPlan(null);
+      if (!result) return;
       if (!result.ok) {
-        setLoadingPlan(null);
         posthog.capture("subscription_checkout_failed", {
           ...analyticsProperties,
           error_code: result.error.code,
@@ -208,7 +219,6 @@ export function PlansPanel() {
         return;
       }
 
-      setLoadingPlan(null);
       posthog.capture("subscription_checkout_redirected", {
         ...analyticsProperties,
         checkout_session_id: result.data.sessionId,
