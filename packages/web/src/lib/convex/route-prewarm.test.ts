@@ -42,6 +42,29 @@ describe("convex:route-prewarm", () => {
     assert.equal(calls[0]?.name, "workspace:context");
   });
 
+  it("prewarms overview forms and metrics from workspace context", async () => {
+    const calls: Array<{ name: string; args: unknown }> = [];
+    const convex = {
+      prewarmQuery: ({ query, args }: { query: typeof api.workspace.context; args: unknown }) => {
+        calls.push({ name: getFunctionName(query), args });
+      },
+      query: async () => ({
+        ok: true,
+        data: {
+          workspace: { _id: "overview-workspace-id" },
+        },
+      }),
+    } as unknown as ConvexReactClient;
+
+    await prewarmWorkspaceRoute(convex, "overview-workspace");
+
+    assert.deepEqual(calls, [
+      { name: "workspace:context", args: { workspaceSlug: "overview-workspace" } },
+      { name: "forms:list", args: { workspaceId: "overview-workspace-id" } },
+      { name: "workspace:metrics", args: { workspaceId: "overview-workspace-id" } },
+    ]);
+  });
+
   it("prewarms form route data from workspace context", async () => {
     const calls: Array<{ name: string; args: unknown }> = [];
 

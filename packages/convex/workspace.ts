@@ -716,18 +716,22 @@ export const list = query({
 
     const workspaces = await Promise.all(
       memberships.map(async (membership) => {
-        const [workspace, forms] = await Promise.all([
+        const [workspace, formPreview] = await Promise.all([
           ctx.db.get(membership.workspaceId),
           ctx.db
             .query("forms")
             .withIndex("by_workspace", (q) => q.eq("workspaceId", membership.workspaceId))
-            .filter((q) => q.neq(q.field("status"), "archived"))
-            .collect(),
+            .take(4),
         ]);
 
         if (!workspace) return null;
 
-        return { ...workspace, role: membership.role, forms };
+        return {
+          ...workspace,
+          role: membership.role,
+          forms: formPreview.slice(0, 3),
+          hasMoreForms: formPreview.length > 3,
+        };
       }),
     );
 
