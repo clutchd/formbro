@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "bun --env-file=../../.env convex dev",
     "studio": "bun convex dashboard",
+    "test": "bun test",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
@@ -29,6 +30,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/bun": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",

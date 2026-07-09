@@ -8,6 +8,10 @@ import { components, internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { chat, options } from "./ai";
 import { authComponent, createAuth } from "./auth";
+import {
+  getSubscriptionLifecycleEvents,
+  type SubscriptionLifecycleEventType,
+} from "./billingAnalytics";
 import { resendClient } from "./emails";
 
 const http = httpRouter();
@@ -29,6 +33,52 @@ function getSubscriptionMetadata(subscription: Stripe.Subscription) {
   };
 }
 
+async function syncSubscriptionAndCapture(
+  ctx: GenericActionCtx<GenericDataModel>,
+  event: Stripe.Event,
+  eventType: SubscriptionLifecycleEventType,
+) {
+  const subscription = event.data.object as Stripe.Subscription;
+  const result = await ctx.runMutation(
+    internal.billing.syncSubscription,
+    getSubscriptionMetadata(subscription),
+  );
+
+  if (!result.ok) return;
+
+  const previousAttributes = event.data.previous_attributes as
+    | Partial<Stripe.Subscription>
+    | undefined;
+  const previousStatus = previousAttributes?.status;
+  const analyticsEvents = getSubscriptionLifecycleEvents({
+    eventId: event.id,
+    eventType,
+    previousStatus,
+    status: subscription.status,
+  });
+
+  await Promise.all(
+    analyticsEvents.map(({ event: analyticsEvent, insertId }) =>
+      ctx.scheduler.runAfter(0, internal.analytics.capture, {
+        distinctId: result.data.ownerAuthId,
+        event: analyticsEvent,
+        properties: {
+          $groups: { workspace: result.data.workspaceId },
+          $insert_id: insertId,
+          billing_interval: subscription.metadata.interval,
+          plan: subscription.metadata.plan,
+          ...(previousStatus ? { previous_status: previousStatus } : {}),
+          status: subscription.status,
+          stripe_event_id: event.id,
+          stripe_subscription_id: subscription.id,
+          workspace_id: result.data.workspaceId,
+          workspace_slug: result.data.workspaceSlug,
+        },
+      }),
+    ),
+  );
+}
+
 registerRoutes(http, components.stripe, {
   webhookPath: "/webhooks/stripe",
   events: {
@@ -36,28 +86,19 @@ registerRoutes(http, components.stripe, {
       ctx: GenericActionCtx<GenericDataModel>,
       event: Stripe.Event,
     ) => {
-      await ctx.runMutation(
-        internal.billing.syncSubscription,
-        getSubscriptionMetadata(event.data.object as Stripe.Subscription),
-      );
+      await syncSubscriptionAndCapture(ctx, event, "customer.subscription.created");
     },
     "customer.subscription.updated": async (
       ctx: GenericActionCtx<GenericDataModel>,
       event: Stripe.Event,
     ) => {
-      await ctx.runMutation(
-        internal.billing.syncSubscription,
-        getSubscriptionMetadata(event.data.object as Stripe.Subscription),
-      );
+      await syncSubscriptionAndCapture(ctx, event, "customer.subscription.updated");
     },
     "customer.subscription.deleted": async (
       ctx: GenericActionCtx<GenericDataModel>,
       event: Stripe.Event,
     ) => {
-      await ctx.runMutation(
-        internal.billing.syncSubscription,
-        getSubscriptionMetadata(event.data.object as Stripe.Subscription),
-      );
+      await syncSubscriptionAndCapture(ctx, event, "customer.subscription.deleted");
     },
   },
 });

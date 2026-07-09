@@ -20,6 +20,7 @@ import {
 import { RiArrowGoBackLine, RiBardLine, RiExternalLinkLine, RiRefreshLine } from "@remixicon/react";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
+import { usePostHog } from "posthog-js/react";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FormAiSidebar } from "@/components/form-ai-sidebar";
@@ -249,6 +250,7 @@ export default function WorkspaceFormPage() {
 }
 
 function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: string }) {
+  const posthog = usePostHog();
   const draft = useQuery(api.forms.getDraft, { formId });
   const revertDraft = useMutation(api.forms.revertDraft);
   const saveDraft = useMutation(api.forms.saveDraft);
@@ -349,6 +351,12 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
   const publish = async () => {
     if (!schema) return;
 
+    const analyticsProperties = {
+      form_id: formId,
+      form_slug: formSlug,
+      is_first_publish: draft?.ok ? !draft.data.publishedSchemaId : false,
+    };
+    posthog.capture("form_publish_started", analyticsProperties);
     dispatch({ type: "publish-started" });
     if (saveTimeoutRef.current !== null) {
       window.clearTimeout(saveTimeoutRef.current);
@@ -357,6 +365,11 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
     try {
       const saved = await saveDraft({ formId, schema });
       if (!saved.ok) {
+        posthog.capture("form_publish_failed", {
+          ...analyticsProperties,
+          error_code: saved.error.code,
+          stage: "save",
+        });
         toast.error("Publish failed", {
           description: getErrorMessage(saved.error),
         });
@@ -365,6 +378,11 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
 
       const result = await publishForm({ formId });
       if (!result.ok) {
+        posthog.capture("form_publish_failed", {
+          ...analyticsProperties,
+          error_code: result.error.code,
+          stage: "publish",
+        });
         toast.error("Publish failed", {
           description: getErrorMessage(result.error),
         });
@@ -377,8 +395,14 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
       lastServerSerialized.current = serialized;
       lastSubmittedSave.current = serialized;
       dispatch({ schema: result.data.schema, type: "publish-succeeded" });
+      posthog.capture("form_published", analyticsProperties);
       toast.success("Form published");
     } catch (error) {
+      posthog.capture("form_publish_failed", {
+        ...analyticsProperties,
+        error_message: getErrorMessage(error),
+        stage: "exception",
+      });
       toast.error("Publish failed", {
         description: getErrorMessage(error),
       });

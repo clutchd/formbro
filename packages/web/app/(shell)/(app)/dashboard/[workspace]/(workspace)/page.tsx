@@ -8,6 +8,8 @@ import { tuiFont, TypographyH1, TypographySubheading } from "@formbro/ui/typogra
 import { RiArrowRightLine, RiBankCardLine, RiFileAiLine, RiFileTextLine } from "@remixicon/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
+import { useEffect } from "react";
 import { Loading } from "@/components/loading";
 import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
@@ -78,6 +80,41 @@ function FormListRow({
   );
 }
 
+function SubscriptionPaywall({
+  settingsPrewarm,
+  workspaceId,
+  workspaceSlug,
+}: {
+  settingsPrewarm: ReturnType<typeof useWorkspaceSettingsPrewarmIntent>;
+  workspaceId: string;
+  workspaceSlug: string;
+}) {
+  const posthog = usePostHog();
+
+  useEffect(() => {
+    posthog.capture("subscription_paywall_viewed", {
+      surface: "workspace_dashboard",
+      workspace_id: workspaceId,
+      workspace_slug: workspaceSlug,
+    });
+  }, [posthog, workspaceId, workspaceSlug]);
+
+  return (
+    <PageState
+      icon={<RiBankCardLine />}
+      title="Subscription required"
+      description="Choose a plan to create forms and start collecting submissions."
+    >
+      <Button asChild>
+        <Link {...settingsPrewarm}>
+          <RiBankCardLine className="size-4" />
+          Manage Billing
+        </Link>
+      </Button>
+    </PageState>
+  );
+}
+
 export default function FormsDashboardContent() {
   const { workspace: workspaceSlug } = useParams<{ workspace: string }>();
   const { forms, metrics, workspace } = useWorkspaceData();
@@ -89,18 +126,11 @@ export default function FormsDashboardContent() {
 
   if (workspace && !hasActiveWorkspaceSubscriptionStatus(workspace)) {
     return (
-      <PageState
-        icon={<RiBankCardLine />}
-        title="Subscription required"
-        description="Choose a plan to create forms and start collecting submissions."
-      >
-        <Button asChild>
-          <Link {...settingsPrewarm}>
-            <RiBankCardLine className="size-4" />
-            Manage Billing
-          </Link>
-        </Button>
-      </PageState>
+      <SubscriptionPaywall
+        settingsPrewarm={settingsPrewarm}
+        workspaceId={workspace._id}
+        workspaceSlug={workspace.slug}
+      />
     );
   }
 

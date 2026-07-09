@@ -263,7 +263,12 @@ export const syncSubscription = internalMutation({
       billingStatus: subscription.billingStatus,
     });
 
-    return ok({ data: subscription });
+    return ok({
+      ownerAuthId: workspace.ownerAuthId,
+      subscription,
+      workspaceId: workspace._id,
+      workspaceSlug: workspace.slug,
+    });
   },
 });
 

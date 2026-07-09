@@ -5,6 +5,7 @@ import { CREATE_FORM } from "@formbro/convex/system/forms/create_form";
 import { RiAddLine } from "@remixicon/react";
 import { useConvex, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import * as React from "react";
 import { InternalDialogForm } from "@/components/internal-dialog-form";
 import { prewarmWorkspaceFormRoute } from "./[form]/_prewarm";
@@ -12,6 +13,7 @@ import { useRequiredWorkspaceData } from "./_data-provider";
 
 export function CreateForm({ children }: { children?: React.ReactNode }) {
   const router = useRouter();
+  const posthog = usePostHog();
   const { workspace } = useRequiredWorkspaceData();
   const convex = useConvex();
   const createForm = useMutation(api.forms.create);
@@ -37,6 +39,11 @@ export function CreateForm({ children }: { children?: React.ReactNode }) {
         return form;
       }}
       onSuccess={({ data }) => {
+        posthog.capture("form_created", {
+          form_slug: data.slug,
+          workspace_id: workspace._id,
+          workspace_slug: workspace.slug,
+        });
         router.push(`/dashboard/${workspace.slug}/${data.slug}`);
       }}
     >

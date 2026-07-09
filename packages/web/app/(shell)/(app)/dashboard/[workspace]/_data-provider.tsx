@@ -6,7 +6,8 @@ import { api } from "@formbro/convex/_generated/api";
 import { RiErrorWarningLine } from "@remixicon/react";
 import { useConvex, useQuery } from "convex/react";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { usePostHog } from "posthog-js/react";
+import { useEffect, useMemo } from "react";
 import { Loading } from "@/components/loading";
 import { PageState } from "@/components/page-state";
 import { useRoutePrewarm, type RoutePrewarmOptions } from "@/lib/convex/route-prewarm";
@@ -41,6 +42,7 @@ export function useWorkspacePrewarmIntent(
 
 export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const posthog = usePostHog();
   const router = useRouter();
   const { workspace: workspaceSlug, form: formSlug } = useParams<{
     workspace: string;
@@ -70,6 +72,24 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   );
   const shouldRedirect =
     contextData !== null && !contextData.isCanonical && pathname !== contextData.canonicalPath;
+
+  useEffect(() => {
+    if (!workspaceData) return;
+
+    posthog.group("workspace", workspaceData._id, {
+      billing_status: workspaceData.billingStatus ?? "inactive",
+      name: workspaceData.name,
+      plan: workspaceData.plan ?? "free",
+      slug: workspaceData.slug,
+    });
+  }, [
+    posthog,
+    workspaceData?._id,
+    workspaceData?.billingStatus,
+    workspaceData?.name,
+    workspaceData?.plan,
+    workspaceData?.slug,
+  ]);
 
   if (shouldRedirect) {
     router.replace(contextData.canonicalPath);

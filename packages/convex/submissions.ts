@@ -3,6 +3,7 @@ import { validateFormSubmission } from "@formbro/core/validation";
 import { fail, ok } from "@formbro/shared/result";
 import { getDocumentSize, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess } from "./access";
 import { defineErrors } from "./errors";
@@ -117,6 +118,10 @@ export const create = mutation({
       return fail({ data: null, error: ERRORS.SUBMISSION_INVALID });
     }
 
+    const firstWorkspaceSubmission = await ctx.db
+      .query("submissions")
+      .withIndex("by_workspace", (q) => q.eq("workspaceId", form.workspaceId))
+      .first();
     const submittedTime = Date.now();
     const data = {
       formId: form._id,
@@ -132,6 +137,26 @@ export const create = mutation({
       ...data,
       bytes,
     });
+
+    if (!firstWorkspaceSubmission) {
+      const workspace = await ctx.db.get(form.workspaceId);
+      if (workspace) {
+        await ctx.scheduler.runAfter(0, internal.analytics.capture, {
+          distinctId: workspace.ownerAuthId,
+          event: "first_submission_received",
+          properties: {
+            $groups: { workspace: workspace._id },
+            $insert_id: `first_submission_received:${workspace._id}`,
+            bytes,
+            form_id: form._id,
+            form_slug: form.slug,
+            submission_id: submissionId,
+            workspace_id: workspace._id,
+            workspace_slug: workspace.slug,
+          },
+        });
+      }
+    }
 
     return ok({ submissionId, bytes });
   },

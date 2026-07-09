@@ -5,12 +5,14 @@ import { CREATE_WORKSPACE } from "@formbro/convex/system/forms/create_workspace"
 import { RiAddLine } from "@remixicon/react";
 import { useConvex, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import * as React from "react";
 import { InternalDialogForm } from "@/components/internal-dialog-form";
 import { prewarmWorkspaceRoute } from "../[workspace]/_prewarm";
 
 export function CreateWorkspace({ children }: { children?: React.ReactNode }) {
   const router = useRouter();
+  const posthog = usePostHog();
   const convex = useConvex();
   const createWorkspace = useMutation(api.workspace.create);
 
@@ -33,6 +35,11 @@ export function CreateWorkspace({ children }: { children?: React.ReactNode }) {
         return workspace;
       }}
       onSuccess={({ data }) => {
+        posthog.capture("workspace_created", {
+          $groups: { workspace: data.workspaceId },
+          workspace_id: data.workspaceId,
+          workspace_slug: data.slug,
+        });
         router.push(`/dashboard/${data.slug}`);
       }}
       Icon={RiAddLine}

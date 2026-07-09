@@ -13,6 +13,7 @@ import { displayFont, tuiFont, TypographySubheading } from "@formbro/ui/typograp
 import { RiCheckboxCircleLine } from "@remixicon/react";
 import { useAction } from "convex/react";
 import { redirect } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
@@ -168,6 +169,7 @@ function PlanCard({
 
 export function PlansPanel() {
   const { billing, workspace } = useRequiredWorkspaceSettingsData();
+  const posthog = usePostHog();
   const createSubscriptionCheckout = useAction(api.billing.createSubscriptionCheckout);
   const isUnlimited = billing.plan === "unlimited";
   const [interval, setInterval] = useState<"monthly" | "annual">("monthly");
@@ -178,6 +180,13 @@ export function PlansPanel() {
   const handleSelectPlan = useCallback(
     async (plan: Plan) => {
       setLoadingPlan(plan);
+      const analyticsProperties = {
+        billing_interval: interval,
+        plan,
+        workspace_id: billing.workspaceId,
+        workspace_slug: workspace.slug,
+      };
+      posthog.capture("subscription_checkout_started", analyticsProperties);
 
       const result = await createSubscriptionCheckout({
         workspaceId: billing.workspaceId,
@@ -189,6 +198,10 @@ export function PlansPanel() {
 
       if (!result.ok) {
         setLoadingPlan(null);
+        posthog.capture("subscription_checkout_failed", {
+          ...analyticsProperties,
+          error_code: result.error.code,
+        });
         toast.error("Failed to start checkout", {
           description: getErrorMessage(result.error),
         });
@@ -196,9 +209,20 @@ export function PlansPanel() {
       }
 
       setLoadingPlan(null);
+      posthog.capture("subscription_checkout_redirected", {
+        ...analyticsProperties,
+        checkout_session_id: result.data.sessionId,
+      });
       redirect(result.data.url);
     },
-    [billing.workspaceId, createSubscriptionCheckout, interval, settingsUrl],
+    [
+      billing.workspaceId,
+      createSubscriptionCheckout,
+      interval,
+      posthog,
+      settingsUrl,
+      workspace.slug,
+    ],
   );
 
   return (
