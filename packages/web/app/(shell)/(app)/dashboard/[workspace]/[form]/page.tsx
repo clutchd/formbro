@@ -42,6 +42,7 @@ import {
   consumePublishCheckoutIntent,
   savePublishCheckoutIntent,
 } from "@/lib/publish-checkout";
+import { copyPublicFormShareUrl, getPublicFormShareUrl } from "@/lib/share-link";
 import { useWorkspaceSettingsPrewarmIntent } from "../settings/_data-provider";
 import { useRequiredWorkspaceFormData } from "./_data-provider";
 
@@ -568,7 +569,39 @@ function FormDraftEditor({
       lastSubmittedSave.current = serialized;
       dispatch({ schema: result.data.schema, type: "publish-succeeded" });
       posthog.capture("form_published", analyticsProperties);
-      toast.success("Form published");
+      const shareUrl = getPublicFormShareUrl(formSlug);
+      toast.success(
+        analyticsProperties.is_first_publish ? "Form published — share it now" : "Form published",
+        {
+          action: {
+            label: "Copy link",
+            onClick: () => {
+              void copyPublicFormShareUrl(shareUrl)
+                .then(() => {
+                  posthog.capture("form_share_link_copied", {
+                    ...analyticsProperties,
+                    surface: "publish_toast",
+                    workspace_id: workspaceId,
+                    workspace_slug: workspaceSlug,
+                  });
+                  toast.success("Share link copied");
+                })
+                .catch((error: unknown) => {
+                  posthog.capture("form_share_link_copy_failed", {
+                    ...analyticsProperties,
+                    error_message: getErrorMessage(error),
+                    surface: "publish_toast",
+                    workspace_id: workspaceId,
+                    workspace_slug: workspaceSlug,
+                  });
+                  toast.error("Failed to copy share link");
+                });
+            },
+          },
+          description: shareUrl,
+          duration: analyticsProperties.is_first_publish ? 12_000 : 6_000,
+        },
+      );
     } catch (error) {
       posthog.capture("form_publish_failed", {
         ...analyticsProperties,
@@ -581,7 +614,17 @@ function FormDraftEditor({
     } finally {
       dispatch({ type: "publish-finished" });
     }
-  }, [draft, formId, formSlug, posthog, publishForm, saveDraft, schema]);
+  }, [
+    draft,
+    formId,
+    formSlug,
+    posthog,
+    publishForm,
+    saveDraft,
+    schema,
+    workspaceId,
+    workspaceSlug,
+  ]);
 
   const openBilling = async () => {
     if (!schema) return;

@@ -9,10 +9,12 @@ import { Card } from "@formbro/ui/card";
 import { Input } from "@formbro/ui/input";
 import { tuiFont, TypographyH2, TypographyP } from "@formbro/ui/typography";
 import { RiClipboardLine, RiExternalLinkLine, RiFileTextLine } from "@remixicon/react";
+import { usePostHog } from "posthog-js/react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
 import { getFormMetadata, getOpenGraphImageUrl } from "@/lib/form-metadata";
+import { copyPublicFormShareUrl, getPublicFormShareUrl } from "@/lib/share-link";
 import { useRequiredWorkspaceFormData } from "../_data-provider";
 
 function getShareMessage(status: Doc<"forms">["status"]) {
@@ -32,9 +34,10 @@ function getShareMessage(status: Doc<"forms">["status"]) {
 
 export default function ShareFormPage() {
   const { form, workspace } = useRequiredWorkspaceFormData();
+  const posthog = usePostHog();
   const [copied, setCopied] = useState(false);
   const shareId = useId();
-  const shareUrl = `${APP_URL}/f/${form.slug}`;
+  const shareUrl = getPublicFormShareUrl(form.slug);
   const metadata = getFormMetadata({
     formName: form.name,
     formSlug: form.slug,
@@ -47,12 +50,17 @@ export default function ShareFormPage() {
 
   const copyToClipboard = async () => {
     try {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareUrl);
-        setCopied(true);
-        toast.success("Share link copied");
-        setTimeout(() => setCopied(false), 3000);
-      }
+      await copyPublicFormShareUrl(shareUrl);
+      setCopied(true);
+      posthog.capture("form_share_link_copied", {
+        form_id: form._id,
+        form_slug: form.slug,
+        surface: "share_page",
+        workspace_id: workspace._id,
+        workspace_slug: workspace.slug,
+      });
+      toast.success("Share link copied");
+      setTimeout(() => setCopied(false), 3000);
     } catch (error) {
       toast.error("Failed to copy to clipboard");
       console.error(error);
@@ -76,7 +84,20 @@ export default function ShareFormPage() {
               {copied ? "Copied" : "Copy"}
             </Button>
             <Button asChild variant="outline">
-              <a href={shareUrl} target="_blank" rel="noreferrer">
+              <a
+                href={shareUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  posthog.capture("form_share_link_opened", {
+                    form_id: form._id,
+                    form_slug: form.slug,
+                    surface: "share_page",
+                    workspace_id: workspace._id,
+                    workspace_slug: workspace.slug,
+                  });
+                }}
+              >
                 <RiExternalLinkLine className="size-4" />
                 Open
               </a>
