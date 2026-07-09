@@ -15,7 +15,6 @@ import { RiArrowRightLine, RiFileAddLine, RiFileTextLine } from "@remixicon/reac
 import Link from "next/link";
 import { useWorkspaceFormPrewarmIntent } from "../[workspace]/[form]/_data-provider";
 import { useWorkspacePrewarmIntent } from "../[workspace]/_data-provider";
-import { useWorkspaceSettingsPrewarmIntent } from "../[workspace]/settings/_data-provider";
 import { WorkspaceBillingStateBadge } from "../workspace-billing-state-badge";
 
 type Workspace = Extract<
@@ -112,19 +111,16 @@ function WorkspaceFormPreview({
 }
 
 export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
-  const settingsPrewarm = useWorkspaceSettingsPrewarmIntent(workspace.slug);
   const workspacePrewarm = useWorkspacePrewarmIntent(workspace.slug);
-  const needsSubscription = !hasActiveWorkspaceSubscriptionStatus(workspace);
-  const href = needsSubscription
-    ? `/dashboard/${workspace.slug}/settings`
-    : `/dashboard/${workspace.slug}`;
-  const prewarmIntentHandlers = needsSubscription ? settingsPrewarm : workspacePrewarm;
+  const hasActiveSubscription = hasActiveWorkspaceSubscriptionStatus(workspace);
+  const ctaLabel =
+    !hasActiveSubscription && workspace.forms.length === 0 ? "Create free draft" : "Open Workspace";
 
   return (
     <Card
       className="flex h-full flex-col gap-0 p-0"
-      onMouseEnter={prewarmIntentHandlers.onMouseEnter}
-      onMouseLeave={prewarmIntentHandlers.onMouseLeave}
+      onMouseEnter={workspacePrewarm.onMouseEnter}
+      onMouseLeave={workspacePrewarm.onMouseLeave}
     >
       <div className="flex items-center gap-3 border-b px-5 py-4">
         <h3 className="truncate font-semibold">{workspace.name}</h3>
@@ -139,13 +135,13 @@ export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
 
       <Button asChild size="lg" className="group/button mt-auto shrink-0 rounded-t-none">
         <Link
-          href={href}
+          href={`/dashboard/${workspace.slug}`}
           prefetch={false}
-          onFocus={prewarmIntentHandlers.onFocus}
-          onBlur={prewarmIntentHandlers.onBlur}
-          onTouchStart={prewarmIntentHandlers.onTouchStart}
+          onFocus={workspacePrewarm.onFocus}
+          onBlur={workspacePrewarm.onBlur}
+          onTouchStart={workspacePrewarm.onTouchStart}
         >
-          {needsSubscription ? "Manage Billing" : "Open Workspace"}
+          {ctaLabel}
           <RiArrowRightLine className="size-3 transition-transform group-hover/button:translate-x-1" />
         </Link>
       </Button>

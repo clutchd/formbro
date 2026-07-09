@@ -30,7 +30,7 @@ import {
 } from "ai";
 import { z } from "zod";
 import type { Id } from "./_generated/dataModel";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { httpAction } from "./_generated/server";
 import { TRUSTED_ORIGINS } from "./auth";
 
@@ -383,6 +383,18 @@ export const chat = httpAction(async (ctx, request) => {
 
     if (!draft.ok) {
       return errorResponse(request, "Form unavailable.", 403);
+    }
+
+    const hasActiveSubscription = await ctx.runQuery(
+      internal.billing.hasActiveWorkspaceSubscription,
+      { workspaceId: draft.data.form.workspaceId },
+    );
+    if (!hasActiveSubscription) {
+      return errorResponse(
+        request,
+        "An active subscription is required to use the assistant.",
+        402,
+      );
     }
 
     const currentSchema = draft.data.schema;

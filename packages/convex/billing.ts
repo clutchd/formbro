@@ -9,6 +9,7 @@ import {
   action,
   internalAction,
   internalMutation,
+  internalQuery,
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
@@ -173,6 +174,16 @@ export async function requireWorkspaceSubscription(
 
   return ok(subscriptionState.data);
 }
+
+export const hasActiveWorkspaceSubscription = internalQuery({
+  args: {
+    workspaceId: v.id("workspaces"),
+  },
+  handler: async (ctx, args) => {
+    const subscriptionState = await getWorkspaceSubscriptionState(ctx, args.workspaceId);
+    return subscriptionState.ok && subscriptionState.data.hasActiveSubscription;
+  },
+});
 
 export const createWorkspaceCustomer = internalAction({
   args: {

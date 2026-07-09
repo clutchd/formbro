@@ -114,12 +114,20 @@ export const getPublic = query({
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .unique();
 
-    if (!form) return null;
+    if (!form?.publishedSchemaId) return null;
 
     const [publishedSchema, workspace] = await Promise.all([
-      form.publishedSchemaId ? await ctx.db.get(form.publishedSchemaId) : null,
+      ctx.db.get(form.publishedSchemaId),
       ctx.db.get(form.workspaceId),
     ]);
+    let publishedName: string | undefined;
+    if (publishedSchema) {
+      try {
+        publishedName = JsonParse(publishedSchema.schema).name;
+      } catch {
+        publishedName = undefined;
+      }
+    }
 
     return ok({
       id: form._id,
@@ -127,7 +135,7 @@ export const getPublic = query({
         name: workspace?.name,
         slug: workspace?.slug,
       },
-      name: form.name,
+      name: publishedName,
       slug: form.slug,
       status: form.status,
       schemaId: publishedSchema?._id ?? null,
