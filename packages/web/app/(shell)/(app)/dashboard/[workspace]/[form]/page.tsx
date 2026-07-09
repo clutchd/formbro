@@ -64,10 +64,10 @@ function FormAiSidebarLoading() {
 
 function FormAiSidebarLoadError({
   onClose,
-  onRetry,
+  onReload,
 }: {
   onClose: () => void;
-  onRetry: () => void;
+  onReload: () => void;
 }) {
   return (
     <aside
@@ -77,14 +77,16 @@ function FormAiSidebarLoadError({
       className="absolute inset-y-0 right-0 z-40 flex w-full max-w-[26rem] shrink-0 flex-col items-center justify-center gap-3 border-l bg-background p-6 text-center shadow-xl md:relative md:z-auto md:shadow-none"
     >
       <p className="text-sm font-semibold">AI assistant unavailable</p>
-      <p className="text-xs text-muted-foreground">The assistant could not load. Try again.</p>
+      <p className="text-xs text-muted-foreground">
+        The assistant could not load. Reload the editor to try again.
+      </p>
       <div className="flex gap-2">
         <Button type="button" variant="outline" size="dense" onClick={onClose}>
           Close
         </Button>
-        <Button type="button" size="dense" onClick={onRetry}>
+        <Button type="button" size="dense" onClick={onReload}>
           <RiRefreshLine className="size-4" />
-          Retry
+          Reload editor
         </Button>
       </div>
     </aside>
@@ -648,7 +650,7 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
         ) : aiOpen && aiLoadError ? (
           <FormAiSidebarLoadError
             onClose={() => setAiOpen(false)}
-            onRetry={() => void ensureAiLoaded()}
+            onReload={() => window.location.reload()}
           />
         ) : null}
       </div>
