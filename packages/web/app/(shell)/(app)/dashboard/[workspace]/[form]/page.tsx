@@ -19,22 +19,32 @@ import {
 } from "@formbro/ui/dialog";
 import { RiArrowGoBackLine, RiBardLine, RiExternalLinkLine, RiRefreshLine } from "@remixicon/react";
 import { useMutation, useQuery } from "convex/react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { type ComponentType, useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
+import type { FormAiSidebarProps } from "@/components/form-ai-sidebar";
 import { FormBuilderCanvas } from "@/components/form-builder/builder";
 import { Loading } from "@/components/loading";
 import { PageState } from "@/components/page-state";
 import { useRequiredWorkspaceFormData } from "./_data-provider";
 
 const FORM_AI_SIDEBAR_ID = "form-ai-sidebar";
-const loadFormAiSidebar = () =>
-  import("@/components/form-ai-sidebar").then((module) => module.FormAiSidebar);
+type FormAiSidebarComponent = ComponentType<FormAiSidebarProps>;
+let formAiSidebarPromise: Promise<FormAiSidebarComponent> | null = null;
+
+function loadFormAiSidebar() {
+  formAiSidebarPromise ??= import("@/components/form-ai-sidebar")
+    .then((module) => module.FormAiSidebar)
+    .catch((error: unknown) => {
+      formAiSidebarPromise = null;
+      throw error;
+    });
+  return formAiSidebarPromise;
+}
 
 function preloadFormAiSidebar() {
   void loadFormAiSidebar().catch(() => {
-    // Intent preloading is best-effort; activation still uses Next's chunk loader and error boundary.
+    // Intent preloading is best-effort; activation provides retryable inline feedback.
   });
 }
 
@@ -44,6 +54,7 @@ function FormAiSidebarLoading() {
       id={FORM_AI_SIDEBAR_ID}
       aria-busy="true"
       aria-label="Loading Ask AI"
+      aria-live="polite"
       className="absolute inset-y-0 right-0 z-40 flex w-full max-w-[26rem] shrink-0 flex-col border-l bg-background shadow-xl md:relative md:z-auto md:shadow-none"
     >
       <Loading title="AI assistant" />
@@ -51,10 +62,34 @@ function FormAiSidebarLoading() {
   );
 }
 
-const FormAiSidebar = dynamic(loadFormAiSidebar, {
-  loading: FormAiSidebarLoading,
-  ssr: false,
-});
+function FormAiSidebarLoadError({
+  onClose,
+  onRetry,
+}: {
+  onClose: () => void;
+  onRetry: () => void;
+}) {
+  return (
+    <aside
+      id={FORM_AI_SIDEBAR_ID}
+      aria-label="Ask AI unavailable"
+      role="alert"
+      className="absolute inset-y-0 right-0 z-40 flex w-full max-w-[26rem] shrink-0 flex-col items-center justify-center gap-3 border-l bg-background p-6 text-center shadow-xl md:relative md:z-auto md:shadow-none"
+    >
+      <p className="text-sm font-semibold">AI assistant unavailable</p>
+      <p className="text-xs text-muted-foreground">The assistant could not load. Try again.</p>
+      <div className="flex gap-2">
+        <Button type="button" variant="outline" size="dense" onClick={onClose}>
+          Close
+        </Button>
+        <Button type="button" size="dense" onClick={onRetry}>
+          <RiRefreshLine className="size-4" />
+          Retry
+        </Button>
+      </div>
+    </aside>
+  );
+}
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type EditorState = {
@@ -284,7 +319,9 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
   const [{ hasUnpublishedChanges, publishing, reverting, saveState, schema }, dispatch] =
     useReducer(editorReducer, initialEditorState);
   const [aiOpen, setAiOpen] = useState(false);
-  const [aiLoaded, setAiLoaded] = useState(false);
+  const [AiSidebar, setAiSidebar] = useState<FormAiSidebarComponent | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiLoadError, setAiLoadError] = useState<unknown>(null);
   const [undoingAiChanges, setUndoingAiChanges] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const schemaRef = useRef<FormInput | null>(null);
@@ -295,19 +332,34 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
   const saveTimeoutRef = useRef<number | null>(null);
   const saveSequence = useRef(0);
 
+  const ensureAiLoaded = useCallback(async () => {
+    if (AiSidebar) return;
+
+    setAiLoadError(null);
+    setAiLoading(true);
+    try {
+      const component = await loadFormAiSidebar();
+      setAiSidebar(() => component);
+    } catch (error) {
+      setAiLoadError(error);
+    } finally {
+      setAiLoading(false);
+    }
+  }, [AiSidebar]);
+
   const toggleAi = () => {
     if (aiOpen) {
       setAiOpen(false);
       return;
     }
 
-    setAiLoaded(true);
     setAiOpen(true);
+    void ensureAiLoaded();
   };
 
   const handleAiOpenChange = (open: boolean) => {
     if (open) {
-      setAiLoaded(true);
+      void ensureAiLoaded();
     }
     setAiOpen(open);
   };
@@ -581,8 +633,8 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <FormBuilderCanvas schema={schema} onSchemaChange={updateSchema} />
         </div>
-        {aiLoaded ? (
-          <FormAiSidebar
+        {AiSidebar ? (
+          <AiSidebar
             id={FORM_AI_SIDEBAR_ID}
             formId={formId}
             onUndoAiChanges={undoAiChanges}
@@ -590,6 +642,13 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
             schema={schema}
             undoing={undoingAiChanges}
             onOpenChange={handleAiOpenChange}
+          />
+        ) : aiOpen && aiLoading ? (
+          <FormAiSidebarLoading />
+        ) : aiOpen && aiLoadError ? (
+          <FormAiSidebarLoadError
+            onClose={() => setAiOpen(false)}
+            onRetry={() => void ensureAiLoaded()}
           />
         ) : null}
       </div>

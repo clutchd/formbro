@@ -9,6 +9,16 @@ import { AiErrorNotice, AiMessage, AiThinkingIndicator } from "./form-ai/message
 import { shouldShowAiThinkingIndicator } from "./form-ai/thinking";
 import { useFormAiSession } from "./form-ai/use-form-ai-session";
 
+export type FormAiSidebarProps = {
+  formId: string;
+  id?: string;
+  onUndoAiChanges?: (schema: FormInput) => Promise<void> | void;
+  onOpenChange: (open: boolean) => void;
+  open: boolean;
+  schema: FormInput;
+  undoing?: boolean;
+};
+
 export function FormAiSidebar({
   formId,
   id,
@@ -17,15 +27,7 @@ export function FormAiSidebar({
   open,
   schema,
   undoing,
-}: {
-  formId: string;
-  id?: string;
-  onUndoAiChanges?: (schema: FormInput) => Promise<void> | void;
-  onOpenChange: (open: boolean) => void;
-  open: boolean;
-  schema: FormInput;
-  undoing?: boolean;
-}) {
+}: FormAiSidebarProps) {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const session = useFormAiSession({
