@@ -19,14 +19,18 @@ import {
 } from "@formbro/ui/dialog";
 import { RiArrowGoBackLine, RiBardLine, RiExternalLinkLine, RiRefreshLine } from "@remixicon/react";
 import { useMutation, useQuery } from "convex/react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
-import { FormAiSidebar } from "@/components/form-ai-sidebar";
 import { FormBuilderCanvas } from "@/components/form-builder/builder";
 import { Loading } from "@/components/loading";
 import { PageState } from "@/components/page-state";
 import { useRequiredWorkspaceFormData } from "./_data-provider";
+
+const loadFormAiSidebar = () =>
+  import("@/components/form-ai-sidebar").then((module) => module.FormAiSidebar);
+const FormAiSidebar = dynamic(loadFormAiSidebar, { ssr: false });
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type EditorState = {
@@ -255,7 +259,8 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
   const publishForm = useMutation(api.forms.publish);
   const [{ hasUnpublishedChanges, publishing, reverting, saveState, schema }, dispatch] =
     useReducer(editorReducer, initialEditorState);
-  const [aiOpen, setAiOpen] = useState(true);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [aiLoaded, setAiLoaded] = useState(false);
   const [undoingAiChanges, setUndoingAiChanges] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const schemaRef = useRef<FormInput | null>(null);
@@ -265,6 +270,23 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
   const lastSubmittedSave = useRef<string | null>(null);
   const saveTimeoutRef = useRef<number | null>(null);
   const saveSequence = useRef(0);
+
+  const toggleAi = () => {
+    if (aiOpen) {
+      setAiOpen(false);
+      return;
+    }
+
+    setAiLoaded(true);
+    setAiOpen(true);
+  };
+
+  const handleAiOpenChange = (open: boolean) => {
+    if (open) {
+      setAiLoaded(true);
+    }
+    setAiOpen(open);
+  };
 
   useEffect(() => {
     schemaRef.current = schema;
@@ -498,7 +520,9 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
             type="button"
             variant={aiOpen ? "default" : "outline"}
             size="dense"
-            onClick={() => setAiOpen((current) => !current)}
+            onFocus={() => void loadFormAiSidebar()}
+            onMouseEnter={() => void loadFormAiSidebar()}
+            onClick={toggleAi}
           >
             <RiBardLine className="size-4" />
             <span className="hidden sm:inline">Ask AI</span>
@@ -531,14 +555,16 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <FormBuilderCanvas schema={schema} onSchemaChange={updateSchema} />
         </div>
-        <FormAiSidebar
-          formId={formId}
-          onUndoAiChanges={undoAiChanges}
-          open={aiOpen}
-          schema={schema}
-          undoing={undoingAiChanges}
-          onOpenChange={setAiOpen}
-        />
+        {aiLoaded ? (
+          <FormAiSidebar
+            formId={formId}
+            onUndoAiChanges={undoAiChanges}
+            open={aiOpen}
+            schema={schema}
+            undoing={undoingAiChanges}
+            onOpenChange={handleAiOpenChange}
+          />
+        ) : null}
       </div>
     </div>
   );
