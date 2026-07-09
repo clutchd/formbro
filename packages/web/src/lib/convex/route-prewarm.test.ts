@@ -1,6 +1,7 @@
 import type { ConvexReactClient } from "convex/react";
 import { api } from "@formbro/convex/_generated/api";
 import { prewarmWorkspaceFormRoute } from "app/(shell)/(app)/dashboard/[workspace]/[form]/_prewarm";
+import { prewarmFormSubmissionsRoute } from "app/(shell)/(app)/dashboard/[workspace]/[form]/submissions/_prewarm";
 import { prewarmWorkspaceRoute } from "app/(shell)/(app)/dashboard/[workspace]/_prewarm";
 import { prewarmWorkspaceSettingsRoute } from "app/(shell)/(app)/dashboard/[workspace]/settings/_prewarm";
 import { describe, it } from "bun:test";
@@ -107,5 +108,23 @@ describe("convex:route-prewarm", () => {
 
     assert.equal(calls.length, 1);
     assert.equal(calls[0]?.name, "workspace:context");
+  });
+
+  it("leaves paginated submissions loading to the pagination hook", () => {
+    const calls: Array<{ name: string; args: unknown }> = [];
+    const convex = {
+      prewarmQuery: ({ query, args }: { query: typeof api.workspace.context; args: unknown }) => {
+        calls.push({ name: getFunctionName(query), args });
+      },
+    } as unknown as ConvexReactClient;
+
+    prewarmFormSubmissionsRoute(convex, "submissions-workspace", "submissions-form");
+
+    assert.deepEqual(calls, [
+      {
+        name: "workspace:context",
+        args: { workspaceSlug: "submissions-workspace", formSlug: "submissions-form" },
+      },
+    ]);
   });
 });

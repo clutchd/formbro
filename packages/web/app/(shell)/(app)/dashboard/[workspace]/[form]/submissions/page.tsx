@@ -17,7 +17,6 @@ import {
 } from "@formbro/ui/dropdown-menu";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@formbro/ui/empty";
 import { Input } from "@formbro/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbro/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@formbro/ui/table";
 import { TypographyH1, TypographySubheading } from "@formbro/ui/typography";
 import {
@@ -33,7 +32,6 @@ import {
   flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type Column,
@@ -48,16 +46,18 @@ import { type CSSProperties, type Dispatch, type SetStateAction, useMemo, useSta
 import { Loading } from "@/components/loading";
 import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
+import { useRequiredWorkspaceFormData } from "../_data-provider";
 import { useFormSubmissionsData } from "./_data-provider";
 
-type SubmissionsResult = FunctionReturnType<typeof api.submissions.list>;
-type SubmissionsData = NonNullable<Extract<SubmissionsResult, { ok: true }>["data"]>;
-type SubmissionColumn = SubmissionsData["columns"][number];
-type SubmissionRow = SubmissionsData["rows"][number];
+type SubmissionRow = FunctionReturnType<typeof api.submissions.list>["page"][number];
+type SubmissionColumn = SubmissionRow["columnHints"][number];
+type SubmissionsData = {
+  columns: SubmissionColumn[];
+  rows: SubmissionRow[];
+};
 
 const selectColumnId = "_select";
 const submittedAtColumnId = "_submitted_at";
-const pageSizeOptions = [10, 25, 50, 100] as const;
 const columnSize = {
   select: 36,
   submitted: 176,
@@ -263,11 +263,17 @@ function ColumnHeader({
 }
 
 function SubmissionsTable({
+  canLoadMore,
   data,
+  isLoadingMore,
+  onLoadMore,
   rowSelection,
   setRowSelection,
 }: {
+  canLoadMore: boolean;
   data: SubmissionsData;
+  isLoadingMore: boolean;
+  onLoadMore: () => void;
   rowSelection: RowSelectionState;
   setRowSelection: Dispatch<SetStateAction<RowSelectionState>>;
 }) {
@@ -368,11 +374,6 @@ function SubmissionsTable({
       minSize: columnSize.fieldMin,
       maxSize: columnSize.fieldMax,
     },
-    initialState: {
-      pagination: {
-        pageSize: 25,
-      },
-    },
     onSortingChange: setSorting,
     onGlobalFilterChange: setGlobalFilter,
     onColumnFiltersChange: setColumnFilters,
@@ -394,7 +395,6 @@ function SubmissionsTable({
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
   });
 
   const visibleColumns = table.getVisibleLeafColumns();
@@ -413,7 +413,7 @@ function SubmissionsTable({
     <div className="flex min-w-0 flex-col gap-2 overflow-hidden">
       <div className="flex shrink-0 flex-col gap-2 lg:flex-row lg:items-center">
         <Input
-          placeholder="Search all submissions..."
+          placeholder="Search loaded submissions..."
           value={globalFilter}
           onChange={(event) => setGlobalFilter(event.target.value)}
           className="h-8 lg:max-w-xs"
@@ -526,100 +526,59 @@ function SubmissionsTable({
       <div className="flex flex-col gap-2 text-xs text-muted-foreground lg:flex-row lg:items-center lg:justify-between">
         <div>
           {selectedRowsCount} selected. Showing {visibleRows.length} of {filteredRowCount} filtered
-          rows
-          {filteredRowCount !== data.rows.length ? ` (${data.rows.length} total)` : null}.
+          loaded rows
+          {filteredRowCount !== data.rows.length ? ` (${data.rows.length} loaded)` : null}.
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-medium text-foreground">Rows</span>
-          <Select
-            value={`${table.getState().pagination.pageSize}`}
-            onValueChange={(value) => table.setPageSize(Number(value))}
-          >
-            <SelectTrigger size="sm" className="w-20">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent align="end">
-              {pageSizeOptions.map((pageSize) => (
-                <SelectItem key={pageSize} value={`${pageSize}`}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span className="w-24 text-center">
-            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount() || 1}
-          </span>
+        {canLoadMore || isLoadingMore ? (
           <Button
             type="button"
             variant="outline"
             size="dense"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
           >
-            First
+            {isLoadingMore ? "Loading older submissions..." : "Load 50 older submissions"}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="dense"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="dense"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="dense"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-          >
-            Last
-          </Button>
-        </div>
+        ) : (
+          <span>All {data.rows.length} submissions loaded.</span>
+        )}
       </div>
     </div>
   );
 }
 
 export default function FormSubmissionsPage() {
-  const { submissions } = useFormSubmissionsData();
+  const { form } = useRequiredWorkspaceFormData();
+  const { canLoadMore, columns, error, isLoading, loadMore, rows, status } =
+    useFormSubmissionsData();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  if (submissions === undefined) {
+  if (status === "pending" && rows.length === 0) {
     return <Loading title="submissions" />;
   }
 
-  if (!submissions.ok) {
+  if (status === "error") {
     return (
       <PageState
         title="Submissions unavailable"
-        description={getErrorMessage(submissions.error)}
+        description={getErrorMessage(error)}
         status="error"
       />
     );
   }
 
-  const data = submissions.data;
+  const data = { columns, rows };
   const selectedRows = data.rows.filter((row) => rowSelection[row.id]);
   const rowsForDownload = selectedRows.length > 0 ? selectedRows : data.rows;
-  const downloadBaseName = getDownloadBaseName(data.form.slug);
+  const downloadBaseName = getDownloadBaseName(form.slug);
   const downloadCsv = () => {
     downloadBlob(
       new Blob([makeCsv(data, rowsForDownload)], { type: "text/csv;charset=utf-8" }),
       `${downloadBaseName}-submissions-${getDownloadTimestamp()}.csv`,
     );
   };
-  const selectedLabel = selectedRows.length > 0 ? `${selectedRows.length} selected` : "All rows";
+  const selectedLabel =
+    selectedRows.length > 0 ? `${selectedRows.length} selected` : `${data.rows.length} loaded`;
 
   return (
     <Page className="flex max-w-none flex-1 flex-col py-5">
@@ -627,12 +586,13 @@ export default function FormSubmissionsPage() {
         <div>
           <TypographyH1>All Submissions</TypographyH1>
           <TypographySubheading>
-            {data.rows.length} submission{data.rows.length === 1 ? "" : "s"}
+            {data.rows.length}
+            {canLoadMore ? "+" : ""} submission{data.rows.length === 1 ? "" : "s"} loaded
           </TypographySubheading>
         </div>
         <div className="flex flex-row items-center gap-2">
           <Button onClick={downloadCsv} title={`Download ${selectedLabel.toLowerCase()}`}>
-            <RiDownloadLine className="size-4" /> Download CSV
+            <RiDownloadLine className="size-4" /> Download loaded CSV
           </Button>
           <Button
             variant="outline"
@@ -657,7 +617,10 @@ export default function FormSubmissionsPage() {
         </Empty>
       ) : (
         <SubmissionsTable
+          canLoadMore={canLoadMore}
           data={data}
+          isLoadingMore={isLoading && data.rows.length > 0}
+          onLoadMore={() => loadMore(50)}
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
         />
