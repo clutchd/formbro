@@ -3,6 +3,7 @@ import { Button } from "@formbro/ui/button";
 import { RiAlertLine, RiFileForbidLine, RiLockLine, RiTimeLine } from "@remixicon/react";
 import Link from "next/link";
 import { PageState } from "@/components/page-state";
+import { buildFormAcquisitionUrl } from "@/lib/form-acquisition";
 import { getFormMetadata } from "@/lib/form-metadata";
 import { getPublicForm, getPublicFormState, type PublicFormState } from "./data";
 import { PublicForm, PublicFormAnalytics } from "./public-form";
@@ -82,7 +83,12 @@ export default async function PublicFormPage({ params }: { params: Promise<{ for
   const { form: formSlug } = await params;
   const [form, state] = await Promise.all([getPublicForm(formSlug), getPublicFormState(formSlug)]);
   const footerHref = form
-    ? `${APP_URL}?utm_source=form&utm_medium=branding&utm_campaign=${encodeURIComponent(form.data.slug)}&utm_content=${encodeURIComponent(form.data.workspace.slug ?? "unknown")}&utm_term=footer`
+    ? buildFormAcquisitionUrl({
+        formName: form.data.name,
+        formSlug: form.data.slug,
+        medium: "branding",
+        workspaceSlug: form.data.workspace.slug,
+      })
     : `${APP_URL}?utm_source=form&utm_medium=branding&utm_campaign=not_found&utm_content=${encodeURIComponent(formSlug)}&utm_term=footer`;
 
   return (

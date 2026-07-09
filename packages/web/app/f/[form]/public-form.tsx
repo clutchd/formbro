@@ -5,7 +5,6 @@ import type { CompiledForm } from "@formbro/core/compile";
 import { api } from "@formbro/convex/_generated/api";
 import { getErrorCode, getErrorMessage } from "@formbro/convex/errors";
 import { Form } from "@formbro/react/components/form";
-import { APP_URL } from "@formbro/shared/brand";
 import { Button } from "@formbro/ui/button";
 import { RiAlertLine, RiArrowRightLine, RiCheckboxCircleLine } from "@remixicon/react";
 import { useMutation } from "convex/react";
@@ -15,6 +14,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
+import { buildFormAcquisitionUrl } from "@/lib/form-acquisition";
 
 type PublicFormAnalyticsProps = {
   formId?: Id<"forms">;
@@ -87,7 +87,14 @@ export function PublicForm({
   };
 
   if (submitted) {
-    return <PublicFormSuccess formId={formId} formSlug={formSlug} workspaceSlug={workspaceSlug} />;
+    return (
+      <PublicFormSuccess
+        formId={formId}
+        formName={formName}
+        formSlug={formSlug}
+        workspaceSlug={workspaceSlug}
+      />
+    );
   }
 
   return (
@@ -139,24 +146,57 @@ export function PublicForm({
 
 export function PublicFormSuccess({
   formId,
+  formName,
   formSlug,
   workspaceSlug,
 }: {
   formId: Id<"forms">;
+  formName?: string;
   formSlug?: string;
   workspaceSlug?: string;
 }) {
-  const createFormHref = `${APP_URL}?utm_source=form&utm_medium=success&utm_campaign=${encodeURIComponent(formSlug ?? formId)}&utm_content=${encodeURIComponent(workspaceSlug ?? "unknown")}&utm_term=create_form`;
+  const posthog = usePostHog();
+  const createFormHref = buildFormAcquisitionUrl({
+    formName,
+    formSlug: formSlug ?? formId,
+    medium: "success",
+    workspaceSlug,
+  });
+
+  useEffect(() => {
+    posthog.capture("template_acquisition_success_viewed", {
+      form_id: formId,
+      form_name: formName,
+      form_slug: formSlug,
+      surface: "public_form_success",
+      workspace_slug: workspaceSlug,
+    });
+  }, [formId, formName, formSlug, posthog, workspaceSlug]);
 
   return (
     <PageState
       icon={<RiCheckboxCircleLine className="size-5" />}
       title="Response recorded"
-      description="Thank you. Your response has been submitted."
+      description={
+        formName
+          ? `Response submitted. Need a form like “${formName}” for your team?`
+          : "Response submitted. Need a form like this for your team?"
+      }
     >
       <Button asChild variant="outline" className="hover:bg-muted">
-        <Link href={createFormHref} target="_blank" rel="noopener noreferrer">
-          Create your own form <RiArrowRightLine className="size-4" />
+        <Link
+          href={createFormHref}
+          onClick={() => {
+            posthog.capture("template_acquisition_cta_clicked", {
+              form_id: formId,
+              form_name: formName,
+              form_slug: formSlug,
+              surface: "public_form_success",
+              workspace_slug: workspaceSlug,
+            });
+          }}
+        >
+          Build a similar form <RiArrowRightLine className="size-4" />
         </Link>
       </Button>
     </PageState>

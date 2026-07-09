@@ -20,6 +20,7 @@ import {
 } from "@remixicon/react";
 import { useAppData } from "app/_data-provider";
 import Link from "next/link";
+import { usePostHog } from "posthog-js/react";
 import {
   useEffect,
   useRef,
@@ -29,6 +30,7 @@ import {
   type RefObject,
   type SetStateAction,
 } from "react";
+import type { FormAcquisitionContext } from "@/lib/form-acquisition";
 import { FormBuilderCanvas } from "@/components/form-builder/builder";
 import { ThemeIcon, useToggleTheme } from "@/components/theme";
 import { useDashboardPrewarmIntent } from "./(shell)/(app)/dashboard/(dashboard)/_data-provider";
@@ -50,12 +52,23 @@ type BuilderDemoStreamState = {
   summary: string | null;
 };
 type LinkIntent = ComponentProps<typeof Link>;
+type HeroCopy = {
+  badge: string;
+  description: string;
+  title: string;
+};
 
 const HERO_STATS = [
   { label: "LICENSE", value: "MIT" },
   { label: "TRIAL", value: "7 DAYS" },
   { label: "SETUP", value: "MINUTES" },
 ];
+const DEFAULT_HERO_COPY: HeroCopy = {
+  badge: TAGLINE.toUpperCase(),
+  description:
+    "Create, publish, and automate forms for intake, approvals, field ops, and onboarding. FormBro stays simple on the surface while giving teams the control to run serious workflows.",
+  title: "Serious forms without the enterprise tax.",
+};
 
 const WORKFLOW_STEPS = [
   {
@@ -598,19 +611,52 @@ const PLANS = [
   },
 ] as const;
 
-export function HomePage() {
+function getHeroCopy(acquisitionContext?: FormAcquisitionContext | null): HeroCopy {
+  if (!acquisitionContext) return DEFAULT_HERO_COPY;
+
+  return {
+    badge: "FROM A FORMBRO FORM",
+    description:
+      "Start with an AI-assisted draft, shape it for your workflow, and publish when it is ready.",
+    title: acquisitionContext.formName
+      ? `Build a form like “${acquisitionContext.formName}”.`
+      : "Build a form like the one you just used.",
+  };
+}
+
+function FormAcquisitionAnalytics({ context }: { context: FormAcquisitionContext }) {
+  const posthog = usePostHog();
+
+  useEffect(() => {
+    posthog.capture("template_acquisition_landing_viewed", {
+      ref_form: context.formSlug,
+      ref_name: context.formName,
+    });
+  }, [context.formName, context.formSlug, posthog]);
+
+  return null;
+}
+
+export function HomePage({
+  acquisitionContext,
+}: {
+  acquisitionContext?: FormAcquisitionContext | null;
+}) {
   const { authUser } = useAppData();
   const isAuthenticated = Boolean(authUser?.ok && authUser.data);
   const dashboardPrewarmIntent = useDashboardPrewarmIntent({ eager: true });
+  const heroCopy = getHeroCopy(acquisitionContext);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
+      {acquisitionContext ? <FormAcquisitionAnalytics context={acquisitionContext} /> : null}
       <LandingHeader
         isAuthenticated={isAuthenticated}
         dashboardPrewarmIntent={dashboardPrewarmIntent}
       />
       <main>
         <HeroSection
+          copy={heroCopy}
           isAuthenticated={isAuthenticated}
           dashboardPrewarmIntent={dashboardPrewarmIntent}
         />
@@ -666,9 +712,11 @@ function LandingHeader({
 }
 
 function HeroSection({
+  copy,
   isAuthenticated,
   dashboardPrewarmIntent,
 }: {
+  copy: HeroCopy;
   isAuthenticated: boolean;
   dashboardPrewarmIntent: LinkIntent;
 }) {
@@ -678,16 +726,12 @@ function HeroSection({
 
       <div className="max-w-4xl">
         <Badge status="neutral" className="mb-5 rounded-none">
-          {TAGLINE.toUpperCase()}
+          {copy.badge}
         </Badge>
         <h1 className="max-w-3xl font-display text-5xl leading-[0.95] font-bold tracking-tight text-balance sm:text-6xl lg:text-7xl">
-          Serious forms without the enterprise tax.
+          {copy.title}
         </h1>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-          Create, publish, and automate forms for intake, approvals, field ops, and onboarding.
-          FormBro stays simple on the surface while giving teams the control to run serious
-          workflows.
-        </p>
+        <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">{copy.description}</p>
 
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <PrimaryCta
