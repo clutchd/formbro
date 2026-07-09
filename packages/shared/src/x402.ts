@@ -1,3 +1,4 @@
+import type { Network, PaymentRequired, SettleResponse } from "@x402/core/types";
 import {
   decodePaymentSignatureHeader,
   encodePaymentRequiredHeader,
@@ -9,7 +10,6 @@ import {
   type PaymentPayloadV2,
   type PaymentRequiredV2,
 } from "@x402/core/schemas";
-import type { SettleResponse } from "@x402/core/types";
 
 export const X402_VERSION = 2 as const;
 
@@ -46,9 +46,25 @@ export function parseX402PaymentSignature(headers: Headers): X402PaymentSignatur
 
 export function createX402PaymentRequiredHeaders(paymentRequired: X402PaymentRequired) {
   const validatedPaymentRequired = PaymentRequiredV2Schema.parse(paymentRequired);
+  const accepts = validatedPaymentRequired.accepts.map((requirements) => {
+    if (!isNetwork(requirements.network)) {
+      throw new Error("Payment requirement network must use CAIP-2 format");
+    }
+
+    return {
+      ...requirements,
+      network: requirements.network,
+      extra: requirements.extra ?? {},
+    };
+  });
+  const encodablePaymentRequired: PaymentRequired = {
+    ...validatedPaymentRequired,
+    accepts,
+    extensions: validatedPaymentRequired.extensions ?? undefined,
+  };
 
   return new Headers({
-    [X402_HEADERS.PAYMENT_REQUIRED]: encodePaymentRequiredHeader(validatedPaymentRequired),
+    [X402_HEADERS.PAYMENT_REQUIRED]: encodePaymentRequiredHeader(encodablePaymentRequired),
   });
 }
 
@@ -56,4 +72,8 @@ export function createX402PaymentResponseHeaders(paymentResponse: X402Settlement
   return new Headers({
     [X402_HEADERS.PAYMENT_RESPONSE]: encodePaymentResponseHeader(paymentResponse),
   });
+}
+
+function isNetwork(value: string): value is Network {
+  return value.includes(":");
 }

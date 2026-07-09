@@ -17,6 +17,19 @@ const PAYMENT_SIGNATURE_HEADER =
 const PAYMENT_RESPONSE_HEADER =
   "eyJzdWNjZXNzIjp0cnVlLCJ0cmFuc2FjdGlvbiI6IjB4MTIzNDU2Nzg5MGFiY2RlZjEyMzQ1Njc4OTBhYmNkZWYxMjM0NTY3ODkwYWJjZGVmMTIzNDU2Nzg5MGFiY2RlZiIsIm5ldHdvcmsiOiJlaXAxNTU6ODQ1MzIiLCJwYXllciI6IjB4ODU3YjA2NTE5RTkxZTNBNTQ1Mzg3OTFiRGJiMEUyMjM3M2UzNmI2NiJ9";
 
+const paymentRequirement = {
+  scheme: "exact",
+  network: "eip155:84532",
+  amount: "10000",
+  asset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  payTo: "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
+  maxTimeoutSeconds: 60,
+  extra: {
+    name: "USDC",
+    version: "2",
+  },
+} satisfies X402PaymentRequired["accepts"][number];
+
 const paymentRequired = {
   x402Version: X402_VERSION,
   error: "PAYMENT-SIGNATURE header is required",
@@ -25,26 +38,13 @@ const paymentRequired = {
     description: "Access to premium market data",
     mimeType: "application/json",
   },
-  accepts: [
-    {
-      scheme: "exact",
-      network: "eip155:84532",
-      amount: "10000",
-      asset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-      payTo: "0x209693Bc6afc0C5328bA36FaF03C514EF312287C",
-      maxTimeoutSeconds: 60,
-      extra: {
-        name: "USDC",
-        version: "2",
-      },
-    },
-  ],
+  accepts: [paymentRequirement],
 } satisfies X402PaymentRequired;
 
 const paymentPayload = {
   x402Version: X402_VERSION,
   resource: paymentRequired.resource,
-  accepted: paymentRequired.accepts[0],
+  accepted: paymentRequirement,
   payload: {
     signature:
       "0x2d6a7588d6acca505cbf0d9a4a227e0c52c6c34008c8e8986a1283259764173608a2ce6496642e377d6da8dbbf5836e9bd15092f9ecab05ded3d6293af148b571c",
@@ -92,9 +92,7 @@ describe("x402 HTTP adapters", () => {
   test("distinguishes missing and malformed payment signatures", () => {
     expect(parseX402PaymentSignature(new Headers())).toEqual({ status: "missing" });
     expect(
-      parseX402PaymentSignature(
-        new Headers({ [X402_HEADERS.PAYMENT_SIGNATURE]: "not base64" }),
-      ),
+      parseX402PaymentSignature(new Headers({ [X402_HEADERS.PAYMENT_SIGNATURE]: "not base64" })),
     ).toEqual({ status: "invalid" });
   });
 
@@ -110,7 +108,7 @@ describe("x402 HTTP adapters", () => {
     expect(() =>
       createX402PaymentRequiredHeaders({
         ...paymentRequired,
-        accepts: [{ ...paymentRequired.accepts[0], network: "base" }],
+        accepts: [{ ...paymentRequirement, network: "base" }],
       }),
     ).toThrow("Network must be in CAIP-2 format");
   });
