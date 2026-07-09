@@ -377,6 +377,54 @@ function PublishCheckoutReturn({
   return null;
 }
 
+function showPublishShareToast({
+  formId,
+  formSlug,
+  isFirstPublish,
+  posthog,
+  workspaceId,
+  workspaceSlug,
+}: {
+  formId: Id<"forms">;
+  formSlug: string;
+  isFirstPublish: boolean;
+  posthog: ReturnType<typeof usePostHog>;
+  workspaceId: string;
+  workspaceSlug: string;
+}) {
+  const shareUrl = getPublicFormShareUrl(formSlug);
+  const analyticsProperties = {
+    form_id: formId,
+    form_slug: formSlug,
+    is_first_publish: isFirstPublish,
+    surface: "publish_toast",
+    workspace_id: workspaceId,
+    workspace_slug: workspaceSlug,
+  };
+
+  toast.success(isFirstPublish ? "Form published — share it now" : "Form published", {
+    action: {
+      label: "Copy link",
+      onClick: () => {
+        void copyPublicFormShareUrl(shareUrl)
+          .then(() => {
+            posthog.capture("form_share_link_copied", analyticsProperties);
+            toast.success("Share link copied");
+          })
+          .catch((error: unknown) => {
+            posthog.capture("form_share_link_copy_failed", {
+              ...analyticsProperties,
+              error_message: getErrorMessage(error),
+            });
+            toast.error("Failed to copy share link");
+          });
+      },
+    },
+    description: shareUrl,
+    duration: isFirstPublish ? 12_000 : 6_000,
+  });
+}
+
 export default function WorkspaceFormPage() {
   const { form, workspace } = useRequiredWorkspaceFormData();
   const canPublish = hasActiveWorkspaceSubscriptionStatus(workspace);
@@ -569,39 +617,14 @@ function FormDraftEditor({
       lastSubmittedSave.current = serialized;
       dispatch({ schema: result.data.schema, type: "publish-succeeded" });
       posthog.capture("form_published", analyticsProperties);
-      const shareUrl = getPublicFormShareUrl(formSlug);
-      toast.success(
-        analyticsProperties.is_first_publish ? "Form published — share it now" : "Form published",
-        {
-          action: {
-            label: "Copy link",
-            onClick: () => {
-              void copyPublicFormShareUrl(shareUrl)
-                .then(() => {
-                  posthog.capture("form_share_link_copied", {
-                    ...analyticsProperties,
-                    surface: "publish_toast",
-                    workspace_id: workspaceId,
-                    workspace_slug: workspaceSlug,
-                  });
-                  toast.success("Share link copied");
-                })
-                .catch((error: unknown) => {
-                  posthog.capture("form_share_link_copy_failed", {
-                    ...analyticsProperties,
-                    error_message: getErrorMessage(error),
-                    surface: "publish_toast",
-                    workspace_id: workspaceId,
-                    workspace_slug: workspaceSlug,
-                  });
-                  toast.error("Failed to copy share link");
-                });
-            },
-          },
-          description: shareUrl,
-          duration: analyticsProperties.is_first_publish ? 12_000 : 6_000,
-        },
-      );
+      showPublishShareToast({
+        formId,
+        formSlug,
+        isFirstPublish: analyticsProperties.is_first_publish,
+        posthog,
+        workspaceId,
+        workspaceSlug,
+      });
     } catch (error) {
       posthog.capture("form_publish_failed", {
         ...analyticsProperties,
