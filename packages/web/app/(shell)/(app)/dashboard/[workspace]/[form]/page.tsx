@@ -29,7 +29,7 @@ import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FormAiSidebar } from "@/components/form-ai-sidebar";
 import { FormBuilderCanvas } from "@/components/form-builder/builder";
@@ -285,6 +285,97 @@ function PublishPaywallAnalytics({
   return null;
 }
 
+const PUBLISH_CHECKOUT_TOAST_ID = "publish-checkout-status";
+
+function PublishCheckoutReturn({
+  canPublish,
+  formId,
+  formSlug,
+  onPublish,
+  workspaceId,
+  workspaceSlug,
+}: {
+  canPublish: boolean;
+  formId: Id<"forms">;
+  formSlug: string;
+  onPublish: () => Promise<void>;
+  workspaceId: string;
+  workspaceSlug: string;
+}) {
+  const searchParams = useSearchParams();
+  const handled = useRef(false);
+  const checkoutStatus = searchParams.get("checkout");
+  const isPublishReturn = searchParams.get("intent") === "publish";
+  const formEditorHref = buildFormEditorHref({ formSlug, workspaceSlug });
+
+  useEffect(() => {
+    if (!isPublishReturn || handled.current) return;
+
+    if (checkoutStatus === "cancelled") {
+      handled.current = true;
+      clearPublishCheckoutIntent(window.sessionStorage);
+      window.history.replaceState(window.history.state, "", formEditorHref);
+      toast.dismiss(PUBLISH_CHECKOUT_TOAST_ID);
+      toast.info("Checkout cancelled", {
+        description: "Your saved draft remains private.",
+      });
+      return;
+    }
+
+    if (checkoutStatus !== "success") return;
+
+    if (!canPublish) {
+      toast.loading("Activating subscription", {
+        description: "Your saved draft will publish automatically when it is ready.",
+        id: PUBLISH_CHECKOUT_TOAST_ID,
+      });
+      return;
+    }
+
+    handled.current = true;
+    const checkoutContext = {
+      formId,
+      formSlug,
+      workspaceId,
+      workspaceSlug,
+    };
+    const intent = consumePublishCheckoutIntent(window.sessionStorage, checkoutContext);
+    window.history.replaceState(window.history.state, "", formEditorHref);
+    toast.dismiss(PUBLISH_CHECKOUT_TOAST_ID);
+
+    if (!intent) {
+      toast.info("Subscription active", {
+        description: "Your draft is ready to publish.",
+      });
+      return;
+    }
+
+    toast.info("Subscription active", {
+      description: "Publishing your saved draft now.",
+    });
+    void onPublish();
+  }, [
+    canPublish,
+    checkoutStatus,
+    formEditorHref,
+    formId,
+    formSlug,
+    isPublishReturn,
+    onPublish,
+    workspaceId,
+    workspaceSlug,
+  ]);
+
+  useEffect(
+    () => () => {
+      toast.dismiss(PUBLISH_CHECKOUT_TOAST_ID);
+    },
+    [],
+  );
+
+  return null;
+}
+
 export default function WorkspaceFormPage() {
   const { form, workspace } = useRequiredWorkspaceFormData();
   const canPublish = hasActiveWorkspaceSubscriptionStatus(workspace);
@@ -330,7 +421,6 @@ function FormDraftEditor({
 }) {
   const posthog = usePostHog();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const settingsPrewarm = useWorkspaceSettingsPrewarmIntent(workspaceSlug);
   const draft = useQuery(api.forms.getDraft, { formId });
   const revertDraft = useMutation(api.forms.revertDraft);
@@ -343,7 +433,6 @@ function FormDraftEditor({
   const [undoingAiChanges, setUndoingAiChanges] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const schemaRef = useRef<FormInput | null>(null);
-  const checkoutReturnHandled = useRef(false);
   const loadedFormId = useRef<string | null>(null);
   const lastSavedSerialized = useRef<string | null>(null);
   const lastServerSerialized = useRef<string | null>(null);
@@ -494,63 +583,6 @@ function FormDraftEditor({
     }
   }, [draft, formId, formSlug, posthog, publishForm, saveDraft, schema]);
 
-  const checkoutStatus = searchParams.get("checkout");
-  const isPublishCheckoutReturn = searchParams.get("intent") === "publish";
-  const formEditorHref = buildFormEditorHref({ formSlug, workspaceSlug });
-  const isAwaitingSubscription =
-    isPublishCheckoutReturn && checkoutStatus === "success" && !canPublish;
-
-  useEffect(() => {
-    if (!isPublishCheckoutReturn || checkoutReturnHandled.current) return;
-
-    if (checkoutStatus === "cancelled") {
-      checkoutReturnHandled.current = true;
-      clearPublishCheckoutIntent(window.sessionStorage);
-      router.replace(formEditorHref);
-      toast.info("Checkout cancelled", {
-        description: "Your saved draft remains private.",
-      });
-      return;
-    }
-
-    if (checkoutStatus !== "success" || !canPublish || !draft?.ok || !schema) return;
-
-    checkoutReturnHandled.current = true;
-    const checkoutContext = {
-      formId,
-      formSlug,
-      workspaceId,
-      workspaceSlug,
-    };
-    const intent = consumePublishCheckoutIntent(window.sessionStorage, checkoutContext);
-    router.replace(formEditorHref);
-
-    if (!intent) {
-      toast.info("Subscription active", {
-        description: "Your draft is ready to publish.",
-      });
-      return;
-    }
-
-    toast.info("Subscription active", {
-      description: "Publishing your saved draft now.",
-    });
-    void publish();
-  }, [
-    canPublish,
-    checkoutStatus,
-    draft,
-    formEditorHref,
-    formId,
-    formSlug,
-    isPublishCheckoutReturn,
-    publish,
-    router,
-    schema,
-    workspaceId,
-    workspaceSlug,
-  ]);
-
   const openBilling = async () => {
     if (!schema) return;
 
@@ -696,6 +728,16 @@ function FormDraftEditor({
 
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-background">
+      <Suspense fallback={null}>
+        <PublishCheckoutReturn
+          canPublish={canPublish}
+          formId={formId}
+          formSlug={formSlug}
+          onPublish={publish}
+          workspaceId={workspaceId}
+          workspaceSlug={workspaceSlug}
+        />
+      </Suspense>
       <div className="z-30 flex min-h-12 shrink-0 flex-wrap items-center justify-between gap-2 border-b bg-background/95 px-4 py-1.5 backdrop-blur">
         <div className="flex min-w-0 flex-wrap items-center gap-1.5">
           <Badge status="neutral">{elementCountLabel}</Badge>
@@ -750,7 +792,7 @@ function FormDraftEditor({
             <Button
               type="button"
               size="dense"
-              disabled={openingBilling || isAwaitingSubscription}
+              disabled={openingBilling}
               onBlur={settingsPrewarm.onBlur}
               onClick={() => void openBilling()}
               onFocus={settingsPrewarm.onFocus}
@@ -758,12 +800,7 @@ function FormDraftEditor({
               onMouseLeave={settingsPrewarm.onMouseLeave}
               onTouchStart={settingsPrewarm.onTouchStart}
             >
-              {isAwaitingSubscription ? (
-                <>
-                  <RiRefreshLine className="size-4 animate-spin" />
-                  Activating subscription
-                </>
-              ) : openingBilling ? (
+              {openingBilling ? (
                 <>
                   <RiRefreshLine className="size-4 animate-spin" />
                   Saving draft

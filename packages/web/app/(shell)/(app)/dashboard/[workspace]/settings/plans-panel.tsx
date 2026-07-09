@@ -11,7 +11,7 @@ import { Spinner } from "@formbro/ui/spinner";
 import { displayFont, tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { RiCheckboxCircleLine } from "@remixicon/react";
 import { useAction } from "convex/react";
-import { redirect, useSearchParams } from "next/navigation";
+import { redirect } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
@@ -170,17 +170,17 @@ function PlanCard({
 export function PlansPanel() {
   const { billing, workspace } = useRequiredWorkspaceSettingsData();
   const posthog = usePostHog();
-  const searchParams = useSearchParams();
   const createSubscriptionCheckout = useAction(api.billing.createSubscriptionCheckout);
   const isUnlimited = billing.plan === "unlimited";
   const [interval, setInterval] = useState<"monthly" | "annual">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
-  const publishContext = getPublishCheckoutContext(searchParams);
 
   const handleSelectPlan = useCallback(
     async (plan: Plan) => {
       setLoadingPlan(plan);
-      const checkoutContext = getPublishCheckoutContext(searchParams);
+      const checkoutContext = getPublishCheckoutContext(
+        new URLSearchParams(window.location.search),
+      );
       const returnUrls = buildCheckoutReturnUrls(
         checkoutContext ?? { workspaceSlug: workspace.slug },
       );
@@ -236,25 +236,12 @@ export function PlansPanel() {
       });
       redirect(result.data.url);
     },
-    [
-      billing.workspaceId,
-      createSubscriptionCheckout,
-      interval,
-      posthog,
-      searchParams,
-      workspace.slug,
-    ],
+    [billing.workspaceId, createSubscriptionCheckout, interval, posthog, workspace.slug],
   );
 
   return (
     <section className="space-y-5 lg:col-span-2">
       <TypographySubheading className={twx(tuiFont, "mb-3")}>Plans</TypographySubheading>
-
-      {publishContext ? (
-        <p className="text-sm text-muted-foreground">
-          Your draft is saved. Choose a plan to continue publishing it.
-        </p>
-      ) : null}
 
       <BillingIntervalToggle interval={interval} onChange={setInterval} />
 
