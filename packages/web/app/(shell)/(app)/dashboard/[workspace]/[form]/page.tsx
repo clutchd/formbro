@@ -65,9 +65,11 @@ function FormAiSidebarLoading() {
 function FormAiSidebarLoadError({
   onClose,
   onReload,
+  reloading,
 }: {
   onClose: () => void;
-  onReload: () => void;
+  onReload: () => Promise<void>;
+  reloading: boolean;
 }) {
   return (
     <aside
@@ -84,9 +86,9 @@ function FormAiSidebarLoadError({
         <Button type="button" variant="outline" size="dense" onClick={onClose}>
           Close
         </Button>
-        <Button type="button" size="dense" onClick={onReload}>
-          <RiRefreshLine className="size-4" />
-          Reload editor
+        <Button type="button" size="dense" disabled={reloading} onClick={() => void onReload()}>
+          <RiRefreshLine className={twx("size-4", reloading && "animate-spin")} />
+          {reloading ? "Saving changes…" : "Reload editor"}
         </Button>
       </div>
     </aside>
@@ -559,6 +561,44 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
     }
   };
 
+  const reloadEditorForAi = async () => {
+    const currentSchema = schemaRef.current;
+    if (!currentSchema) return;
+
+    saveSequence.current += 1;
+    if (saveTimeoutRef.current !== null) {
+      window.clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+
+    const serialized = serializeSchema(currentSchema);
+    if (serialized !== lastSavedSerialized.current) {
+      dispatch({ saveState: "saving", type: "save-state-changed" });
+      try {
+        const result = await saveDraft({ formId, schema: currentSchema });
+        if (!result.ok) {
+          dispatch({ saveState: "error", type: "save-state-changed" });
+          toast.error("Reload cancelled", {
+            description: getErrorMessage(result.error),
+          });
+          return;
+        }
+
+        const savedSerialized = serializeSchema(result.data.schema);
+        lastSavedSerialized.current = savedSerialized;
+        lastSubmittedSave.current = savedSerialized;
+      } catch (error) {
+        dispatch({ saveState: "error", type: "save-state-changed" });
+        toast.error("Reload cancelled", {
+          description: getErrorMessage(error),
+        });
+        return;
+      }
+    }
+
+    window.location.reload();
+  };
+
   if (draft === undefined || !schema) {
     return <Loading title="editor" />;
   }
@@ -650,7 +690,8 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
         ) : aiOpen && aiLoadError ? (
           <FormAiSidebarLoadError
             onClose={() => setAiOpen(false)}
-            onReload={() => window.location.reload()}
+            onReload={reloadEditorForAi}
+            reloading={saveState === "saving"}
           />
         ) : null}
       </div>
