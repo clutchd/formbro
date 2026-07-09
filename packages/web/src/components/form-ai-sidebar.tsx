@@ -11,6 +11,7 @@ import { useFormAiSession } from "./form-ai/use-form-ai-session";
 
 export function FormAiSidebar({
   formId,
+  id,
   onUndoAiChanges,
   onOpenChange,
   open,
@@ -18,6 +19,7 @@ export function FormAiSidebar({
   undoing,
 }: {
   formId: string;
+  id?: string;
   onUndoAiChanges?: (schema: FormInput) => Promise<void> | void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
@@ -66,7 +68,11 @@ export function FormAiSidebar({
   if (!open) return null;
 
   return (
-    <aside className="absolute inset-y-0 right-0 z-40 flex w-full max-w-[26rem] shrink-0 flex-col border-l bg-background shadow-xl md:relative md:z-auto md:shadow-none">
+    <aside
+      id={id}
+      aria-label="Ask AI"
+      className="absolute inset-y-0 right-0 z-40 flex w-full max-w-[26rem] shrink-0 flex-col border-l bg-background shadow-xl md:relative md:z-auto md:shadow-none"
+    >
       <div className="flex min-h-12 items-center justify-between gap-2 border-b px-4">
         <div className="flex min-w-0 items-center gap-2">
           <RiBardLine className="size-4 shrink-0" />

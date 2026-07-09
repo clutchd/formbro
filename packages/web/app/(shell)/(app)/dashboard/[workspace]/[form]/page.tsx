@@ -28,9 +28,33 @@ import { Loading } from "@/components/loading";
 import { PageState } from "@/components/page-state";
 import { useRequiredWorkspaceFormData } from "./_data-provider";
 
+const FORM_AI_SIDEBAR_ID = "form-ai-sidebar";
 const loadFormAiSidebar = () =>
   import("@/components/form-ai-sidebar").then((module) => module.FormAiSidebar);
-const FormAiSidebar = dynamic(loadFormAiSidebar, { ssr: false });
+
+function preloadFormAiSidebar() {
+  void loadFormAiSidebar().catch(() => {
+    // Intent preloading is best-effort; activation still uses Next's chunk loader and error boundary.
+  });
+}
+
+function FormAiSidebarLoading() {
+  return (
+    <aside
+      id={FORM_AI_SIDEBAR_ID}
+      aria-busy="true"
+      aria-label="Loading Ask AI"
+      className="absolute inset-y-0 right-0 z-40 flex w-full max-w-[26rem] shrink-0 flex-col border-l bg-background shadow-xl md:relative md:z-auto md:shadow-none"
+    >
+      <Loading title="AI assistant" />
+    </aside>
+  );
+}
+
+const FormAiSidebar = dynamic(loadFormAiSidebar, {
+  loading: FormAiSidebarLoading,
+  ssr: false,
+});
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 type EditorState = {
@@ -520,8 +544,10 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
             type="button"
             variant={aiOpen ? "default" : "outline"}
             size="dense"
-            onFocus={() => void loadFormAiSidebar()}
-            onMouseEnter={() => void loadFormAiSidebar()}
+            aria-controls={FORM_AI_SIDEBAR_ID}
+            aria-expanded={aiOpen}
+            onFocus={preloadFormAiSidebar}
+            onMouseEnter={preloadFormAiSidebar}
             onClick={toggleAi}
           >
             <RiBardLine className="size-4" />
@@ -557,6 +583,7 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
         </div>
         {aiLoaded ? (
           <FormAiSidebar
+            id={FORM_AI_SIDEBAR_ID}
             formId={formId}
             onUndoAiChanges={undoAiChanges}
             open={aiOpen}
