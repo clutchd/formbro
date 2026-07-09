@@ -3,7 +3,7 @@
 import type { Id } from "@formbro/convex/_generated/dataModel";
 import type { CompiledForm } from "@formbro/core/compile";
 import { api } from "@formbro/convex/_generated/api";
-import { getErrorMessage } from "@formbro/convex/errors";
+import { getErrorCode, getErrorMessage } from "@formbro/convex/errors";
 import { Form } from "@formbro/react/components/form";
 import { APP_URL } from "@formbro/shared/brand";
 import { Button } from "@formbro/ui/button";
@@ -117,6 +117,7 @@ export function PublicForm({
           setSubmitError(message);
           posthog.capture("public_form_submit_failed", {
             ...publicFormProperties(analytics),
+            error_code: getErrorCode(error),
             error_message: message,
           });
           toast.error("Could not submit response", {

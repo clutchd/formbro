@@ -3,9 +3,11 @@ import { validateFormSubmission } from "@formbro/core/validation";
 import { fail, ok } from "@formbro/shared/result";
 import { getDocumentSize, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
+import type { SubmissionLimitReason } from "./billingUtils";
 import { internal } from "./_generated/api";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess } from "./access";
+import { getWorkspaceSubmissionAllowance } from "./billing";
 import { defineErrors } from "./errors";
 import { ERRORS as FORM_ERRORS } from "./forms";
 import { SubmissionValue } from "./schema";
@@ -29,11 +31,38 @@ export const ERRORS = defineErrors({
     message: "This form schema is not available for submissions.",
     status: "BAD_REQUEST",
   },
+  SUBSCRIPTION_INACTIVE: {
+    message: "This form is not accepting responses.",
+    status: "FORBIDDEN",
+  },
+  MONTHLY_SUBMISSION_LIMIT_REACHED: {
+    message: "This form has reached its response limit.",
+    status: "FORBIDDEN",
+  },
+  STORAGE_LIMIT_REACHED: {
+    message: "This form is not accepting responses.",
+    status: "FORBIDDEN",
+  },
   SUBMISSION_INVALID: {
     message: "Submitted form data is invalid.",
     status: "BAD_REQUEST",
   },
 });
+
+function getSubmissionLimitError(reason: SubmissionLimitReason) {
+  switch (reason) {
+    case "inactive_subscription":
+      return ERRORS.SUBSCRIPTION_INACTIVE;
+    case "monthly_submission_limit":
+      return ERRORS.MONTHLY_SUBMISSION_LIMIT_REACHED;
+    case "storage_limit":
+      return ERRORS.STORAGE_LIMIT_REACHED;
+    default: {
+      const exhaustiveReason: never = reason;
+      return exhaustiveReason;
+    }
+  }
+}
 
 function parseStoredForm(json: string): CompiledForm | null {
   try {
@@ -118,18 +147,6 @@ export const create = mutation({
       return fail({ data: null, error: ERRORS.SUBMISSION_INVALID });
     }
 
-    const workspace = await ctx.db.get(form.workspaceId);
-    const firstWorkspaceSubmission =
-      workspace && workspace.firstSubmissionTime === undefined
-        ? await ctx.db
-            .query("submissions")
-            .withIndex("by_workspace", (q) => q.eq("workspaceId", form.workspaceId))
-            .first()
-        : null;
-    const isFirstWorkspaceSubmission =
-      Boolean(workspace) &&
-      workspace?.firstSubmissionTime === undefined &&
-      firstWorkspaceSubmission === null;
     const submittedTime = Date.now();
     const data = {
       formId: form._id,
@@ -141,33 +158,59 @@ export const create = mutation({
     };
 
     const bytes = getDocumentSize(data);
+    const allowance = await getWorkspaceSubmissionAllowance(ctx, form.workspaceId, bytes);
+    if (!allowance.ok) {
+      return fail({ data: null, error: allowance.error });
+    }
+    if (!allowance.data.allowed) {
+      return fail({ data: null, error: getSubmissionLimitError(allowance.data.reason) });
+    }
+
+    const { nextStorageBytes, workspace } = allowance.data;
+    const firstWorkspaceSubmission =
+      workspace.firstSubmissionTime === undefined
+        ? await ctx.db
+            .query("submissions")
+            .withIndex("by_workspace", (q) => q.eq("workspaceId", form.workspaceId))
+            .first()
+        : null;
+    const isFirstWorkspaceSubmission =
+      workspace.firstSubmissionTime === undefined && firstWorkspaceSubmission === null;
     const submissionId = await ctx.db.insert("submissions", {
       ...data,
       bytes,
     });
 
-    if (workspace && workspace.firstSubmissionTime === undefined) {
-      await ctx.db.patch(workspace._id, {
-        firstSubmissionTime: firstWorkspaceSubmission?.submittedTime ?? submittedTime,
-      });
+    const workspacePatch: {
+      firstSubmissionTime?: number;
+      submissionStorageBytes?: number;
+    } = {};
+    if (workspace.firstSubmissionTime === undefined) {
+      workspacePatch.firstSubmissionTime = firstWorkspaceSubmission?.submittedTime ?? submittedTime;
+    }
+    if (nextStorageBytes !== undefined) {
+      workspacePatch.submissionStorageBytes = nextStorageBytes;
+    }
+    if (Object.keys(workspacePatch).length > 0) {
+      await ctx.db.patch(workspace._id, workspacePatch);
+    }
 
-      if (isFirstWorkspaceSubmission) {
-        await ctx.scheduler.runAfter(0, internal.analytics.capture, {
-          deduplicationKey: `first_submission_received:${workspace._id}`,
-          distinctId: workspace.ownerAuthId,
-          event: "first_submission_received",
-          properties: {
-            bytes,
-            form_id: form._id,
-            form_slug: form.slug,
-            submission_id: submissionId,
-            workspace_id: workspace._id,
-            workspace_slug: workspace.slug,
-          },
-          timestamp: new Date(submittedTime).toISOString(),
-          workspaceId: workspace._id,
-        });
-      }
+    if (isFirstWorkspaceSubmission) {
+      await ctx.scheduler.runAfter(0, internal.analytics.capture, {
+        deduplicationKey: `first_submission_received:${workspace._id}`,
+        distinctId: workspace.ownerAuthId,
+        event: "first_submission_received",
+        properties: {
+          bytes,
+          form_id: form._id,
+          form_slug: form.slug,
+          submission_id: submissionId,
+          workspace_id: workspace._id,
+          workspace_slug: workspace.slug,
+        },
+        timestamp: new Date(submittedTime).toISOString(),
+        workspaceId: workspace._id,
+      });
     }
 
     return ok({ submissionId, bytes });
@@ -315,6 +358,7 @@ export async function _delete(ctx: MutationCtx, submissionId: Id<"submissions">)
   const submission = await ctx.db.get(submissionId);
   if (!submission) return fail({ data: null, error: ERRORS.SUBMISSION_NOT_FOUND });
 
+  const workspace = await ctx.db.get(submission.workspaceId);
   const schemaDoc = await ctx.db.get(submission.schemaId);
   const form = schemaDoc ? parseStoredForm(schemaDoc.schema) : null;
   const fields = form ? getCompiledFields(form) : [];
@@ -326,5 +370,10 @@ export async function _delete(ctx: MutationCtx, submissionId: Id<"submissions">)
   );
 
   await ctx.db.delete(submissionId);
+  if (workspace?.submissionStorageBytes !== undefined) {
+    await ctx.db.patch(workspace._id, {
+      submissionStorageBytes: Math.max(0, workspace.submissionStorageBytes - submission.bytes),
+    });
+  }
   return ok({ submissionId });
 }

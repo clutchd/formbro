@@ -88,6 +88,34 @@ export const WORKSPACE_LIMITS: Record<
   },
 } as const;
 
+export type SubmissionLimitReason =
+  | "inactive_subscription"
+  | "monthly_submission_limit"
+  | "storage_limit";
+
+export function getSubmissionLimitReason({
+  hasActiveSubscription,
+  incomingBytes,
+  limits,
+  monthlySubmissionsUsed,
+  storageUsedBytes,
+}: {
+  hasActiveSubscription: boolean;
+  incomingBytes: number;
+  limits: Pick<(typeof WORKSPACE_LIMITS)[WorkspacePlan], "monthlySubmissions" | "storageBytes">;
+  monthlySubmissionsUsed: number;
+  storageUsedBytes: number;
+}): SubmissionLimitReason | null {
+  if (!hasActiveSubscription) return "inactive_subscription";
+  if (limits.monthlySubmissions !== null && monthlySubmissionsUsed >= limits.monthlySubmissions) {
+    return "monthly_submission_limit";
+  }
+  if (limits.storageBytes !== null && storageUsedBytes + incomingBytes > limits.storageBytes) {
+    return "storage_limit";
+  }
+  return null;
+}
+
 export function normalizeWorkspacePlan(plan?: WorkspacePlan): WorkspacePlan {
   switch (plan) {
     case "free":

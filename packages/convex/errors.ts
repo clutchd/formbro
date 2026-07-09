@@ -50,6 +50,14 @@ export function getErrorMessage(error: unknown) {
   return "Something went wrong.";
 }
 
+export function getErrorCode(error: unknown) {
+  if (isResultError(error)) return error.code;
+  if (error && typeof error === "object" && "data" in error && isResultError(error.data)) {
+    return error.data.code;
+  }
+  return undefined;
+}
+
 export function shouldReportError(error: unknown) {
   if (isResultError(error)) return false;
 

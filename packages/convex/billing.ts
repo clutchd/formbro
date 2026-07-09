@@ -17,9 +17,13 @@ import { getUser } from "./auth";
 import {
   billingIntervalValidator,
   canDeleteWorkspace,
+  getSubmissionLimitReason,
   getStripePriceIdForPlan,
   getWorkspaceLimits,
+  getWorkspaceMonthlySubmissionPeriod,
+  getWorkspaceMonthlySubmissionsUsed,
   getWorkspacePlanLabel,
+  getWorkspaceStorageUsedBytes,
   hasActiveWorkspaceSubscriptionStatus,
   normalizeWorkspacePlan,
   resolvePlanFromStripePriceId,
@@ -119,6 +123,53 @@ export async function getWorkspaceSubscriptionState(
     hasActiveSubscription,
     canDelete,
     limits,
+  });
+}
+
+export async function getWorkspaceSubmissionAllowance(
+  ctx: QueryCtx | MutationCtx,
+  workspaceId: Id<"workspaces">,
+  incomingBytes: number,
+) {
+  const subscriptionState = await getWorkspaceSubscriptionState(ctx, workspaceId);
+  if (!subscriptionState.ok) {
+    return fail({ data: null, error: subscriptionState.error });
+  }
+
+  const { hasActiveSubscription, limits, subscription, workspace } = subscriptionState.data;
+  if (!hasActiveSubscription) {
+    return ok({ allowed: false as const, reason: "inactive_subscription" as const });
+  }
+
+  const period = getWorkspaceMonthlySubmissionPeriod(subscription);
+  const trackStorage =
+    limits.storageBytes !== null || workspace.submissionStorageBytes !== undefined;
+  const [monthlySubmissionsUsed, storageUsedBytes] = await Promise.all([
+    limits.monthlySubmissions === null
+      ? Promise.resolve(0)
+      : getWorkspaceMonthlySubmissionsUsed(ctx, workspaceId, period, limits.monthlySubmissions),
+    !trackStorage
+      ? Promise.resolve(0)
+      : workspace.submissionStorageBytes === undefined
+        ? getWorkspaceStorageUsedBytes(ctx, workspaceId)
+        : Promise.resolve(workspace.submissionStorageBytes),
+  ]);
+  const reason = getSubmissionLimitReason({
+    hasActiveSubscription,
+    incomingBytes,
+    limits,
+    monthlySubmissionsUsed,
+    storageUsedBytes,
+  });
+
+  if (reason) {
+    return ok({ allowed: false as const, reason });
+  }
+
+  return ok({
+    allowed: true as const,
+    nextStorageBytes: trackStorage ? storageUsedBytes + incomingBytes : undefined,
+    workspace,
   });
 }
 

@@ -15,6 +15,7 @@ export default defineSchema({
     stripePriceId: v.optional(v.string()),
     billingStatus: v.optional(v.string()),
     firstSubmissionTime: v.optional(v.number()),
+    submissionStorageBytes: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
     .index("by_owner", ["ownerAuthId"])

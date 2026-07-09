@@ -768,7 +768,8 @@ export const billing = query({
     const [formsUsed, monthlySubmissionsUsed, storageUsedBytes] = await Promise.all([
       getWorkspaceFormsUsed(ctx, args.workspaceId),
       getWorkspaceMonthlySubmissionsUsed(ctx, args.workspaceId, monthlySubmissionPeriod),
-      getWorkspaceStorageUsedBytes(ctx, args.workspaceId),
+      subscriptionState.data.workspace.submissionStorageBytes ??
+        getWorkspaceStorageUsedBytes(ctx, args.workspaceId),
     ]);
 
     return ok({
