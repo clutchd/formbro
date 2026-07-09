@@ -13,7 +13,7 @@ import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
 import { useWorkspaceFormPrewarmIntent } from "../[form]/_data-provider";
 import { FormStatusBadge } from "../[form]/form-status-badge";
-import { useWorkspaceData } from "../_data-provider";
+import { useWorkspaceData, useWorkspaceMetricsData } from "../_data-provider";
 import { CreateForm } from "../create-form-form";
 import { useWorkspaceSettingsPrewarmIntent } from "../settings/_data-provider";
 
@@ -32,7 +32,7 @@ function FormListRow({
   workspaceSlug,
 }: {
   form: NonNullable<ReturnType<typeof useWorkspaceData>["forms"]>[number];
-  metrics: NonNullable<ReturnType<typeof useWorkspaceData>["metrics"]>[string];
+  metrics: NonNullable<ReturnType<typeof useWorkspaceMetricsData>["metrics"]>[string];
   workspaceSlug: string;
 }) {
   const formPrewarm = useWorkspaceFormPrewarmIntent(workspaceSlug, form.slug);
@@ -80,7 +80,8 @@ function FormListRow({
 
 export default function FormsDashboardContent() {
   const { workspace: workspaceSlug } = useParams<{ workspace: string }>();
-  const { forms, metrics, workspace } = useWorkspaceData();
+  const { forms, workspace } = useWorkspaceData();
+  const { metrics } = useWorkspaceMetricsData();
   const settingsPrewarm = useWorkspaceSettingsPrewarmIntent(workspaceSlug);
 
   if (!forms) {

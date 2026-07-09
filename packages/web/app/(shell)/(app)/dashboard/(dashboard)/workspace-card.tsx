@@ -87,24 +87,24 @@ function WorkspaceFormPreviewLink({
 function WorkspaceFormPreview({
   workspaceSlug,
   forms,
+  hasMoreForms,
 }: {
   workspaceSlug: string;
   forms: Workspace["forms"];
+  hasMoreForms: boolean;
 }) {
   if (forms.length === 0) {
     return <EmptyWorkspaceContent />;
   }
 
-  const overflowCount = forms.length - forms.slice(0, 3).length;
-
   return (
     <div className="flex flex-1 flex-col">
-      {forms.slice(0, 3).map((form) => (
+      {forms.map((form) => (
         <WorkspaceFormPreviewLink key={form._id} workspaceSlug={workspaceSlug} form={form} />
       ))}
-      {overflowCount > 0 ? (
+      {hasMoreForms ? (
         <p className={twx(tuiFont, "mt-auto px-5 py-3 text-[10px] text-muted-foreground")}>
-          +{overflowCount} more
+          More forms available
         </p>
       ) : null}
     </div>
@@ -134,7 +134,11 @@ export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
       </div>
 
       <div className="flex min-h-36 flex-1 flex-col">
-        <WorkspaceFormPreview workspaceSlug={workspace.slug} forms={workspace.forms} />
+        <WorkspaceFormPreview
+          workspaceSlug={workspace.slug}
+          forms={workspace.forms}
+          hasMoreForms={workspace.hasMoreForms}
+        />
       </div>
 
       <Button asChild size="lg" className="group/button mt-auto shrink-0 rounded-t-none">

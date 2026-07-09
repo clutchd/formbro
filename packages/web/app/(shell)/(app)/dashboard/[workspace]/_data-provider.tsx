@@ -22,10 +22,13 @@ const workspaceSegment = createSegmentData<{
     | Extract<FunctionReturnType<typeof api.workspace.context>, { ok: true }>["data"]["form"]
     | undefined;
   forms: Extract<FunctionReturnType<typeof api.forms.list>, { ok: true }>["data"] | undefined;
+}>("Workspace");
+
+const workspaceMetricsSegment = createSegmentData<{
   metrics:
     | Extract<FunctionReturnType<typeof api.workspace.metrics>, { ok: true }>["data"]
     | undefined;
-}>("Workspace");
+}>("WorkspaceMetrics");
 
 export function useWorkspacePrewarmIntent(
   workspaceSlug: string,
@@ -58,15 +61,10 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
     api.forms.list,
     workspaceData ? { workspaceId: workspaceData._id } : "skip",
   );
-  const metricsResult = useQuery(
-    api.workspace.metrics,
-    workspaceData ? { workspaceId: workspaceData._id } : "skip",
-  );
   const forms = formsResult?.ok ? formsResult.data : undefined;
-  const metrics = metricsResult?.ok ? metricsResult.data : undefined;
   const value = useMemo(
-    () => ({ context, workspace: workspaceData, form: formData, forms, metrics }),
-    [context, workspaceData, formData, forms, metrics],
+    () => ({ context, workspace: workspaceData, form: formData, forms }),
+    [context, workspaceData, formData, forms],
   );
   const shouldRedirect =
     contextData !== null && !contextData.isCanonical && pathname !== contextData.canonicalPath;
@@ -77,6 +75,17 @@ export function WorkspaceDataProvider({ children }: { children: ReactNode }) {
   }
 
   return <workspaceSegment.Provider value={value}>{children}</workspaceSegment.Provider>;
+}
+
+export function WorkspaceMetricsDataProvider({ children }: { children: ReactNode }) {
+  const { workspace } = useRequiredWorkspaceData();
+  const metricsResult = useQuery(api.workspace.metrics, { workspaceId: workspace._id });
+  const metrics = metricsResult?.ok ? metricsResult.data : undefined;
+  const value = useMemo(() => ({ metrics }), [metrics]);
+
+  return (
+    <workspaceMetricsSegment.Provider value={value}>{children}</workspaceMetricsSegment.Provider>
+  );
 }
 
 export function WorkspaceContentBoundary({ children }: { children: ReactNode }) {
@@ -101,6 +110,7 @@ export function WorkspaceContentBoundary({ children }: { children: ReactNode }) 
 }
 
 export const useWorkspaceData = workspaceSegment.useData;
+export const useWorkspaceMetricsData = workspaceMetricsSegment.useData;
 
 export function useRequiredWorkspaceData() {
   const data = useWorkspaceData();
