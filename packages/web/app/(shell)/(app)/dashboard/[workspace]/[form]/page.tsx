@@ -3,6 +3,7 @@
 import type { Id } from "@formbro/convex/_generated/dataModel";
 import type { FormInput } from "@formbro/core/schema/form";
 import { api } from "@formbro/convex/_generated/api";
+import { hasActiveWorkspaceSubscriptionStatus } from "@formbro/convex/billingUtils";
 import { getErrorMessage } from "@formbro/convex/errors";
 import { twx } from "@formbro/shared/twx";
 import { Badge, badgeVariants } from "@formbro/ui/badge";
@@ -17,9 +18,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@formbro/ui/dialog";
-import { RiArrowGoBackLine, RiBardLine, RiExternalLinkLine, RiRefreshLine } from "@remixicon/react";
+import {
+  RiArrowGoBackLine,
+  RiBankCardLine,
+  RiBardLine,
+  RiExternalLinkLine,
+  RiRefreshLine,
+} from "@remixicon/react";
 import { useMutation, useQuery } from "convex/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { usePostHog } from "posthog-js/react";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -27,6 +35,7 @@ import { FormAiSidebar } from "@/components/form-ai-sidebar";
 import { FormBuilderCanvas } from "@/components/form-builder/builder";
 import { Loading } from "@/components/loading";
 import { PageState } from "@/components/page-state";
+import { useWorkspaceSettingsPrewarmIntent } from "../settings/_data-provider";
 import { useRequiredWorkspaceFormData } from "./_data-provider";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
@@ -243,14 +252,78 @@ function DraftStatusBadge({
   );
 }
 
-export default function WorkspaceFormPage() {
-  const { form } = useRequiredWorkspaceFormData();
+function PublishPaywallAnalytics({
+  formId,
+  formSlug,
+  workspaceId,
+  workspaceSlug,
+}: {
+  formId: Id<"forms">;
+  formSlug: string;
+  workspaceId: string;
+  workspaceSlug: string;
+}) {
+  const posthog = usePostHog();
 
-  return <FormDraftEditor formId={form._id} formSlug={form.slug} />;
+  useEffect(() => {
+    posthog.capture("subscription_paywall_viewed", {
+      form_id: formId,
+      form_slug: formSlug,
+      surface: "form_publish",
+      workspace_id: workspaceId,
+      workspace_slug: workspaceSlug,
+    });
+  }, [formId, formSlug, posthog, workspaceId, workspaceSlug]);
+
+  return null;
 }
 
-function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: string }) {
+export default function WorkspaceFormPage() {
+  const { form, workspace } = useRequiredWorkspaceFormData();
+  const canPublish = hasActiveWorkspaceSubscriptionStatus(workspace);
+
+  return (
+    <>
+      {!canPublish ? (
+        <PublishPaywallAnalytics
+          formId={form._id}
+          formSlug={form.slug}
+          workspaceId={workspace._id}
+          workspaceSlug={workspace.slug}
+        />
+      ) : null}
+      <FormDraftEditor
+        billingCtaLabel={
+          workspace.stripeSubscriptionId ? "Choose plan to publish" : "Start trial to publish"
+        }
+        canPublish={canPublish}
+        formId={form._id}
+        formSlug={form.slug}
+        workspaceId={workspace._id}
+        workspaceSlug={workspace.slug}
+      />
+    </>
+  );
+}
+
+function FormDraftEditor({
+  billingCtaLabel,
+  canPublish,
+  formId,
+  formSlug,
+  workspaceId,
+  workspaceSlug,
+}: {
+  billingCtaLabel: string;
+  canPublish: boolean;
+  formId: Id<"forms">;
+  formSlug: string;
+  workspaceId: string;
+  workspaceSlug: string;
+}) {
   const posthog = usePostHog();
+  const router = useRouter();
+  const settingsPrewarm = useWorkspaceSettingsPrewarmIntent(workspaceSlug);
   const draft = useQuery(api.forms.getDraft, { formId });
   const revertDraft = useMutation(api.forms.revertDraft);
   const saveDraft = useMutation(api.forms.saveDraft);
@@ -258,6 +331,7 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
   const [{ hasUnpublishedChanges, publishing, reverting, saveState, schema }, dispatch] =
     useReducer(editorReducer, initialEditorState);
   const [aiOpen, setAiOpen] = useState(true);
+  const [openingBilling, setOpeningBilling] = useState(false);
   const [undoingAiChanges, setUndoingAiChanges] = useState(false);
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const schemaRef = useRef<FormInput | null>(null);
@@ -411,6 +485,52 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
     }
   };
 
+  const openBilling = async () => {
+    if (!schema) return;
+
+    posthog.capture("subscription_cta_clicked", {
+      form_id: formId,
+      form_slug: formSlug,
+      surface: "form_publish",
+      workspace_id: workspaceId,
+      workspace_slug: workspaceSlug,
+    });
+    setOpeningBilling(true);
+    saveSequence.current += 1;
+    if (saveTimeoutRef.current !== null) {
+      window.clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+
+    try {
+      const result = await saveDraft({ formId, schema });
+      if (!result.ok) {
+        dispatch({ saveState: "error", type: "save-state-changed" });
+        toast.error("Draft save failed", {
+          description: getErrorMessage(result.error),
+        });
+        return;
+      }
+
+      const serialized = serializeSchema(result.data.schema);
+      lastSavedSerialized.current = serialized;
+      lastServerSerialized.current = serialized;
+      lastSubmittedSave.current = serialized;
+      dispatch({
+        hasUnpublishedChanges: result.data.hasUnpublishedChanges,
+        type: "save-succeeded",
+      });
+      router.push(settingsPrewarm.href);
+    } catch (error) {
+      dispatch({ saveState: "error", type: "save-state-changed" });
+      toast.error("Draft save failed", {
+        description: getErrorMessage(error),
+      });
+    } finally {
+      setOpeningBilling(false);
+    }
+  };
+
   const revertToPublished = async () => {
     if (!schema) return;
 
@@ -518,36 +638,66 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
           />
         </div>
         <div className="flex flex-wrap items-center justify-end gap-1.5">
-          <Button
-            type="button"
-            variant={aiOpen ? "default" : "outline"}
-            size="dense"
-            onClick={() => setAiOpen((current) => !current)}
-          >
-            <RiBardLine className="size-4" />
-            <span className="hidden sm:inline">Ask AI</span>
-          </Button>
-          <Button type="button" variant="outline" size="dense" asChild>
-            <Link href={publicHref} target="_blank" rel="noopener noreferrer">
-              <RiExternalLinkLine className="size-4" />
-              <span className="hidden sm:inline">Open</span>
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            size="dense"
-            onClick={publish}
-            disabled={publishing || saveState === "saving"}
-          >
-            {publishing ? (
-              <>
-                <RiRefreshLine className="size-4 animate-spin" />
-                Publishing
-              </>
-            ) : (
-              "Publish"
-            )}
-          </Button>
+          {canPublish ? (
+            <Button
+              type="button"
+              variant={aiOpen ? "default" : "outline"}
+              size="dense"
+              onClick={() => setAiOpen((current) => !current)}
+            >
+              <RiBardLine className="size-4" />
+              <span className="hidden sm:inline">Ask AI</span>
+            </Button>
+          ) : null}
+          {draft.data.publishedSchemaId ? (
+            <Button type="button" variant="outline" size="dense" asChild>
+              <Link href={publicHref} target="_blank" rel="noopener noreferrer">
+                <RiExternalLinkLine className="size-4" />
+                <span className="hidden sm:inline">Open</span>
+              </Link>
+            </Button>
+          ) : null}
+          {canPublish ? (
+            <Button
+              type="button"
+              size="dense"
+              onClick={publish}
+              disabled={publishing || saveState === "saving"}
+            >
+              {publishing ? (
+                <>
+                  <RiRefreshLine className="size-4 animate-spin" />
+                  Publishing
+                </>
+              ) : (
+                "Publish"
+              )}
+            </Button>
+          ) : (
+            <Button
+              type="button"
+              size="dense"
+              disabled={openingBilling}
+              onBlur={settingsPrewarm.onBlur}
+              onClick={() => void openBilling()}
+              onFocus={settingsPrewarm.onFocus}
+              onMouseEnter={settingsPrewarm.onMouseEnter}
+              onMouseLeave={settingsPrewarm.onMouseLeave}
+              onTouchStart={settingsPrewarm.onTouchStart}
+            >
+              {openingBilling ? (
+                <>
+                  <RiRefreshLine className="size-4 animate-spin" />
+                  Saving draft
+                </>
+              ) : (
+                <>
+                  <RiBankCardLine className="size-4" />
+                  {billingCtaLabel}
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -555,14 +705,16 @@ function FormDraftEditor({ formId, formSlug }: { formId: Id<"forms">; formSlug: 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <FormBuilderCanvas schema={schema} onSchemaChange={updateSchema} />
         </div>
-        <FormAiSidebar
-          formId={formId}
-          onUndoAiChanges={undoAiChanges}
-          open={aiOpen}
-          schema={schema}
-          undoing={undoingAiChanges}
-          onOpenChange={setAiOpen}
-        />
+        {canPublish ? (
+          <FormAiSidebar
+            formId={formId}
+            onUndoAiChanges={undoAiChanges}
+            open={aiOpen}
+            schema={schema}
+            undoing={undoingAiChanges}
+            onOpenChange={setAiOpen}
+          />
+        ) : null}
       </div>
     </div>
   );

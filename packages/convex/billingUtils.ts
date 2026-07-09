@@ -64,7 +64,7 @@ export const WORKSPACE_LIMITS: Record<
 > = {
   free: {
     members: 1,
-    forms: 0,
+    forms: 1,
     monthlySubmissions: 0,
     storageBytes: 0,
   },
@@ -98,6 +98,20 @@ export function normalizeWorkspacePlan(plan?: WorkspacePlan): WorkspacePlan {
     default:
       return "free";
   }
+}
+
+export function getWorkspaceLimits({
+  hasActiveSubscription,
+  plan,
+}: {
+  hasActiveSubscription: boolean;
+  plan?: WorkspacePlan;
+}) {
+  const normalizedPlan = normalizeWorkspacePlan(plan);
+  if (!hasActiveSubscription && normalizedPlan !== "unlimited") {
+    return WORKSPACE_LIMITS.free;
+  }
+  return WORKSPACE_LIMITS[normalizedPlan];
 }
 
 function formatLimitFeature(value: number | null, singular: string, plural: string, suffix = "") {

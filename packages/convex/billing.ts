@@ -9,6 +9,7 @@ import {
   action,
   internalAction,
   internalMutation,
+  internalQuery,
   type MutationCtx,
   type QueryCtx,
 } from "./_generated/server";
@@ -17,11 +18,11 @@ import {
   billingIntervalValidator,
   canDeleteWorkspace,
   getStripePriceIdForPlan,
+  getWorkspaceLimits,
   getWorkspacePlanLabel,
   hasActiveWorkspaceSubscriptionStatus,
   normalizeWorkspacePlan,
   resolvePlanFromStripePriceId,
-  WORKSPACE_LIMITS,
   WORKSPACE_TRIAL_DAYS,
   workspacePlanValidator,
 } from "./billingUtils";
@@ -108,7 +109,7 @@ export async function getWorkspaceSubscriptionState(
     workspaceBillingStatus: workspace.billingStatus,
     plan,
   });
-  const limits = WORKSPACE_LIMITS[plan];
+  const limits = getWorkspaceLimits({ hasActiveSubscription, plan });
 
   return ok({
     workspace,
@@ -173,6 +174,16 @@ export async function requireWorkspaceSubscription(
 
   return ok(subscriptionState.data);
 }
+
+export const hasActiveWorkspaceSubscription = internalQuery({
+  args: {
+    workspaceId: v.id("workspaces"),
+  },
+  handler: async (ctx, args) => {
+    const subscriptionState = await getWorkspaceSubscriptionState(ctx, args.workspaceId);
+    return subscriptionState.ok && subscriptionState.data.hasActiveSubscription;
+  },
+});
 
 export const createWorkspaceCustomer = internalAction({
   args: {

@@ -10,7 +10,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess, getWorkspaceAccess } from "./access";
-import { requireWorkspaceSubscription } from "./billing";
+import { getWorkspaceSubscriptionState, requireWorkspaceSubscription } from "./billing";
 import { getWorkspaceFormsUsed, isWorkspaceLimitReached } from "./billingUtils";
 import { defineErrors } from "./errors";
 import { _delete as _deleteSubmission } from "./submissions";
@@ -47,7 +47,7 @@ export const create = mutation({
     const access = await getWorkspaceAccess(ctx, args.workspaceId);
     if (!access.ok) return fail({ data: null, error: access.error });
 
-    const subscriptionState = await requireWorkspaceSubscription(ctx, args.workspaceId);
+    const subscriptionState = await getWorkspaceSubscriptionState(ctx, args.workspaceId);
     if (!subscriptionState.ok) return fail({ data: null, error: subscriptionState.error });
 
     if (
@@ -114,12 +114,20 @@ export const getPublic = query({
       .withIndex("by_slug", (q) => q.eq("slug", args.slug))
       .unique();
 
-    if (!form) return null;
+    if (!form?.publishedSchemaId) return null;
 
     const [publishedSchema, workspace] = await Promise.all([
-      form.publishedSchemaId ? await ctx.db.get(form.publishedSchemaId) : null,
+      ctx.db.get(form.publishedSchemaId),
       ctx.db.get(form.workspaceId),
     ]);
+    let publishedName: string | undefined;
+    if (publishedSchema) {
+      try {
+        publishedName = JsonParse(publishedSchema.schema).name;
+      } catch {
+        publishedName = undefined;
+      }
+    }
 
     return ok({
       id: form._id,
@@ -127,7 +135,7 @@ export const getPublic = query({
         name: workspace?.name,
         slug: workspace?.slug,
       },
-      name: form.name,
+      name: publishedName,
       slug: form.slug,
       status: form.status,
       schemaId: publishedSchema?._id ?? null,
@@ -219,6 +227,9 @@ export const publish = mutation({
     if (!formWithAccess.ok) return fail({ data: null, error: formWithAccess.error });
 
     const { form, access } = formWithAccess.data;
+    const subscriptionState = await requireWorkspaceSubscription(ctx, form.workspaceId);
+    if (!subscriptionState.ok) return fail({ data: null, error: subscriptionState.error });
+
     if (!form.draftSchemaId) return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_FOUND });
 
     const draftSchema = await ctx.db.get(form.draftSchemaId);
