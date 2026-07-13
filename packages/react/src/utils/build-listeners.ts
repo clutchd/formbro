@@ -28,7 +28,7 @@ export function buildListeners(tanstack: ListenerFormApi, listeners: CompiledLis
               tanstack.setFieldValue(step.targetId, nextValue.toLocaleUpperCase());
               break;
             default: {
-              const exhaustive: never = step;
+              const exhaustive: never = step.type;
               throw new Error(`Unsupported listener: ${exhaustive}`);
             }
           }
