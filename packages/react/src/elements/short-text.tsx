@@ -1,28 +1,7 @@
-import type { FieldComponentProps } from "../types.js";
-import { Input } from "../components/primitives.js";
-import { useFieldContext } from "../hooks/tanstack-context.js";
+import { createTextField } from "./text-field.js";
 
-export const component = function ShortTextComponent({
-  ariaDescribedBy,
-  ariaInvalid,
-  ariaRequired,
-  schema,
-}: FieldComponentProps) {
-  const field = useFieldContext<string>();
-
-  return (
-    <Input
-      id={schema.id}
-      name={schema.id}
-      type="text"
-      placeholder={schema?.placeholder ?? ""}
-      autoComplete="off"
-      value={field.state.value ?? ""}
-      onChange={(e) => field.handleChange(e.target.value)}
-      onBlur={field.handleBlur}
-      aria-invalid={ariaInvalid}
-      aria-required={ariaRequired}
-      aria-describedby={ariaDescribedBy}
-    />
-  );
-};
+export const component = createTextField({
+  autoComplete: "off",
+  kind: "input",
+  type: "text",
+});
