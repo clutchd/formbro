@@ -1,5 +1,5 @@
 import type { FormInput } from "./schema/form.js";
-import { FieldRegistry } from "./registry.js";
+import { getElementTarget } from "./registry.js";
 
 type FormElement = FormInput["elements"][number];
 type ElementDiff = {
@@ -30,8 +30,6 @@ export type FormSchemaChangeResult = {
   summary: string;
 };
 
-const fieldTypes = new Set<string>(FieldRegistry.map((field) => field.key));
-
 function elementLabel(element: FormElement) {
   if ("label" in element && typeof element.label === "string" && element.label.trim()) {
     return element.label.trim();
@@ -48,14 +46,6 @@ function formName(schema: FormInput) {
   return schema.name.trim() || "the form";
 }
 
-function elementTarget(
-  element: FormElement,
-): Extract<FormSchemaChangeTarget, "element" | "field" | "page"> {
-  if (element.type === "page_break") return "page";
-  if (fieldTypes.has(element.type)) return "field";
-  return "element";
-}
-
 function targetNoun(target: Extract<FormSchemaChangeTarget, "element" | "field" | "page">) {
   switch (target) {
     case "element":
@@ -68,7 +58,7 @@ function targetNoun(target: Extract<FormSchemaChangeTarget, "element" | "field" 
 }
 
 function elementUpdateLabel(element: FormElement) {
-  const target = elementTarget(element);
+  const target = getElementTarget(element.type);
 
   if (target === "field") return `Updated ${elementLabel(element)}`;
   if (target === "page") return `Updated page: ${elementLabel(element)}`;
@@ -83,10 +73,10 @@ function summarizeElementGroup(
   elements: FormElement[],
   type: FormSchemaChangeSummary["type"],
 ): FormSchemaChangeSummary[] {
-  const grouped = new Map<ReturnType<typeof elementTarget>, FormElement[]>();
+  const grouped = new Map<ReturnType<typeof getElementTarget>, FormElement[]>();
 
   for (const element of elements) {
-    const target = elementTarget(element);
+    const target = getElementTarget(element.type);
     grouped.set(target, [...(grouped.get(target) ?? []), element]);
   }
 
@@ -122,7 +112,7 @@ function countFormElements(elements: FormElement[]) {
   let pageBreaks = 0;
 
   for (const element of elements) {
-    const target = elementTarget(element);
+    const target = getElementTarget(element.type);
 
     if (target === "field") fields += 1;
     else if (target === "page") pageBreaks += 1;

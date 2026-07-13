@@ -1,8 +1,6 @@
 import { z } from "zod";
-import { FieldRegistry } from "./registry.js";
+import { getElementTarget } from "./registry.js";
 import { FormElementSchema, FormSchema, type FormInput, type FormOutput } from "./schema/form.js";
-
-const fieldTypes = new Set<string>(FieldRegistry.map((field) => field.key));
 
 export const FormSchemaChangeSummarySchema = z.strictObject({
   count: z.number().int().positive().optional(),
@@ -123,12 +121,6 @@ export type FormEditorAiMessageMetadata = {
   workspaceId?: string;
 };
 
-function elementTarget(element: FormOutput["elements"][number]): FormSchemaChangeSummary["target"] {
-  if (element.type === "page_break") return "page";
-  if (fieldTypes.has(element.type)) return "field";
-  return "element";
-}
-
 function pluralize(count: number, singular: string, plural = `${singular}s`) {
   return count === 1 ? singular : plural;
 }
@@ -167,7 +159,7 @@ function summarizeElementOperations(
   const countsByTarget = new Map<FormSchemaChangeSummary["target"], number>();
 
   for (const element of elements) {
-    const target = elementTarget(element);
+    const target = getElementTarget(element.type);
     countsByTarget.set(target, (countsByTarget.get(target) ?? 0) + 1);
   }
 
@@ -244,7 +236,9 @@ function assertSequentialPlacements(input: AddFormSchemaEditInput) {
 function assertAddOperationCategory(input: AddFormSchemaEditInput) {
   const expectedTarget =
     input.type === "add_pages" ? "page" : input.type === "add_fields" ? "field" : "element";
-  const mismatched = input.elements.filter((element) => elementTarget(element) !== expectedTarget);
+  const mismatched = input.elements.filter(
+    (element) => getElementTarget(element.type) !== expectedTarget,
+  );
 
   if (mismatched.length > 0) {
     throw new Error(

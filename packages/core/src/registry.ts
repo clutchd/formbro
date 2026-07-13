@@ -429,3 +429,8 @@ export const Registry = Object.fromEntries(
 };
 
 export const RegistryKeys = Object.keys(Registry) as [RegistryKey, ...RegistryKey[]];
+
+export function getElementTarget(type: RegistryKey): "element" | "field" | "page" {
+  if (type === "page_break") return "page";
+  return Registry[type].category;
+}
