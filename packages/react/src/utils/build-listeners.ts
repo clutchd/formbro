@@ -14,14 +14,23 @@ export function buildListeners(tanstack: ListenerFormApi, listeners: CompiledLis
 
     if (onChangeSteps.length > 0) {
       sourceListeners.onChange = ({ value }) => {
+        const nextValue = String(value ?? "");
+
         for (const step of onChangeSteps) {
           switch (step.type) {
             case "slugify":
-              slugify(tanstack, step.targetId)({ value: String(value ?? "") });
+              tanstack.setFieldValue(
+                step.targetId,
+                slugLib.default(nextValue, { lower: true, strict: true, trim: true }),
+              );
               break;
             case "uppercase":
-              uppercase(tanstack, step.targetId)({ value: String(value ?? "") });
+              tanstack.setFieldValue(step.targetId, nextValue.toLocaleUpperCase());
               break;
+            default: {
+              const exhaustive: never = step;
+              throw new Error(`Unsupported listener: ${exhaustive}`);
+            }
           }
         }
       };
@@ -33,19 +42,4 @@ export function buildListeners(tanstack: ListenerFormApi, listeners: CompiledLis
   }
 
   return result;
-}
-
-function slugify(tanstack: ListenerFormApi, target: string) {
-  return ({ value }: { value: string }) => {
-    tanstack.setFieldValue(
-      target,
-      slugLib.default(value, { lower: true, strict: true, trim: true }),
-    );
-  };
-}
-
-function uppercase(tanstack: ListenerFormApi, target: string) {
-  return async ({ value }: { value: string }) => {
-    tanstack.setFieldValue(target, value.toLocaleUpperCase());
-  };
 }

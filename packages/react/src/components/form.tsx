@@ -135,6 +135,12 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
     }
   };
 
+  const submitArea = (
+    <FormSubmitArea previewValidationStatus={previewValidationStatus} preview={preview}>
+      <state.tanstack.SubmitButton schema={state.schema} disabled={disabled} />
+    </FormSubmitArea>
+  );
+
   return (
     <form onSubmit={handleSubmit} className={cx("text-wrap", className)} {...props}>
       <state.tanstack.AppForm>
@@ -166,15 +172,11 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
                 <span aria-hidden="true">{">"}</span>
               </Button>
             ) : (
-              <FormSubmitArea previewValidationStatus={previewValidationStatus} preview={preview}>
-                <state.tanstack.SubmitButton schema={state.schema} disabled={disabled} />
-              </FormSubmitArea>
+              submitArea
             )}
           </div>
         ) : (
-          <FormSubmitArea previewValidationStatus={previewValidationStatus} preview={preview}>
-            <state.tanstack.SubmitButton schema={state.schema} disabled={disabled} />
-          </FormSubmitArea>
+          submitArea
         )}
       </state.tanstack.AppForm>
 
