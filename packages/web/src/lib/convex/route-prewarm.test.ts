@@ -148,12 +148,12 @@ describe("convex:route-prewarm", () => {
       }),
     } as unknown as ConvexReactClient;
 
-    await prewarmFormSubmissionsRoute(convex, "workspace-slug", "form-slug");
+    await prewarmFormSubmissionsRoute(convex, "submissions-workspace", "submissions-form");
 
     assert.deepEqual(calls, [
       {
         name: "workspace:context",
-        args: { workspaceSlug: "workspace-slug", formSlug: "form-slug" },
+        args: { workspaceSlug: "submissions-workspace", formSlug: "submissions-form" },
       },
       { name: "submissions:list", args: { formId: "form-id" } },
     ]);

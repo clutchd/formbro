@@ -27,7 +27,7 @@ function buildQueryKey(queryName: string, args: unknown): string {
   return `${queryName}:${JSON.stringify(convexToJson(args as Value))}`;
 }
 
-declare const routeQueryBrand: unique symbol;
+const routeQueryBrand = Symbol("routeQuery");
 type PrewarmQuery = {
   query: FunctionReference<"query">;
   args: Record<string, unknown>;
@@ -38,7 +38,7 @@ export function routeQuery<Query extends FunctionReference<"query">>(
   query: Query,
   args: FunctionArgs<Query>,
 ): PrewarmQuery {
-  return { query, args } as PrewarmQuery;
+  return { query, args, [routeQueryBrand]: true };
 }
 
 function makeRouteQuerySpec({ query, args }: PrewarmQuery): RouteQuerySpec {
