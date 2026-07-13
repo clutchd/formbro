@@ -1,12 +1,13 @@
 import type { ConvexReactClient } from "convex/react";
 import { api } from "@formbro/convex/_generated/api";
 import { prewarmWorkspaceFormRoute } from "app/(shell)/(app)/dashboard/[workspace]/[form]/_prewarm";
+import { prewarmFormSubmissionsRoute } from "app/(shell)/(app)/dashboard/[workspace]/[form]/submissions/_prewarm";
 import { prewarmWorkspaceRoute } from "app/(shell)/(app)/dashboard/[workspace]/_prewarm";
 import { prewarmWorkspaceSettingsRoute } from "app/(shell)/(app)/dashboard/[workspace]/settings/_prewarm";
 import { describe, it } from "bun:test";
 import { getFunctionName } from "convex/server";
 import assert from "node:assert/strict";
-import { prewarmRoute } from "./route-prewarm";
+import { prewarmRoute, routeQuery } from "./route-prewarm";
 
 describe("convex:route-prewarm", () => {
   it("dedupes prewarm queries within the dedupe window", () => {
@@ -17,7 +18,7 @@ describe("convex:route-prewarm", () => {
       },
     } as unknown as ConvexReactClient;
 
-    const queries = [{ query: api.workspace.list, args: {} }];
+    const queries = [routeQuery(api.workspace.list, {})];
 
     prewarmRoute(convex, queries);
     prewarmRoute(convex, queries);
@@ -130,5 +131,31 @@ describe("convex:route-prewarm", () => {
 
     assert.equal(calls.length, 1);
     assert.equal(calls[0]?.name, "workspace:context");
+  });
+
+  it("prewarms submissions from form context", async () => {
+    const calls: Array<{ name: string; args: unknown }> = [];
+    const convex = {
+      prewarmQuery: ({ query, args }: { query: typeof api.workspace.context; args: unknown }) => {
+        calls.push({ name: getFunctionName(query), args });
+      },
+      query: async () => ({
+        ok: true,
+        data: {
+          workspace: { _id: "workspace-id" },
+          form: { _id: "form-id" },
+        },
+      }),
+    } as unknown as ConvexReactClient;
+
+    await prewarmFormSubmissionsRoute(convex, "workspace-slug", "form-slug");
+
+    assert.deepEqual(calls, [
+      {
+        name: "workspace:context",
+        args: { workspaceSlug: "workspace-slug", formSlug: "form-slug" },
+      },
+      { name: "submissions:list", args: { formId: "form-id" } },
+    ]);
   });
 });

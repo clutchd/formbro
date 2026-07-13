@@ -1,6 +1,6 @@
 import type { ConvexReactClient } from "convex/react";
 import { api } from "@formbro/convex/_generated/api";
-import { prewarmDependentRoute } from "@/lib/convex/route-prewarm";
+import { prewarmDependentRoute, routeQuery } from "@/lib/convex/route-prewarm";
 
 export async function prewarmWorkspaceSettingsRoute(
   convex: ConvexReactClient,
@@ -13,12 +13,11 @@ export async function prewarmWorkspaceSettingsRoute(
     getDependents: (context) =>
       context?.ok
         ? [
-            { query: api.forms.list, args: { workspaceId: context.data.workspace._id } },
-            { query: api.workspace.listMembers, args: { workspaceId: context.data.workspace._id } },
-            { query: api.workspace.listInvites, args: { workspaceId: context.data.workspace._id } },
-            { query: api.workspace.billing, args: { workspaceId: context.data.workspace._id } },
+            routeQuery(api.forms.list, { workspaceId: context.data.workspace._id }),
+            routeQuery(api.workspace.listMembers, { workspaceId: context.data.workspace._id }),
+            routeQuery(api.workspace.listInvites, { workspaceId: context.data.workspace._id }),
+            routeQuery(api.workspace.billing, { workspaceId: context.data.workspace._id }),
           ]
         : [],
-    warning: "Workspace settings dependent prewarm failed",
   });
 }

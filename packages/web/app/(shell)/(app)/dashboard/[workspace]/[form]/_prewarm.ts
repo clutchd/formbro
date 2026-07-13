@@ -1,6 +1,6 @@
 import type { ConvexReactClient } from "convex/react";
 import { api } from "@formbro/convex/_generated/api";
-import { prewarmDependentRoute } from "@/lib/convex/route-prewarm";
+import { prewarmDependentRoute, routeQuery } from "@/lib/convex/route-prewarm";
 
 export async function prewarmWorkspaceFormRoute(
   convex: ConvexReactClient,
@@ -12,9 +12,6 @@ export async function prewarmWorkspaceFormRoute(
     query: api.workspace.context,
     args: { workspaceSlug, formSlug },
     getDependents: (context) =>
-      context?.ok
-        ? [{ query: api.forms.list, args: { workspaceId: context.data.workspace._id } }]
-        : [],
-    warning: "Workspace form dependent prewarm failed",
+      context?.ok ? [routeQuery(api.forms.list, { workspaceId: context.data.workspace._id })] : [],
   });
 }

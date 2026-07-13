@@ -1,6 +1,6 @@
 import type { ConvexReactClient } from "convex/react";
 import { api } from "@formbro/convex/_generated/api";
-import { prewarmDependentRoute } from "@/lib/convex/route-prewarm";
+import { prewarmDependentRoute, routeQuery } from "@/lib/convex/route-prewarm";
 
 export async function prewarmFormSubmissionsRoute(
   convex: ConvexReactClient,
@@ -13,8 +13,7 @@ export async function prewarmFormSubmissionsRoute(
     args: { workspaceSlug, formSlug },
     getDependents: (context) =>
       context?.ok && context.data.form
-        ? [{ query: api.submissions.list, args: { formId: context.data.form._id } }]
+        ? [routeQuery(api.submissions.list, { formId: context.data.form._id })]
         : [],
-    warning: "Form submissions dependent prewarm failed",
   });
 }

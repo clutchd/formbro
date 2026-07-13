@@ -17,9 +17,9 @@ function prewarmLog(event: string, details?: Record<string, unknown>) {
   console.debug("[prewarm]", event, details ?? "");
 }
 
-type RouteQuerySpec<Query extends FunctionReference<"query">> = {
-  query: Query;
-  args: FunctionArgs<Query>;
+type RouteQuerySpec = {
+  query: FunctionReference<"query">;
+  args: Record<string, unknown>;
   key: string;
 };
 
@@ -27,10 +27,21 @@ function buildQueryKey(queryName: string, args: unknown): string {
   return `${queryName}:${JSON.stringify(convexToJson(args as Value))}`;
 }
 
-function makeRouteQuerySpec<Query extends FunctionReference<"query">>(
+declare const routeQueryBrand: unique symbol;
+type PrewarmQuery = {
+  query: FunctionReference<"query">;
+  args: Record<string, unknown>;
+  readonly [routeQueryBrand]: true;
+};
+
+export function routeQuery<Query extends FunctionReference<"query">>(
   query: Query,
   args: FunctionArgs<Query>,
-): RouteQuerySpec<Query> {
+): PrewarmQuery {
+  return { query, args } as PrewarmQuery;
+}
+
+function makeRouteQuerySpec({ query, args }: PrewarmQuery): RouteQuerySpec {
   return {
     query,
     args,
@@ -43,11 +54,6 @@ type PrewarmRouteOptions = {
   extendSubscriptionFor?: number;
 };
 
-export type PrewarmQuery = {
-  query: FunctionReference<"query">;
-  args: Record<string, unknown>;
-};
-
 const lastPrewarmedAt = new Map<string, number>();
 
 export function prewarmRoute(
@@ -55,9 +61,7 @@ export function prewarmRoute(
   queries: PrewarmQuery[],
   options: PrewarmRouteOptions = {},
 ) {
-  const specs = queries.map(({ query, args }) =>
-    makeRouteQuerySpec(query, args as FunctionArgs<typeof query>),
-  );
+  const specs = queries.map(makeRouteQuerySpec);
   const dedupeMs = options.dedupeMs ?? PREWARM_DEDUPE_MS;
   const extendSubscriptionFor = options.extendSubscriptionFor ?? PREWARM_EXTEND_MS;
   const now = Date.now();
@@ -102,21 +106,22 @@ export async function prewarmDependentRoute<Query extends FunctionReference<"que
   convex,
   getDependents,
   query,
-  warning,
 }: {
   args: FunctionArgs<Query>;
   convex: ConvexReactClient;
   getDependents: (context: FunctionReturnType<Query>) => PrewarmQuery[];
   query: Query;
-  warning: string;
 }) {
-  prewarmRoute(convex, [{ query, args }]);
+  prewarmRoute(convex, [routeQuery(query, args)]);
 
   try {
     const dependents = getDependents(await convex.query(query, args));
     if (dependents.length > 0) prewarmRoute(convex, dependents);
   } catch (error) {
-    console.warn(warning, error);
+    console.warn("[prewarm] dependents.failed", {
+      query: getFunctionName(query),
+      error,
+    });
   }
 }
 

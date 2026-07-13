@@ -7,6 +7,7 @@ import { useConvex, useQuery, type ConvexReactClient } from "convex/react";
 import { useMemo } from "react";
 import {
   prewarmRoute,
+  routeQuery,
   useRoutePrewarm,
   type RoutePrewarmOptions,
 } from "@/lib/convex/route-prewarm";
@@ -19,7 +20,7 @@ const dashboard = createSegmentData<{
 const DASHBOARD_HREF = "/dashboard";
 
 function dashboardPrewarm(convex: ConvexReactClient) {
-  prewarmRoute(convex, [{ query: api.workspace.list, args: {} }]);
+  prewarmRoute(convex, [routeQuery(api.workspace.list, {})]);
 }
 
 export function useDashboardPrewarmIntent(options: RoutePrewarmOptions = {}) {
