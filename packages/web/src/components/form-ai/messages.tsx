@@ -31,6 +31,11 @@ import {
   type RemixiconComponentType,
 } from "@remixicon/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  hasVisibleAiMessageParts,
+  isToolPart,
+  isVisibleTextPart,
+} from "@/components/form-ai/thinking";
 
 export type FormEditorAiMessage = UIMessage<FormEditorAiMessageMetadata>;
 type FormEditorAiMessagePart = FormEditorAiMessage["parts"][number];
@@ -39,18 +44,6 @@ export type AiFeedbackTextPrompt = {
   messageId: string;
   rating: AiFeedbackRating;
 };
-
-function isToolPart(part: FormEditorAiMessagePart): part is ToolUIPart {
-  return part.type.startsWith("tool-");
-}
-
-function isVisibleTextPart(part: FormEditorAiMessagePart) {
-  return part.type === "text" && part.text.trim().length > 0;
-}
-
-function hasVisibleAiMessageParts(message: FormEditorAiMessage) {
-  return message.parts.some((part) => isVisibleTextPart(part) || isToolPart(part));
-}
 
 function isSchemaEditToolPart(part: ToolUIPart) {
   return part.type === "tool-edit_form_schema" || part.type === "tool-apply_form_schema";

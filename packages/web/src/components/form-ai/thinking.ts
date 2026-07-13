@@ -1,18 +1,18 @@
 import type { FormEditorAiMessageMetadata } from "@formbro/core/ai";
-import type { ChatStatus, UIMessage } from "ai";
+import type { ChatStatus, ToolUIPart, UIMessage } from "ai";
 
 type FormEditorAiMessage = UIMessage<FormEditorAiMessageMetadata>;
 type FormEditorAiMessagePart = FormEditorAiMessage["parts"][number];
 
-function isToolPart(part: FormEditorAiMessagePart) {
+export function isToolPart(part: FormEditorAiMessagePart): part is ToolUIPart {
   return part.type.startsWith("tool-");
 }
 
-function isVisibleTextPart(part: FormEditorAiMessagePart) {
+export function isVisibleTextPart(part: FormEditorAiMessagePart) {
   return part.type === "text" && part.text.trim().length > 0;
 }
 
-function hasVisibleAiMessageParts(message: FormEditorAiMessage) {
+export function hasVisibleAiMessageParts(message: FormEditorAiMessage) {
   return message.parts.some((part) => isVisibleTextPart(part) || isToolPart(part));
 }
 
