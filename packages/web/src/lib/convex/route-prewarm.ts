@@ -1,7 +1,7 @@
 "use client";
 
 import type { ConvexReactClient } from "convex/react";
-import type { FunctionArgs, FunctionReference } from "convex/server";
+import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex/server";
 import { getFunctionName } from "convex/server";
 import { convexToJson, type Value } from "convex/values";
 import { useRouter } from "next/navigation";
@@ -43,14 +43,16 @@ type PrewarmRouteOptions = {
   extendSubscriptionFor?: number;
 };
 
+export type PrewarmQuery = {
+  query: FunctionReference<"query">;
+  args: Record<string, unknown>;
+};
+
 const lastPrewarmedAt = new Map<string, number>();
 
 export function prewarmRoute(
   convex: ConvexReactClient,
-  queries: Array<{
-    query: FunctionReference<"query">;
-    args: Record<string, unknown>;
-  }>,
+  queries: PrewarmQuery[],
   options: PrewarmRouteOptions = {},
 ) {
   const specs = queries.map(({ query, args }) =>
@@ -92,6 +94,29 @@ export function prewarmRoute(
 
   if (skipped.length > 0) {
     prewarmLog("queries.skip", { keys: skipped });
+  }
+}
+
+export async function prewarmDependentRoute<Query extends FunctionReference<"query">>({
+  args,
+  convex,
+  getDependents,
+  query,
+  warning,
+}: {
+  args: FunctionArgs<Query>;
+  convex: ConvexReactClient;
+  getDependents: (context: FunctionReturnType<Query>) => PrewarmQuery[];
+  query: Query;
+  warning: string;
+}) {
+  prewarmRoute(convex, [{ query, args }]);
+
+  try {
+    const dependents = getDependents(await convex.query(query, args));
+    if (dependents.length > 0) prewarmRoute(convex, dependents);
+  } catch (error) {
+    console.warn(warning, error);
   }
 }
 
