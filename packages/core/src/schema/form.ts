@@ -122,11 +122,7 @@ export type FormOnSuccess<T extends FormInput = FormInput, TData = undefined> = 
   data: TData;
 }) => void;
 
-export type FormOnError<T extends FormInput = FormInput> = ({
-  error,
-}: {
-  error: unknown;
-}) => void;
+export type FormOnError<T extends FormInput = FormInput> = ({ error }: { error: unknown }) => void;
 
 export interface IFieldProps {
   schema: CompiledField;

@@ -1,9 +1,9 @@
 "use client";
 
 import type { ChangeEvent, ComponentProps } from "react";
+import type { FieldComponentProps } from "../types.js";
 import { Input, Textarea } from "../components/primitives.js";
 import { useFieldContext } from "../hooks/tanstack-context.js";
-import type { FieldComponentProps } from "../types.js";
 
 type TextFieldOptions =
   | {

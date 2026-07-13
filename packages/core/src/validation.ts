@@ -188,17 +188,13 @@ function range(
 
   if (schema instanceof z.ZodString) {
     const next =
-      rule.type === "min"
-        ? schema.min(rule.value, message)
-        : schema.max(rule.value, message);
+      rule.type === "min" ? schema.min(rule.value, message) : schema.max(rule.value, message);
     return optional ? next.optional() : next;
   }
 
   if (schema instanceof z.ZodNumber) {
     const next =
-      rule.type === "min"
-        ? schema.min(rule.value, message)
-        : schema.max(rule.value, message);
+      rule.type === "min" ? schema.min(rule.value, message) : schema.max(rule.value, message);
     return optional ? next.optional() : next;
   }
 
