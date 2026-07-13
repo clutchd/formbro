@@ -1,8 +1,16 @@
+import type { Metadata } from "next";
 import { Card } from "@formbro/ui/card";
 import { Logo } from "@formbro/ui/logo";
 import Link from "next/link";
 import { type PropsWithChildren, Suspense } from "react";
 import { AuthError } from "./auth-error";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default function Layout({ children }: PropsWithChildren) {
   return (

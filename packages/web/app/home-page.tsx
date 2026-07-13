@@ -673,6 +673,9 @@ function LandingHeader({
         <Logo />
       </Link>
       <nav className="hidden items-center gap-6 font-mono text-xs tracking-wider text-muted-foreground uppercase md:flex">
+        <Link href="/templates" className="hover:text-foreground">
+          Templates
+        </Link>
         <Link href="#builder" className="hover:text-foreground">
           Builder
         </Link>
@@ -683,6 +686,12 @@ function LandingHeader({
           Pricing
         </Link>
       </nav>
+      <Link
+        href="/templates"
+        className="font-mono text-[0.65rem] tracking-wider text-muted-foreground uppercase hover:text-foreground md:hidden"
+      >
+        Templates
+      </Link>
       {isAuthenticated ? (
         <Button asChild variant="outline">
           <Link
@@ -744,6 +753,8 @@ function HeroSection({
   isAuthenticated: boolean;
   dashboardPrewarmIntent: LinkIntent;
 }) {
+  const captureMarketingCta = useMarketingCtaCapture();
+
   return (
     <section className="relative mx-auto w-full max-w-7xl px-5 pt-10 pb-16 sm:px-8 lg:pt-16">
       <div className="absolute inset-x-0 top-0 -z-10 h-[560px] border-b bg-muted/30" />
@@ -768,6 +779,20 @@ function HeroSection({
           />
           <SecondaryCta isAuthenticated={isAuthenticated} />
         </div>
+        <Link
+          href="/templates"
+          className="mt-5 inline-flex rounded-sm font-mono text-xs tracking-wider text-muted-foreground uppercase underline-offset-4 hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          onClick={() =>
+            captureMarketingCta({
+              audience: isAuthenticated ? "authenticated" : "anonymous",
+              href: "/templates",
+              label: "Browse form templates",
+              location: "hero_tertiary",
+            })
+          }
+        >
+          Browse form templates
+        </Link>
 
         <div className="mt-10 grid max-w-xl grid-cols-3 border-y bg-card/70">
           {HERO_STATS.map((stat) => (
@@ -833,13 +858,13 @@ function PrimaryCta({
 function SecondaryCta({ isAuthenticated }: { isAuthenticated: boolean }) {
   const captureMarketingCta = useMarketingCtaCapture();
 
-  return isAuthenticated ? (
+  return (
     <Button asChild variant="outline" size="lg">
       <Link
         href="#builder"
         onClick={() =>
           captureMarketingCta({
-            audience: "authenticated",
+            audience: isAuthenticated ? "authenticated" : "anonymous",
             href: "#builder",
             label: "Try the builder",
             location: "hero_secondary",
@@ -847,22 +872,6 @@ function SecondaryCta({ isAuthenticated }: { isAuthenticated: boolean }) {
         }
       >
         Try the builder
-      </Link>
-    </Button>
-  ) : (
-    <Button asChild variant="outline" size="lg">
-      <Link
-        href="/sign-in"
-        onClick={() =>
-          captureMarketingCta({
-            audience: "anonymous",
-            href: "/sign-in",
-            label: "Sign in",
-            location: "hero_secondary",
-          })
-        }
-      >
-        Sign in
       </Link>
     </Button>
   );
