@@ -182,7 +182,10 @@ export function useRoutePrewarm(
   const { eager = false, debounceMs } = options;
   const router = useRouter();
   const prewarmRef = useRef(prewarmFn);
-  prewarmRef.current = prewarmFn;
+
+  useEffect(() => {
+    prewarmRef.current = prewarmFn;
+  }, [prewarmFn]);
 
   const prewarm = useCallback(() => {
     prewarmLog("run", { href });
