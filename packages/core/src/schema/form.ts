@@ -2,7 +2,6 @@ import { z } from "zod";
 import type { CompiledField } from "../compile.js";
 import type { FieldRegistryKey } from "../registry.js";
 import type { ExtractFormData } from "./extract.js";
-// import type { TanStackForm } from "@/forms/hooks/tanstack";
 import { ElementSchema } from "./element.js";
 import { FieldSchema } from "./field.js";
 import { IdSchema } from "./id.js";
@@ -105,36 +104,28 @@ export type FormActionResult<TData = undefined, TError = unknown> =
 
 export type FormAction<T extends FormInput = FormInput, TData = undefined> = ({
   values,
-  //tanstack,
 }: {
   values: FormValues<T>;
-  //tanstack?: TanStackForm;
 }) => FormActionResult<TData> | Promise<FormActionResult<TData>>;
 
 export type FormOnMutate<T extends FormInput = FormInput> = ({
   values,
-  //tanstack,
 }: {
   values: FormValues<T>;
-  //tanstack?: TanStackForm;
 }) => FormValues<T>;
 
 export type FormOnSuccess<T extends FormInput = FormInput, TData = undefined> = ({
   result,
   data,
-  //tanstack,
 }: {
   result: FormValues<T>;
   data: TData;
-  //tanstack?: TanStackForm;
 }) => void;
 
 export type FormOnError<T extends FormInput = FormInput> = ({
   error,
-  //tanstack,
 }: {
   error: unknown;
-  //tanstack?: TanStackForm;
 }) => void;
 
 export interface IFieldProps {
