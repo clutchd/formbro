@@ -21,7 +21,7 @@ import { TypographyH2, TypographyP, TypographySubheading } from "@formbro/ui/typ
 import { RiDeleteBinLine } from "@remixicon/react";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
 import { useRequiredWorkspaceFormData } from "../_data-provider";
@@ -103,13 +103,11 @@ function FormMetric({
   );
 }
 
-function formatDate(value: number) {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(value));
-}
+const dateFormatter = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+});
 
 export default function FormSettingsPage() {
   const router = useRouter();
@@ -126,7 +124,7 @@ export default function FormSettingsPage() {
 
   const isClosed = pendingClosed ?? form.status === "closed";
 
-  const handleDeleteForm = useCallback(async () => {
+  const handleDeleteForm = async () => {
     setIsDeleting(true);
     const result = await deleteForm({ formId: form._id });
     if (!result.ok) {
@@ -140,29 +138,26 @@ export default function FormSettingsPage() {
     setConfirmOpen(false);
     toast.success("Form deleted successfully");
     router.push(`/dashboard/${workspace.slug}`);
-  }, [deleteForm, form._id, router, workspace.slug]);
+  };
 
-  const handleCloseFormChange = useCallback(
-    (checked: boolean) => {
-      const status = checked ? "closed" : "open";
-      setPendingClosed(checked);
-      void updateFormStatus({ formId: form._id, status }).then((result) => {
-        if (!result.ok) {
-          setPendingClosed(null);
-          toast.error("Failed to update form status.", {
-            description: getErrorMessage(result.error),
-          });
-        }
-      });
-    },
-    [updateFormStatus, form._id],
-  );
+  const handleCloseFormChange = (checked: boolean) => {
+    const status = checked ? "closed" : "open";
+    setPendingClosed(checked);
+    void updateFormStatus({ formId: form._id, status }).then((result) => {
+      if (!result.ok) {
+        setPendingClosed(null);
+        toast.error("Failed to update form status.", {
+          description: getErrorMessage(result.error),
+        });
+      }
+    });
+  };
 
   return (
     <Page className="space-y-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <FormMetric label="Status" className="capitalize" value={form.status} />
-        <FormMetric label="Created" value={formatDate(form._creationTime)} />
+        <FormMetric label="Created" value={dateFormatter.format(new Date(form._creationTime))} />
       </div>
 
       <SettingsSection title="Access Controls">

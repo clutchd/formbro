@@ -19,7 +19,7 @@ import { TypographyP, TypographySubheading } from "@formbro/ui/typography";
 import { RiDeleteBinLine } from "@remixicon/react";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
@@ -35,7 +35,7 @@ export default function BillingSettingsPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDeleteWorkspace = useCallback(async () => {
+  const handleDeleteWorkspace = async () => {
     setIsDeleting(true);
     const result = await deleteWorkspace({ workspaceId: billing.workspaceId });
     if (!result.ok) {
@@ -49,7 +49,7 @@ export default function BillingSettingsPage() {
     setConfirmOpen(false);
     toast.success("Workspace deleted successfully");
     router.push(`/dashboard`);
-  }, [deleteWorkspace, billing.workspaceId, router]);
+  };
 
   return (
     <Page className="space-y-5">

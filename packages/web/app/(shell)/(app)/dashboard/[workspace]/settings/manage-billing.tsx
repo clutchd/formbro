@@ -7,7 +7,7 @@ import { TypographyH1, TypographySubheading } from "@formbro/ui/typography";
 import { RiExternalLinkLine } from "@remixicon/react";
 import { useAction } from "convex/react";
 import { redirect } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
@@ -16,9 +16,7 @@ function ManageBillingButton() {
   const [isLoading, setIsLoading] = useState(false);
   const createPortalSession = useAction(api.billing.createPortalSession);
 
-  const handleManageBilling = useCallback(async () => {
-    if (!workspace) return;
-
+  const handleManageBilling = async () => {
     setIsLoading(true);
 
     const result = await createPortalSession({
@@ -36,7 +34,7 @@ function ManageBillingButton() {
 
     setIsLoading(false);
     redirect(result.data.url);
-  }, [workspace, createPortalSession]);
+  };
 
   if (!billing.canManageBilling) return null;
 
@@ -44,7 +42,7 @@ function ManageBillingButton() {
     <Button
       variant="outline"
       className="group/button"
-      disabled={!workspace || !billing.hasActiveSubscription}
+      disabled={!billing.hasActiveSubscription}
       onClick={() => void handleManageBilling()}
     >
       Manage Billing {isLoading ? <Spinner /> : <RiExternalLinkLine className="size-4" />}

@@ -13,7 +13,7 @@ import { displayFont, tuiFont, TypographySubheading } from "@formbro/ui/typograp
 import { RiCheckboxCircleLine } from "@remixicon/react";
 import { useAction } from "convex/react";
 import { redirect } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
@@ -175,31 +175,28 @@ export function PlansPanel() {
 
   const settingsUrl = `${APP_URL}/dashboard/${workspace.slug}/settings`;
 
-  const handleSelectPlan = useCallback(
-    async (plan: Plan) => {
-      setLoadingPlan(plan);
+  const handleSelectPlan = async (plan: Plan) => {
+    setLoadingPlan(plan);
 
-      const result = await createSubscriptionCheckout({
-        workspaceId: billing.workspaceId,
-        plan,
-        interval,
-        successUrl: `${settingsUrl}?checkout=success`,
-        cancelUrl: `${settingsUrl}?checkout=cancelled`,
-      });
+    const result = await createSubscriptionCheckout({
+      workspaceId: billing.workspaceId,
+      plan,
+      interval,
+      successUrl: `${settingsUrl}?checkout=success`,
+      cancelUrl: `${settingsUrl}?checkout=cancelled`,
+    });
 
-      if (!result.ok) {
-        setLoadingPlan(null);
-        toast.error("Failed to start checkout", {
-          description: getErrorMessage(result.error),
-        });
-        return;
-      }
-
+    if (!result.ok) {
       setLoadingPlan(null);
-      redirect(result.data.url);
-    },
-    [billing.workspaceId, createSubscriptionCheckout, interval, settingsUrl],
-  );
+      toast.error("Failed to start checkout", {
+        description: getErrorMessage(result.error),
+      });
+      return;
+    }
+
+    setLoadingPlan(null);
+    redirect(result.data.url);
+  };
 
   return (
     <section className="space-y-5 lg:col-span-2">
