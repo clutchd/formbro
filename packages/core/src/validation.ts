@@ -106,14 +106,16 @@ function buildFieldValidators(validatorPlan: CompiledValidator) {
           validator = rule.value ? required(validatorPlan, validator) : validator;
           break;
         case "min":
-          validator = min(validatorPlan, rule, validator);
-          break;
         case "max":
-          validator = max(validatorPlan, rule, validator);
+          validator = range(validatorPlan, rule, validator);
           break;
         case "regex":
           validator = regex(validatorPlan, rule, validator);
           break;
+        default: {
+          const exhaustive: never = rule;
+          throw new Error(`Unsupported validation rule: ${exhaustive}`);
+        }
       }
     }
 
@@ -175,27 +177,28 @@ function required(validatorPlan: CompiledValidator, validator: z.ZodTypeAny): z.
   return validator;
 }
 
-function min(
+function range(
   validatorPlan: CompiledValidator,
-  rule: Extract<FormRule, { type: "min" }>,
+  rule: Extract<FormRule, { type: "max" | "min" }>,
   validator: z.ZodTypeAny,
 ): z.ZodTypeAny {
   const optional = validator instanceof z.ZodOptional;
   const schema = optional ? validator.unwrap() : validator;
+  const message = rule.message || getRangeMessage(validatorPlan, rule.type, rule.value);
 
   if (schema instanceof z.ZodString) {
-    const next = schema.min(
-      rule.value,
-      rule.message || `${getDisplayName(validatorPlan)} must be at least ${rule.value} characters`,
-    );
+    const next =
+      rule.type === "min"
+        ? schema.min(rule.value, message)
+        : schema.max(rule.value, message);
     return optional ? next.optional() : next;
   }
 
   if (schema instanceof z.ZodNumber) {
-    const next = schema.min(
-      rule.value,
-      rule.message || `${getDisplayName(validatorPlan)} must be at least ${rule.value}`,
-    );
+    const next =
+      rule.type === "min"
+        ? schema.min(rule.value, message)
+        : schema.max(rule.value, message);
     return optional ? next.optional() : next;
   }
 
@@ -207,67 +210,17 @@ function min(
         }
 
         if (typeof value === "string") {
-          return value.length >= rule.value;
+          return rule.type === "min" ? value.length >= rule.value : value.length <= rule.value;
         }
 
         if (typeof value === "number") {
-          return value >= rule.value;
+          return rule.type === "min" ? value >= rule.value : value <= rule.value;
         }
 
         return false;
       },
       {
-        message: rule.message || getRangeMessage(validatorPlan, "min", rule.value),
-      },
-    );
-  }
-
-  return validator;
-}
-
-function max(
-  validatorPlan: CompiledValidator,
-  rule: Extract<FormRule, { type: "max" }>,
-  validator: z.ZodTypeAny,
-): z.ZodTypeAny {
-  const optional = validator instanceof z.ZodOptional;
-  const schema = optional ? validator.unwrap() : validator;
-
-  if (schema instanceof z.ZodString) {
-    const next = schema.max(
-      rule.value,
-      rule.message || `${getDisplayName(validatorPlan)} must be at most ${rule.value} characters`,
-    );
-    return optional ? next.optional() : next;
-  }
-
-  if (schema instanceof z.ZodNumber) {
-    const next = schema.max(
-      rule.value,
-      rule.message || `${getDisplayName(validatorPlan)} must be at most ${rule.value}`,
-    );
-    return optional ? next.optional() : next;
-  }
-
-  if (schema instanceof z.ZodUnion) {
-    return schema.refine(
-      (value) => {
-        if (value === "") {
-          return true;
-        }
-
-        if (typeof value === "string") {
-          return value.length <= rule.value;
-        }
-
-        if (typeof value === "number") {
-          return value <= rule.value;
-        }
-
-        return false;
-      },
-      {
-        message: rule.message || getRangeMessage(validatorPlan, "max", rule.value),
+        message,
       },
     );
   }
