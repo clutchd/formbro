@@ -25,7 +25,6 @@ import {
 } from "./billingUtils";
 import { defineErrors } from "./errors";
 import { _deleteForm, ERRORS as FORM_ERRORS } from "./forms";
-import { datetimeFormatter } from "./lib";
 
 export const ERRORS = defineErrors({
   DELETE_WORKSPACE_PERMISSION_DENIED: {
@@ -399,7 +398,6 @@ export const deleteWorkspace = mutation({
       return fail({ data: null, error: ERRORS.DELETE_WORKSPACE_ACTIVE_SUBSCRIPTION });
     }
 
-    // Delete all workspace members
     const members = await ctx.db
       .query("workspaceMembers")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))
@@ -409,7 +407,6 @@ export const deleteWorkspace = mutation({
       await ctx.db.delete(member._id);
     }
 
-    // Delete all workspace forms
     const forms = await ctx.db
       .query("forms")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", args.workspaceId))

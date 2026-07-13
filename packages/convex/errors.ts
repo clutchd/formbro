@@ -13,7 +13,7 @@ function isResultError(
   AnyResult<unknown>,
   { ok: false; error: { message: string; status: Status | StatusCode } }
 >["error"] {
-  if (!(value !== null && typeof value === "object")) return false;
+  if (value === null || typeof value !== "object") return false;
 
   return (
     "code" in value &&
@@ -73,11 +73,9 @@ export class FormBroError extends ConvexError<
       context && Object.keys(context).length > 0
         ? {
             ...error,
-            context: context
-              ? (Object.fromEntries(
-                  Object.entries(context).filter(([, value]) => value !== undefined),
-                ) as Record<string, Value>)
-              : undefined,
+            context: Object.fromEntries(
+              Object.entries(context).filter(([, value]) => value !== undefined),
+            ) as Record<string, Value>,
           }
         : error;
     super(payload);

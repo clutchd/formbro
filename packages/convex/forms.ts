@@ -117,7 +117,7 @@ export const getPublic = query({
     if (!form) return null;
 
     const [publishedSchema, workspace] = await Promise.all([
-      form.publishedSchemaId ? await ctx.db.get(form.publishedSchemaId) : null,
+      form.publishedSchemaId ? ctx.db.get(form.publishedSchemaId) : null,
       ctx.db.get(form.workspaceId),
     ]);
 

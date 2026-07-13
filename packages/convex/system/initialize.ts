@@ -65,9 +65,6 @@ const initWorkspace = async (
       })
     ).workspaceId;
 
-  if (existing) {
-  }
-
   const existingMembers = await ctx.db
     .query("workspaceMembers")
     .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
