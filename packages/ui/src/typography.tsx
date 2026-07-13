@@ -37,7 +37,7 @@ export function TypographyH1({ children, className, ...props }: React.ComponentP
   );
 }
 
-export function TypographyH2({ children, className, ...props }: React.ComponentProps<"h1">) {
+export function TypographyH2({ children, className, ...props }: React.ComponentProps<"h2">) {
   return (
     <h2 className={twx(h2, className)} {...props}>
       {children}
