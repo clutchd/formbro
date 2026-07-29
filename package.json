@@ -13,7 +13,11 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
-    "lint": "oxlint --fix && oxfmt"
+    "format": "oxfmt --write .",
+    "lint": "oxlint --fix .",
+    "test": "turbo test",
+    "typecheck": "turbo typecheck",
+    "verify": "oxfmt --check . && oxlint . && bun run test && bun run typecheck && bun run build"
   },
   "devDependencies": {
     "@types/bun": "catalog:",

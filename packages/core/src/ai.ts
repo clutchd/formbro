@@ -106,12 +106,12 @@ export const FinishFormSchemaEditOutputSchema = z.strictObject({
 });
 
 export type FormSchemaChangeSummary = z.output<typeof FormSchemaChangeSummarySchema>;
-export type FormSchemaEditInput = z.output<typeof FormSchemaEditInputSchema>;
+export type FormSchemaEditInput = z.input<typeof FormSchemaEditInputSchema>;
 export type FormSchemaEditInputPreview = z.output<typeof FormSchemaEditInputPreviewSchema>;
 export type FormSchemaEditOutput = z.output<typeof FormSchemaEditOutputSchema>;
 export type FinishFormSchemaEditOutput = z.output<typeof FinishFormSchemaEditOutputSchema>;
 type AddFormSchemaEditInput = Extract<
-  FormSchemaEditInput,
+  z.output<typeof FormSchemaEditInputSchema>,
   { type: "add_fields" | "add_layout_elements" | "add_pages" }
 >;
 
@@ -294,16 +294,17 @@ function assertExistingElementIds(schema: FormInput, ids: string[]) {
 export function applyFormSchemaEdit(
   schema: FormInput,
   input: FormSchemaEditInput,
-): { operations: FormSchemaChangeSummary[]; schema: FormInput } {
+): { operations: FormSchemaChangeSummary[]; schema: FormOutput } {
   const current = FormSchema.parse(schema);
+  const edit = FormSchemaEditInputSchema.parse(input);
   let operations: FormSchemaChangeSummary[] = [];
   let next: FormOutput = current;
 
-  switch (input.type) {
+  switch (edit.type) {
     case "set_form_name": {
       next = {
         ...current,
-        name: input.name,
+        name: edit.name,
       };
       operations = [{ label: "Updated form name", target: "title", type: "update" }];
       break;
@@ -313,29 +314,29 @@ export function applyFormSchemaEdit(
     case "add_pages": {
       next = {
         ...current,
-        elements: insertAddedElements(current, input),
+        elements: insertAddedElements(current, edit),
       };
-      operations = summarizeElementOperations(input.elements, "add");
+      operations = summarizeElementOperations(edit.elements, "add");
       break;
     }
     case "update_elements": {
       assertExistingElementIds(
         current,
-        input.elements.map((element) => element.id),
+        edit.elements.map((element) => element.id),
       );
 
-      const updatesById = new Map(input.elements.map((element) => [element.id, element]));
+      const updatesById = new Map(edit.elements.map((element) => [element.id, element]));
       next = {
         ...current,
         elements: current.elements.map((element) => updatesById.get(element.id) ?? element),
       };
-      operations = summarizeElementOperations(input.elements, "update");
+      operations = summarizeElementOperations(edit.elements, "update");
       break;
     }
     case "remove_elements": {
-      assertExistingElementIds(current, input.ids);
+      assertExistingElementIds(current, edit.ids);
 
-      const removedIds = new Set(input.ids);
+      const removedIds = new Set(edit.ids);
       const removedElements = current.elements.filter((element) => removedIds.has(element.id));
       next = {
         ...current,
@@ -347,12 +348,12 @@ export function applyFormSchemaEdit(
     case "move_elements": {
       assertExistingElementIds(
         current,
-        input.placements.map((placement) => placement.id),
+        edit.placements.map((placement) => placement.id),
       );
 
       let elements = current.elements;
 
-      for (const placement of input.placements) {
+      for (const placement of edit.placements) {
         const moving = elements.find((element) => element.id === placement.id);
         if (!moving) continue;
 
@@ -368,8 +369,8 @@ export function applyFormSchemaEdit(
       };
       operations = [
         {
-          count: input.placements.length,
-          label: `Moved ${input.placements.length} ${pluralize(input.placements.length, "element")}`,
+          count: edit.placements.length,
+          label: `Moved ${edit.placements.length} ${pluralize(edit.placements.length, "element")}`,
           target: "element",
           type: "update",
         },
@@ -379,7 +380,7 @@ export function applyFormSchemaEdit(
     case "update_submit": {
       next = {
         ...current,
-        submit: input.submit ?? undefined,
+        submit: edit.submit ?? undefined,
       };
       operations = [{ label: "Updated submit button", target: "submit", type: "update" }];
       break;

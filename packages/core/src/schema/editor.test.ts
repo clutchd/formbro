@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import type { FormElementInput } from "./form";
 import { RegistryKeys } from "../registry";
 import {
   convertFormElementDraftType,
@@ -10,7 +11,9 @@ import {
 
 describe("form editor schema helpers", () => {
   it("creates unique ids for draft elements", () => {
-    const elements = [{ id: "short_text_abc", name: "Name", type: "short_text", label: "Name" }];
+    const elements: FormElementInput[] = [
+      { id: "short_text_abc", name: "Name", type: "short_text", label: "Name" },
+    ];
 
     expect(createFormElementId({ elements, suffix: "abc", type: "short_text" })).toBe(
       "short_text_abc_2",
@@ -60,13 +63,13 @@ describe("form editor schema helpers", () => {
   });
 
   it("only preserves options for option-backed targets", () => {
-    const source = {
+    const source: FormElementInput = {
       id: "choice",
       name: "Choice",
       type: "single_select",
       label: "Favorite option",
       options: ["A", "B"],
-    } as const;
+    };
 
     expect(convertFormElementDraftType({ element: source, type: "single_select" })).toMatchObject({
       options: ["A", "B"],
