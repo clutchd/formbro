@@ -7,6 +7,9 @@
     "./package.json": "./package.json",
     "./*": "./src/*.ts"
   },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
   "dependencies": {
     "cnfast": "0.0.8",
     "nanoid": "5.1.11",

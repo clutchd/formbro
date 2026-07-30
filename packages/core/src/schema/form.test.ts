@@ -36,7 +36,7 @@ describe("FormSchema", () => {
       ],
     });
 
-    expect(parsed.elements[0]?.rules).toBeUndefined();
+    expect(parsed.elements[0]).not.toHaveProperty("rules");
   });
 
   it("rejects invalid ids", () => {

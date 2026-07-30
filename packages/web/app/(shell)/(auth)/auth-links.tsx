@@ -1,39 +1,32 @@
 "use client";
 
-import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { Spinner } from "@formbro/ui/spinner";
 import { useState } from "react";
+import { toast } from "sonner";
 import { signIn } from "@/lib/auth/client";
 
 function AuthLink({
   onClick,
   children,
   icon,
+  disabled,
+  isLoading,
 }: {
   onClick: () => Promise<unknown>;
   children: React.ReactNode;
   icon: React.ReactNode;
+  disabled: boolean;
+  isLoading: boolean;
 }) {
-  const [isLoading, setIsLoading] = useState(false);
-
-  async function handleClick() {
-    setIsLoading(true);
-    try {
-      await onClick();
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
   return (
     <Button
       type="button"
-      onClick={handleClick}
-      aria-disabled={isLoading}
+      onClick={onClick}
+      disabled={disabled}
       variant="outline"
       size="lg"
-      className={twx("w-full gap-3", isLoading ? "pointer-events-none opacity-70" : "")}
+      className="w-full gap-3"
     >
       {isLoading ? <Spinner className="size-5" /> : icon}
       {children}
@@ -76,18 +69,36 @@ function MicrosoftIcon({ className }: { className?: string }) {
 }
 
 export function AuthLinks({ callbackURL = "/dashboard" }: { callbackURL?: string }) {
+  const [pendingProvider, setPendingProvider] = useState<"google" | "microsoft" | null>(null);
+
+  async function handleSignIn(provider: "google" | "microsoft") {
+    if (pendingProvider) return;
+    setPendingProvider(provider);
+
+    try {
+      await signIn.social({ provider, callbackURL });
+    } catch {
+      setPendingProvider(null);
+      toast.error("Could not start sign in. Check your connection and try again.");
+    }
+  }
+
   return (
     <>
       <AuthLink
-        onClick={() => signIn.social({ provider: "google", callbackURL })}
+        onClick={() => handleSignIn("google")}
         icon={<GoogleIcon className="size-5" />}
+        disabled={pendingProvider !== null}
+        isLoading={pendingProvider === "google"}
       >
         Continue with Google
       </AuthLink>
 
       <AuthLink
-        onClick={() => signIn.social({ provider: "microsoft", callbackURL })}
+        onClick={() => handleSignIn("microsoft")}
         icon={<MicrosoftIcon className="size-5" />}
+        disabled={pendingProvider !== null}
+        isLoading={pendingProvider === "microsoft"}
       >
         Continue with Microsoft
       </AuthLink>

@@ -6,11 +6,11 @@ import {
   parseFormSchemaEditInputPreview,
   parseFormSchemaEditOutput,
 } from "./ai";
-import { createDefaultFormSchema, type FormInput } from "./schema/form";
+import { createDefaultFormSchema, DEFAULT_FORM_NAME, type FormInput } from "./schema/form";
 
 const blankSchema: FormInput = {
   id: "demo",
-  name: "Untitled form",
+  name: DEFAULT_FORM_NAME,
   elements: [],
   submit: { label: "Submit", size: "full-width" },
 };
