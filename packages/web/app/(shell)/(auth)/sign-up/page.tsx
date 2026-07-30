@@ -1,5 +1,12 @@
+import type { Metadata } from "next";
 import { authCallbackURL, authHref } from "@/lib/auth/callback-url";
 import { Auth } from "../auth";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/sign-up",
+  },
+};
 
 export default async function SignUpPage({
   searchParams,
