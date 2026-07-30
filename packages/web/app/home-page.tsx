@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormInput } from "@formbro/core/schema/form";
+import { DEFAULT_FORM_NAME, type FormInput } from "@formbro/core/schema/form";
 import { applyFormSchemaEdit, type FormSchemaEditInput } from "@formbro/core/ai";
 import { FormBuilderCanvas } from "@formbro/react/builder";
 import { Form } from "@formbro/react/components/form";
@@ -106,7 +106,7 @@ const BUILDER_DEMO_BETWEEN_STEP_DELAY_MS = 160;
 const BUILDER_DEMO_BASE_SCHEMA: FormInput = {
   id: "homepage_builder_demo",
   version: "1.0.0",
-  name: "Untitled form",
+  name: DEFAULT_FORM_NAME,
   elements: [],
   submit: { label: "Submit", size: "full-width" },
 };

@@ -28,6 +28,8 @@ const FormToastsSchema = z
   ])
   .optional();
 
+export const DEFAULT_FORM_NAME = "Untitled form";
+
 export const FormElementSchema = z.union([ElementSchema, FieldSchema]);
 
 export const FormSchema = z

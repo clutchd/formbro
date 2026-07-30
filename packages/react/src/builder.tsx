@@ -1,6 +1,6 @@
 "use client";
 
-import type { FormInput } from "@formbro/core/schema/form";
+import { DEFAULT_FORM_NAME, type FormInput } from "@formbro/core/schema/form";
 import {
   closestCenter,
   DndContext,
@@ -142,7 +142,7 @@ export function FormBuilderCanvas({
   };
 
   const updateFormName = (name: string) => {
-    onSchemaChange((current) => ({ ...current, name: name || "Untitled form" }));
+    onSchemaChange((current) => ({ ...current, name: name || DEFAULT_FORM_NAME }));
   };
 
   const updateSubmit = (updater: (submit: SubmitConfig) => SubmitConfig) => {
