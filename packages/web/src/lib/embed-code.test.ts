@@ -1,0 +1,32 @@
+import { describe, expect, test } from "bun:test";
+import { buildEmbedCode } from "./embed-code";
+
+describe("dashboard embed code", () => {
+  test("builds hosted, automatic, and iframe integration options", () => {
+    expect(
+      buildEmbedCode({
+        embedUrl: "https://embed.formbro.com/",
+        formName: "Employment application",
+        publicId: "employment-application",
+      }),
+    ).toEqual({
+      hostedUrl: "https://embed.formbro.com/e/employment-application",
+      automatic:
+        '<div data-formbro-id="employment-application" data-formbro-title="Employment application"></div>\n<script async src="https://embed.formbro.com/embed.js"></script>',
+      iframe:
+        '<iframe src="https://embed.formbro.com/e/employment-application" title="Employment application" width="100%" height="640" loading="eager" style="border: 0; display: block;"></iframe>',
+    });
+  });
+
+  test("encodes route segments and escapes HTML attributes", () => {
+    const result = buildEmbedCode({
+      embedUrl: "https://embed.formbro.com",
+      formName: 'Jobs & "Careers"',
+      publicId: "jobs/us",
+    });
+
+    expect(result.hostedUrl).toBe("https://embed.formbro.com/e/jobs%2Fus");
+    expect(result.automatic).toContain('data-formbro-title="Jobs &amp; &quot;Careers&quot;"');
+    expect(result.iframe).not.toContain('title="Jobs & "Careers""');
+  });
+});

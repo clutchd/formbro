@@ -1,9 +1,9 @@
 "use client";
 
 import type { Doc } from "@formbro/convex/_generated/dataModel";
-import type { Metadata } from "next";
-import { APP_URL } from "@formbro/shared/brand";
+import { APP_URL, EMBED_URL } from "@formbro/shared/brand";
 import { twx } from "@formbro/shared/twx";
+import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
 import { Card } from "@formbro/ui/card";
 import { Input } from "@formbro/ui/input";
@@ -12,6 +12,7 @@ import { RiClipboardLine, RiExternalLinkLine, RiFileTextLine } from "@remixicon/
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
+import { buildEmbedCode } from "@/lib/embed-code";
 import { getFormMetadata, getOpenGraphImageUrl } from "@/lib/form-metadata";
 import { useRequiredWorkspaceFormData } from "../_data-provider";
 
@@ -32,9 +33,16 @@ function getShareMessage(status: Doc<"forms">["status"]) {
 
 export default function ShareFormPage() {
   const { form, workspace } = useRequiredWorkspaceFormData();
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"automatic" | "iframe" | "share" | null>(null);
+  const [embedMethod, setEmbedMethod] = useState<"automatic" | "iframe">("automatic");
   const shareId = useId();
   const shareUrl = `${APP_URL}/f/${form.slug}`;
+  const embedCode = buildEmbedCode({
+    embedUrl: EMBED_URL,
+    formName: form.name,
+    publicId: form.slug,
+  });
+  const canEmbed = form.status !== "draft" && Boolean(form.publishedSchemaId);
   const metadata = getFormMetadata({
     formName: form.name,
     formSlug: form.slug,
@@ -45,14 +53,20 @@ export default function ShareFormPage() {
     ? getOpenGraphImageUrl(metadata.openGraph.images)
     : undefined;
 
-  const copyToClipboard = async () => {
+  const copyToClipboard = async (
+    value: string,
+    target: "automatic" | "iframe" | "share",
+    successMessage: string,
+  ) => {
     try {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareUrl);
-        setCopied(true);
-        toast.success("Share link copied");
-        setTimeout(() => setCopied(false), 3000);
+      if (!navigator.clipboard) {
+        throw new Error("Clipboard API is unavailable");
       }
+
+      await navigator.clipboard.writeText(value);
+      setCopied(target);
+      toast.success(successMessage);
+      setTimeout(() => setCopied(null), 3000);
     } catch (error) {
       toast.error("Failed to copy to clipboard");
       console.error(error);
@@ -71,9 +85,9 @@ export default function ShareFormPage() {
           </div>
           <div className="flex flex-row items-center gap-2">
             <Input id={shareId} value={shareUrl} readOnly className="font-mono text-xs" />
-            <Button onClick={copyToClipboard}>
+            <Button onClick={() => copyToClipboard(shareUrl, "share", "Share link copied")}>
               <RiClipboardLine className="size-4" />
-              {copied ? "Copied" : "Copy"}
+              {copied === "share" ? "Copied" : "Copy"}
             </Button>
             <Button asChild variant="outline">
               <a href={shareUrl} target="_blank" rel="noreferrer">
@@ -121,6 +135,106 @@ export default function ShareFormPage() {
           </div>
         </Card>
       </div>
+
+      <Card className="gap-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <TypographyH2>Embed Form</TypographyH2>
+              {form.status === "open" ? (
+                <Badge status="success">Live</Badge>
+              ) : form.status === "closed" ? (
+                <Badge status="warning">Closed</Badge>
+              ) : (
+                <Badge status="neutral">Publish required</Badge>
+              )}
+            </div>
+            <TypographyP className="max-w-2xl text-sm text-muted-foreground">
+              Add this form to any website. Published changes are reflected automatically without
+              replacing the embed code.
+            </TypographyP>
+          </div>
+          {canEmbed ? (
+            <Button asChild variant="outline">
+              <a href={embedCode.hostedUrl} target="_blank" rel="noreferrer">
+                <RiExternalLinkLine className="size-4" />
+                Preview embed
+              </a>
+            </Button>
+          ) : (
+            <Button variant="outline" disabled>
+              <RiExternalLinkLine className="size-4" />
+              Preview embed
+            </Button>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-2" aria-label="Embed method">
+            <Button
+              type="button"
+              size="sm"
+              variant={embedMethod === "automatic" ? "default" : "outline"}
+              onClick={() => setEmbedMethod("automatic")}
+              aria-pressed={embedMethod === "automatic"}
+            >
+              Auto-resizing
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={embedMethod === "iframe" ? "default" : "outline"}
+              onClick={() => setEmbedMethod("iframe")}
+              aria-pressed={embedMethod === "iframe"}
+            >
+              Plain iframe
+            </Button>
+            {embedMethod === "automatic" ? <Badge status="info">Recommended</Badge> : null}
+          </div>
+
+          <div className="overflow-hidden rounded-lg border bg-muted/20">
+            <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
+              <div>
+                <p className="text-sm font-medium">
+                  {embedMethod === "automatic" ? "Responsive embed" : "Fixed-height fallback"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {embedMethod === "automatic"
+                    ? "Loads server-rendered markup and follows the form height automatically."
+                    : "Works without the loader script; adjust the height for your page."}
+                </p>
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                onClick={() =>
+                  copyToClipboard(embedCode[embedMethod], embedMethod, "Embed code copied")
+                }
+                disabled={!canEmbed}
+              >
+                <RiClipboardLine className="size-4" />
+                {copied === embedMethod ? "Copied" : "Copy code"}
+              </Button>
+            </div>
+            <pre className="overflow-x-auto p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap text-foreground">
+              <code>{embedCode[embedMethod]}</code>
+            </pre>
+          </div>
+
+          {!canEmbed ? (
+            <p className="text-sm text-muted-foreground">
+              Publish this form before copying the embed code. The same snippet will continue to
+              work for every future revision.
+            </p>
+          ) : (
+            <div className="grid gap-2 text-xs text-muted-foreground sm:grid-cols-3">
+              <p>Server-rendered form markup</p>
+              <p>CDN-served page and loader</p>
+              <p>Published updates within about 60 seconds</p>
+            </div>
+          )}
+        </div>
+      </Card>
     </Page>
   );
 }

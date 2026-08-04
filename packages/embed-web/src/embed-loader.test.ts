@@ -3,8 +3,8 @@ import { embedFrameUrl, normalizeEmbedHeight, parseEmbedLifecycleMessage } from 
 
 describe("embed parent loader", () => {
   test("builds an encoded hosted-form URL from the loader origin", () => {
-    expect(embedFrameUrl("https://embed.formbro.app/embed.js", "job applications")).toBe(
-      "https://embed.formbro.app/e/job%20applications",
+    expect(embedFrameUrl("https://embed.formbro.com/embed.js", "job applications")).toBe(
+      "https://embed.formbro.com/e/job%20applications",
     );
   });
 
