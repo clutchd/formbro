@@ -242,6 +242,10 @@ export const publish = mutation({
       });
       const status = form.status === "draft" ? "open" : form.status;
 
+      if (form.publishedSchemaId) {
+        await ctx.db.patch(form.publishedSchemaId, { retiredTime: now });
+      }
+
       await ctx.db.patch(form._id, {
         draftSchemaId: draftSchema._id,
         name: schema.name,

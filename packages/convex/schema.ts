@@ -66,6 +66,7 @@ export default defineSchema({
     status: v.union(v.literal("draft"), v.literal("published")),
     createdBy: v.optional(v.id("workspaceMembers")),
     publishedTime: v.optional(v.number()),
+    retiredTime: v.optional(v.number()),
   })
     .index("by_form_id", ["formId"])
     .index("by_schema_status", ["formId", "status"]),

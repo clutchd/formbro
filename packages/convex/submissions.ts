@@ -7,6 +7,7 @@ import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess } from "./access";
 import { defineErrors } from "./errors";
 import { ERRORS as FORM_ERRORS } from "./forms";
+import { canAcceptPublishedRevision } from "./publishedRevision";
 import { SubmissionValue } from "./schema";
 
 const FILE_FIELD_TYPES = new Set(["file_upload"]);
@@ -105,7 +106,18 @@ export const create = mutation({
       return fail({ data: null, error: ERRORS.FORM_NOT_OPEN });
     }
 
-    if (form.publishedSchemaId !== schema._id) {
+    const submittedTime = Date.now();
+    if (
+      !canAcceptPublishedRevision({
+        currentRevisionId: form.publishedSchemaId,
+        now: submittedTime,
+        revision: {
+          id: schema._id,
+          retiredTime: schema.retiredTime,
+          status: schema.status,
+        },
+      })
+    ) {
       return fail({ data: null, error: ERRORS.FORM_SCHEMA_MISMATCH });
     }
 
@@ -117,7 +129,6 @@ export const create = mutation({
       return fail({ data: null, error: ERRORS.SUBMISSION_INVALID });
     }
 
-    const submittedTime = Date.now();
     const data = {
       formId: form._id,
       schemaId: schema._id,
