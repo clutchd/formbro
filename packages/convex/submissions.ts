@@ -85,6 +85,7 @@ export const create = mutation({
   args: {
     formId: v.id("forms"),
     schemaId: v.id("formSchemas"),
+    idempotencyKey: v.optional(v.string()),
     data: v.record(v.string(), SubmissionValue),
   },
   handler: async (ctx, args) => {
@@ -101,6 +102,23 @@ export const create = mutation({
 
     const form = await ctx.db.get(args.formId);
     if (!form) return fail({ data: null, error: FORM_ERRORS.FORM_NOT_FOUND });
+
+    if (args.idempotencyKey) {
+      const existing = await ctx.db
+        .query("submissions")
+        .withIndex("by_form_idempotency_key", (q) =>
+          q.eq("formId", form._id).eq("idempotencyKey", args.idempotencyKey),
+        )
+        .unique();
+
+      if (existing) {
+        if (existing.schemaId !== schema._id) {
+          return fail({ data: null, error: ERRORS.FORM_SCHEMA_MISMATCH });
+        }
+
+        return ok({ submissionId: existing._id, bytes: existing.bytes });
+      }
+    }
 
     if (form.status !== "open") {
       return fail({ data: null, error: ERRORS.FORM_NOT_OPEN });
@@ -134,6 +152,7 @@ export const create = mutation({
       schemaId: schema._id,
       bytes: 0,
       workspaceId: form.workspaceId,
+      ...(args.idempotencyKey ? { idempotencyKey: args.idempotencyKey } : {}),
       data: args.data,
       submittedTime,
     };

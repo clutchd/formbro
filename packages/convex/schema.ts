@@ -75,6 +75,7 @@ export default defineSchema({
     workspaceId: v.id("workspaces"),
     formId: v.id("forms"),
     schemaId: v.id("formSchemas"),
+    idempotencyKey: v.optional(v.string()),
     data: v.record(v.string(), SubmissionValue),
     bytes: v.number(),
     submittedTime: v.number(),
@@ -82,5 +83,6 @@ export default defineSchema({
     .index("by_workspace", ["workspaceId"])
     .index("by_workspace_submitted", ["workspaceId", "submittedTime"])
     .index("by_form_id", ["formId"])
+    .index("by_form_idempotency_key", ["formId", "idempotencyKey"])
     .index("by_form_submitted", ["formId", "submittedTime"]),
 });

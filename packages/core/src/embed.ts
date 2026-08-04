@@ -13,6 +13,14 @@ export const PublishedFormSnapshotSchema = z.object({
 
 export type PublishedFormSnapshot = z.output<typeof PublishedFormSnapshotSchema>;
 
+export const PublishedFormSubmissionSchema = z.object({
+  revision: z.string().trim().min(1),
+  idempotencyKey: z.string().trim().min(1).max(128),
+  values: z.record(z.string(), z.string()),
+});
+
+export type PublishedFormSubmission = z.output<typeof PublishedFormSubmissionSchema>;
+
 export function createPublishedFormSnapshot(
   snapshot: Omit<z.input<typeof PublishedFormSnapshotSchema>, "protocolVersion">,
 ) {
