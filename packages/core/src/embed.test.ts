@@ -1,8 +1,10 @@
 import { describe, expect, test } from "bun:test";
 import {
   createPublishedFormSnapshot,
+  DEFAULT_EMBED_SETTINGS,
   EmbedLifecycleMessageSchema,
   FORMBRO_EMBED_PROTOCOL_VERSION,
+  normalizeEmbedAllowedOrigins,
   PublishedFormSubmissionSchema,
 } from "./embed";
 
@@ -20,6 +22,7 @@ describe("published form snapshot", () => {
     });
 
     expect(snapshot).toEqual({
+      embed: DEFAULT_EMBED_SETTINGS,
       protocolVersion: 1,
       publicId: "employment-application",
       publishedTime: 1_000,
@@ -31,6 +34,34 @@ describe("published form snapshot", () => {
         elements: [],
       },
     });
+  });
+});
+
+describe("embed settings", () => {
+  test("normalizes exact HTTP origins and removes duplicates", () => {
+    expect(
+      normalizeEmbedAllowedOrigins([
+        "https://saymechanical.com/",
+        "https://saymechanical.com",
+        "http://localhost:3000",
+      ]),
+    ).toEqual(["https://saymechanical.com", "http://localhost:3000"]);
+  });
+
+  test("rejects paths, credentials, non-HTTP protocols, and oversized policies", () => {
+    for (const origin of [
+      "https://saymechanical.com/careers",
+      "https://user:pass@saymechanical.com",
+      "javascript:alert(1)",
+    ]) {
+      expect(() => normalizeEmbedAllowedOrigins([origin])).toThrow();
+    }
+
+    expect(() =>
+      normalizeEmbedAllowedOrigins(
+        Array.from({ length: 26 }, (_, index) => `https://${index}.example.com`),
+      ),
+    ).toThrow();
   });
 });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import type { Doc } from "@formbro/convex/_generated/dataModel";
+import { DEFAULT_EMBED_SETTINGS } from "@formbro/core/embed";
 import { APP_URL, EMBED_URL } from "@formbro/shared/brand";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
@@ -38,6 +39,7 @@ export default function ShareFormPage() {
   const shareId = useId();
   const shareUrl = `${APP_URL}/f/${form.slug}`;
   const embedCode = buildEmbedCode({
+    allowedOrigins: (form.embedSettings ?? DEFAULT_EMBED_SETTINGS).allowedOrigins,
     embedUrl: EMBED_URL,
     formName: form.name,
     publicId: form.slug,

@@ -3,6 +3,10 @@ import { describe, expect, test } from "bun:test";
 import { embedSnapshotErrorResponse, publishedSnapshotResponse } from "./embed-snapshot";
 
 const snapshot: PublishedFormSnapshot = {
+  embed: {
+    appearance: { colorScheme: "auto", density: "comfortable" },
+    allowedOrigins: [],
+  },
   protocolVersion: 1,
   publicId: "employment-application",
   publishedTime: 1_000,

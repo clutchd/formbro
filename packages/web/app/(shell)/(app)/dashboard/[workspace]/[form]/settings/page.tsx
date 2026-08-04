@@ -2,6 +2,7 @@
 
 import { api } from "@formbro/convex/_generated/api";
 import { getErrorMessage } from "@formbro/convex/errors";
+import { DEFAULT_EMBED_SETTINGS, type EmbedSettings } from "@formbro/core/embed";
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { Card } from "@formbro/ui/card";
@@ -15,8 +16,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@formbro/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@formbro/ui/select";
 import { Spinner } from "@formbro/ui/spinner";
 import { Switch } from "@formbro/ui/switch";
+import { Textarea } from "@formbro/ui/textarea";
 import { TypographyH2, TypographyP, TypographySubheading } from "@formbro/ui/typography";
 import { RiDeleteBinLine } from "@remixicon/react";
 import { useMutation } from "convex/react";
@@ -115,14 +118,33 @@ export default function FormSettingsPage() {
   const router = useRouter();
   const { form, workspace } = useRequiredWorkspaceFormData();
   const updateFormStatus = useMutation(api.forms.updateStatus);
+  const updateEmbedSettings = useMutation(api.forms.updateEmbedSettings);
   const deleteForm = useMutation(api.forms.deleteForm);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [pendingClosed, setPendingClosed] = useState<boolean | null>(null);
+  const currentEmbedSettings = form.embedSettings ?? DEFAULT_EMBED_SETTINGS;
+  const [colorScheme, setColorScheme] = useState<EmbedSettings["appearance"]["colorScheme"]>(
+    currentEmbedSettings.appearance.colorScheme,
+  );
+  const [density, setDensity] = useState<EmbedSettings["appearance"]["density"]>(
+    currentEmbedSettings.appearance.density,
+  );
+  const [allowedOrigins, setAllowedOrigins] = useState(() =>
+    currentEmbedSettings.allowedOrigins.join("\n"),
+  );
+  const [isSavingEmbed, setIsSavingEmbed] = useState(false);
 
   useEffect(() => {
     setPendingClosed(null);
   }, [form.status]);
+
+  useEffect(() => {
+    const settings = form.embedSettings ?? DEFAULT_EMBED_SETTINGS;
+    setColorScheme(settings.appearance.colorScheme);
+    setDensity(settings.appearance.density);
+    setAllowedOrigins(settings.allowedOrigins.join("\n"));
+  }, [form.embedSettings]);
 
   const isClosed = pendingClosed ?? form.status === "closed";
 
@@ -158,6 +180,34 @@ export default function FormSettingsPage() {
     [updateFormStatus, form._id],
   );
 
+  const handleSaveEmbedSettings = useCallback(async () => {
+    setIsSavingEmbed(true);
+    try {
+      const result = await updateEmbedSettings({
+        formId: form._id,
+        appearance: { colorScheme, density },
+        allowedOrigins: allowedOrigins
+          .split("\n")
+          .map((origin) => origin.trim())
+          .filter(Boolean),
+      });
+
+      if (!result.ok) {
+        toast.error("Failed to update embed settings.", {
+          description: getErrorMessage(result.error),
+        });
+        return;
+      }
+
+      toast.success("Embed settings updated");
+    } catch (error) {
+      toast.error("Failed to update embed settings.");
+      console.error(error);
+    } finally {
+      setIsSavingEmbed(false);
+    }
+  }, [allowedOrigins, colorScheme, density, form._id, updateEmbedSettings]);
+
   return (
     <Page className="space-y-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -171,6 +221,79 @@ export default function FormSettingsPage() {
           description="Stop accepting new submissions while keeping the form visible."
           action={<Switch checked={isClosed} onCheckedChange={handleCloseFormChange} />}
         />
+      </SettingsSection>
+
+      <SettingsSection
+        title="Embedded Forms"
+        description="Choose neutral presentation defaults and optionally restrict which websites may frame this form."
+      >
+        <SettingsItem
+          title="Color scheme"
+          description="Automatic follows the visitor's operating-system preference."
+          action={
+            <Select
+              value={colorScheme}
+              onValueChange={(value) =>
+                setColorScheme(value as EmbedSettings["appearance"]["colorScheme"])
+              }
+            >
+              <SelectTrigger aria-label="Embedded form color scheme">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Automatic</SelectItem>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+              </SelectContent>
+            </Select>
+          }
+        />
+        <SettingsItem
+          title="Density"
+          description="Comfortable is the default; compact reduces padding for dense layouts."
+          action={
+            <Select
+              value={density}
+              onValueChange={(value) => setDensity(value as EmbedSettings["appearance"]["density"])}
+            >
+              <SelectTrigger aria-label="Embedded form density">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="comfortable">Comfortable</SelectItem>
+                <SelectItem value="compact">Compact</SelectItem>
+              </SelectContent>
+            </Select>
+          }
+        />
+        <div className="space-y-3 py-5">
+          <div>
+            <p className="font-medium">Allowed website origins</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Optional. Enter one exact origin per line, such as https://saymechanical.com. No paths
+              or wildcards.
+            </p>
+          </div>
+          <Textarea
+            aria-label="Allowed website origins"
+            value={allowedOrigins}
+            onChange={(event) => setAllowedOrigins(event.target.value)}
+            placeholder={"https://saymechanical.com\nhttps://www.saymechanical.com"}
+            rows={4}
+            className="font-mono text-xs"
+          />
+          <p className="text-xs text-muted-foreground">
+            Restrictions use the browser's Content Security Policy. Enabling or disabling them
+            changes the embed route, so recopy the snippet from Share afterward. Restricted views
+            use a small policy gate; unrestricted embeds remain fully CDN-served.
+          </p>
+          <div className="flex justify-end">
+            <Button onClick={() => void handleSaveEmbedSettings()} disabled={isSavingEmbed}>
+              {isSavingEmbed ? <Spinner /> : null}
+              Save embed settings
+            </Button>
+          </div>
+        </div>
       </SettingsSection>
 
       <Card className="border-destructive/20">

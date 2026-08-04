@@ -29,4 +29,17 @@ describe("dashboard embed code", () => {
     expect(result.automatic).toContain('data-formbro-title="Jobs &amp; &quot;Careers&quot;"');
     expect(result.iframe).not.toContain('title="Jobs & "Careers""');
   });
+
+  test("uses the guarded route when a domain policy is enabled", () => {
+    const result = buildEmbedCode({
+      allowedOrigins: ["https://saymechanical.com"],
+      embedUrl: "https://embed.formbro.com",
+      formName: "Careers",
+      publicId: "jobs",
+    });
+
+    expect(result.hostedUrl).toBe("https://embed.formbro.com/g/jobs");
+    expect(result.automatic).toContain("data-formbro-guarded");
+    expect(result.iframe).toContain('src="https://embed.formbro.com/g/jobs"');
+  });
 });

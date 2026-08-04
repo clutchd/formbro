@@ -3,7 +3,55 @@ import { FormSchema } from "./schema/form";
 
 export const FORMBRO_EMBED_PROTOCOL_VERSION = 1;
 
+export const EmbedSettingsSchema = z.object({
+  appearance: z.object({
+    colorScheme: z.enum(["auto", "light", "dark"]),
+    density: z.enum(["comfortable", "compact"]),
+  }),
+  allowedOrigins: z.array(z.string()).max(25),
+});
+
+export type EmbedSettings = z.output<typeof EmbedSettingsSchema>;
+
+export const DEFAULT_EMBED_SETTINGS: EmbedSettings = {
+  appearance: {
+    colorScheme: "auto",
+    density: "comfortable",
+  },
+  allowedOrigins: [],
+};
+
+export function normalizeEmbedAllowedOrigins(values: string[]) {
+  const origins = new Set<string>();
+
+  for (const value of values) {
+    const candidate = value.trim();
+    const url = new URL(candidate);
+
+    if (
+      !["http:", "https:"].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      url.pathname !== "/" ||
+      url.search ||
+      url.hash ||
+      candidate.length > 2_048
+    ) {
+      throw new Error(`Invalid embed origin: ${value}`);
+    }
+
+    origins.add(url.origin);
+  }
+
+  if (origins.size > 25) {
+    throw new Error("Embed policies support at most 25 origins");
+  }
+
+  return [...origins];
+}
+
 export const PublishedFormSnapshotSchema = z.object({
+  embed: EmbedSettingsSchema.default(DEFAULT_EMBED_SETTINGS),
   protocolVersion: z.literal(FORMBRO_EMBED_PROTOCOL_VERSION),
   publicId: z.string().trim().min(1),
   publishedTime: z.number().int().nonnegative(),

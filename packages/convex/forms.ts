@@ -1,4 +1,9 @@
 import {
+  DEFAULT_EMBED_SETTINGS,
+  EmbedSettingsSchema,
+  normalizeEmbedAllowedOrigins,
+} from "@formbro/core/embed";
+import {
   createDefaultFormSchema,
   FormSchema,
   JsonParse,
@@ -34,6 +39,10 @@ export const ERRORS = defineErrors({
   },
   SCHEMA_INVALID: {
     message: "Form schema is invalid.",
+    status: "UNPROCESSABLE_ENTITY",
+  },
+  EMBED_SETTINGS_INVALID: {
+    message: "Embed settings are invalid.",
     status: "UNPROCESSABLE_ENTITY",
   },
 });
@@ -128,6 +137,7 @@ export const getPublic = query({
         slug: workspace?.slug,
       },
       name: form.name,
+      embedSettings: form.embedSettings ?? DEFAULT_EMBED_SETTINGS,
       slug: form.slug,
       status: form.status,
       schemaId: publishedSchema?._id ?? null,
@@ -337,6 +347,32 @@ export const updateStatus = mutation({
 
     await ctx.db.patch(args.formId, { status: args.status });
     return ok({ formId: args.formId, status: args.status });
+  },
+});
+
+export const updateEmbedSettings = mutation({
+  args: {
+    formId: v.id("forms"),
+    appearance: v.object({
+      colorScheme: v.union(v.literal("auto"), v.literal("light"), v.literal("dark")),
+      density: v.union(v.literal("comfortable"), v.literal("compact")),
+    }),
+    allowedOrigins: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const formWithAccess = await getFormAccess(ctx, args.formId);
+    if (!formWithAccess.ok) return fail({ data: null, error: formWithAccess.error });
+
+    try {
+      const embedSettings = EmbedSettingsSchema.parse({
+        appearance: args.appearance,
+        allowedOrigins: normalizeEmbedAllowedOrigins(args.allowedOrigins),
+      });
+      await ctx.db.patch(args.formId, { embedSettings });
+      return ok({ embedSettings, formId: args.formId });
+    } catch {
+      return fail({ data: null, error: ERRORS.EMBED_SETTINGS_INVALID });
+    }
   },
 });
 

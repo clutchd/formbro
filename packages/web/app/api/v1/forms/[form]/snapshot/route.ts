@@ -41,6 +41,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ for
   try {
     return publishedSnapshotResponse(
       createPublishedFormSnapshot({
+        embed: form.embedSettings,
         publicId: form.slug,
         publishedTime: form.publishedTime,
         revision: form.schemaId,

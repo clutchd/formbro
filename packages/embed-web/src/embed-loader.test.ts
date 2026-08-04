@@ -6,6 +6,9 @@ describe("embed parent loader", () => {
     expect(embedFrameUrl("https://embed.formbro.com/embed.js", "job applications")).toBe(
       "https://embed.formbro.com/e/job%20applications",
     );
+    expect(embedFrameUrl("https://embed.formbro.com/embed.js", "jobs", true)).toBe(
+      "https://embed.formbro.com/g/jobs",
+    );
   });
 
   test("accepts only the versioned public lifecycle contract", () => {

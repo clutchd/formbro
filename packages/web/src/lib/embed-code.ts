@@ -8,22 +8,26 @@ function escapeHtmlAttribute(value: string) {
 }
 
 export function buildEmbedCode({
+  allowedOrigins = [],
   embedUrl,
   formName,
   publicId,
 }: {
+  allowedOrigins?: string[];
   embedUrl: string;
   formName: string;
   publicId: string;
 }) {
   const embedOrigin = new URL(embedUrl).origin;
-  const hostedUrl = `${embedOrigin}/e/${encodeURIComponent(publicId)}`;
+  const guarded = allowedOrigins.length > 0;
+  const route = guarded ? "g" : "e";
+  const hostedUrl = `${embedOrigin}/${route}/${encodeURIComponent(publicId)}`;
   const escapedId = escapeHtmlAttribute(publicId);
   const escapedName = escapeHtmlAttribute(formName);
 
   return {
     hostedUrl,
-    automatic: `<div data-formbro-id="${escapedId}" data-formbro-title="${escapedName}"></div>\n<script async src="${embedOrigin}/embed.js"></script>`,
+    automatic: `<div data-formbro-id="${escapedId}" data-formbro-title="${escapedName}"${guarded ? " data-formbro-guarded" : ""}></div>\n<script async src="${embedOrigin}/embed.js"></script>`,
     iframe: `<iframe src="${hostedUrl}" title="${escapedName}" width="100%" height="640" loading="eager" style="border: 0; display: block;"></iframe>`,
   };
 }

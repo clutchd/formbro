@@ -48,6 +48,15 @@ export default defineSchema({
     .index("by_workspace_and_email", ["workspaceId", "email"]),
 
   forms: defineTable({
+    embedSettings: v.optional(
+      v.object({
+        appearance: v.object({
+          colorScheme: v.union(v.literal("auto"), v.literal("light"), v.literal("dark")),
+          density: v.union(v.literal("comfortable"), v.literal("compact")),
+        }),
+        allowedOrigins: v.array(v.string()),
+      }),
+    ),
     name: v.string(),
     slug: v.string(),
     workspaceId: v.id("workspaces"),

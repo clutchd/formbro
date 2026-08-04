@@ -8,6 +8,7 @@ const MAX_EMBED_HEIGHT = 10_000;
 type EmbedContainer = HTMLElement & {
   dataset: DOMStringMap & {
     formbroId?: string;
+    formbroGuarded?: string;
     formbroLoading?: "eager" | "lazy";
     formbroTitle?: string;
   };
@@ -75,8 +76,11 @@ export function normalizeEmbedHeight(height: number) {
   return Math.min(MAX_EMBED_HEIGHT, Math.max(MIN_EMBED_HEIGHT, Math.ceil(height)));
 }
 
-export function embedFrameUrl(loaderSource: string, publicId: string) {
-  return new URL(`/e/${encodeURIComponent(publicId)}`, loaderSource).toString();
+export function embedFrameUrl(loaderSource: string, publicId: string, guarded = false) {
+  return new URL(
+    `/${guarded ? "g" : "e"}/${encodeURIComponent(publicId)}`,
+    loaderSource,
+  ).toString();
 }
 
 function createFrame(container: EmbedContainer, loaderSource: string): EmbedEntry | null {
@@ -86,7 +90,11 @@ function createFrame(container: EmbedContainer, loaderSource: string): EmbedEntr
     return null;
   }
 
-  const source = embedFrameUrl(loaderSource, publicId);
+  const source = embedFrameUrl(
+    loaderSource,
+    publicId,
+    Object.hasOwn(container.dataset, "formbroGuarded"),
+  );
   const frame = document.createElement("iframe");
 
   frame.src = source;

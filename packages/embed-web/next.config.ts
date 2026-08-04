@@ -42,6 +42,18 @@ const nextConfig: NextConfig = {
         { key: "X-Content-Type-Options", value: "nosniff" },
       ],
     },
+    {
+      source: "/i/:path*",
+      headers: [
+        {
+          key: "Content-Security-Policy",
+          value: contentSecurityPolicy.replace("frame-ancestors *", "frame-ancestors 'self'"),
+        },
+        { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=()" },
+        { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+        { key: "X-Content-Type-Options", value: "nosniff" },
+      ],
+    },
   ],
 };
 
