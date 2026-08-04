@@ -377,7 +377,7 @@ export const updateEmbedSettings = mutation({
 });
 
 export async function _deleteForm(ctx: MutationCtx, formId: Id<"forms">) {
-  const [schemas, submissions] = await Promise.all([
+  const [schemas, submissions, embedTelemetry] = await Promise.all([
     ctx.db
       .query("formSchemas")
       .withIndex("by_form_id", (q) => q.eq("formId", formId))
@@ -385,6 +385,10 @@ export async function _deleteForm(ctx: MutationCtx, formId: Id<"forms">) {
     ctx.db
       .query("submissions")
       .withIndex("by_form_id", (q) => q.eq("formId", formId))
+      .collect(),
+    ctx.db
+      .query("embedTelemetryDaily")
+      .withIndex("by_form_and_day", (q) => q.eq("formId", formId))
       .collect(),
   ]);
 
@@ -394,6 +398,10 @@ export async function _deleteForm(ctx: MutationCtx, formId: Id<"forms">) {
 
   for (const schema of schemas) {
     await ctx.db.delete(schema._id);
+  }
+
+  for (const telemetry of embedTelemetry) {
+    await ctx.db.delete(telemetry._id);
   }
 
   await ctx.db.delete(formId);

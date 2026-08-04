@@ -69,6 +69,30 @@ export const PublishedFormSubmissionSchema = z.object({
 
 export type PublishedFormSubmission = z.output<typeof PublishedFormSubmissionSchema>;
 
+export const EMBED_TELEMETRY_SAMPLE_RATE = 0.01;
+
+export const EmbedTelemetryPayloadSchema = z
+  .object({
+    protocolVersion: z.literal(FORMBRO_EMBED_PROTOCOL_VERSION),
+    publicId: z.string().trim().min(1),
+    revision: z.string().trim().min(1),
+    started: z.boolean(),
+    submitted: z.boolean(),
+    hadError: z.boolean(),
+    duration: z.enum([
+      "under_10_seconds",
+      "10_to_29_seconds",
+      "30_to_119_seconds",
+      "120_plus_seconds",
+    ]),
+  })
+  .strict()
+  .refine((payload) => !payload.submitted || payload.started, {
+    message: "Submitted sessions must also be started",
+  });
+
+export type EmbedTelemetryPayload = z.output<typeof EmbedTelemetryPayloadSchema>;
+
 const embedLifecycleMessageBase = {
   source: z.literal("formbro:embed"),
   protocolVersion: z.literal(FORMBRO_EMBED_PROTOCOL_VERSION),

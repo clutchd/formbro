@@ -94,4 +94,20 @@ export default defineSchema({
     .index("by_form_id", ["formId"])
     .index("by_form_idempotency_key", ["formId", "idempotencyKey"])
     .index("by_form_submitted", ["formId", "submittedTime"]),
+
+  embedTelemetryDaily: defineTable({
+    day: v.string(),
+    duration10To29Seconds: v.number(),
+    duration120PlusSeconds: v.number(),
+    duration30To119Seconds: v.number(),
+    durationUnder10Seconds: v.number(),
+    errors: v.number(),
+    formId: v.id("forms"),
+    revisionId: v.id("formSchemas"),
+    sampledViews: v.number(),
+    started: v.number(),
+    submitted: v.number(),
+  })
+    .index("by_form_and_day", ["formId", "day"])
+    .index("by_form_revision_day", ["formId", "revisionId", "day"]),
 });

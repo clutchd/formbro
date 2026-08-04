@@ -1,5 +1,6 @@
 import type { GenericActionCtx, GenericDataModel } from "convex/server";
 import { registerRoutes } from "@convex-dev/stripe";
+import { EmbedTelemetryPayloadSchema } from "@formbro/core/embed";
 import { ok } from "@formbro/shared/result";
 import { hasString } from "@formbro/shared/util";
 import { httpRouter } from "convex/server";
@@ -60,6 +61,52 @@ registerRoutes(http, components.stripe, {
       );
     },
   },
+});
+
+http.route({
+  path: "/embed/telemetry",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const contentLength = Number(request.headers.get("content-length") ?? 0);
+    if (contentLength > 2_048) {
+      return new Response(null, { status: 413 });
+    }
+
+    const text = await request.text();
+    if (text.length > 2_048) {
+      return new Response(null, { status: 413 });
+    }
+
+    let input: unknown;
+    try {
+      input = JSON.parse(text);
+    } catch {
+      return new Response(null, { status: 400 });
+    }
+
+    const payload = EmbedTelemetryPayloadSchema.safeParse(input);
+    if (!payload.success) {
+      return new Response(null, { status: 400 });
+    }
+
+    const recorded = await ctx.runMutation(internal.embedTelemetry.record, {
+      duration: payload.data.duration,
+      hadError: payload.data.hadError,
+      publicId: payload.data.publicId,
+      revision: payload.data.revision,
+      started: payload.data.started,
+      submitted: payload.data.submitted,
+    });
+
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+      },
+      status: recorded ? 202 : 404,
+    });
+  }),
 });
 
 http.route({

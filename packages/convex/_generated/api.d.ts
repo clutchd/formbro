@@ -15,6 +15,8 @@ import type * as auth from "../auth.js";
 import type * as billing from "../billing.js";
 import type * as billingUtils from "../billingUtils.js";
 import type * as emails from "../emails.js";
+import type * as embedTelemetry from "../embedTelemetry.js";
+import type * as embedTelemetryAggregate from "../embedTelemetryAggregate.js";
 import type * as errors from "../errors.js";
 import type * as forms from "../forms.js";
 import type * as http from "../http.js";
@@ -40,6 +42,8 @@ declare const fullApi: ApiFromModules<{
   billing: typeof billing;
   billingUtils: typeof billingUtils;
   emails: typeof emails;
+  embedTelemetry: typeof embedTelemetry;
+  embedTelemetryAggregate: typeof embedTelemetryAggregate;
   errors: typeof errors;
   forms: typeof forms;
   http: typeof http;

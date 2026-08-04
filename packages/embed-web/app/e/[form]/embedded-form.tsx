@@ -4,6 +4,7 @@ import type { PublishedFormSnapshot } from "@formbro/core/embed";
 import { Form } from "@formbro/react/components/form";
 import { useRef, useState } from "react";
 import { postEmbedMessage } from "./embed-frame";
+import { useEmbedTelemetry } from "./use-embed-telemetry";
 
 type SubmissionResponse = {
   data?: {
@@ -27,14 +28,21 @@ function createIdempotencyKey() {
 export function EmbeddedForm({
   snapshot,
   submissionUrl,
+  telemetryUrl,
 }: {
   snapshot: PublishedFormSnapshot;
   submissionUrl: string;
+  telemetryUrl?: string;
 }) {
   const idempotencyKeyRef = useRef<string | null>(null);
   const startedRef = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const telemetry = useEmbedTelemetry({
+    publicId: snapshot.publicId,
+    revision: snapshot.revision,
+    telemetryUrl,
+  });
 
   if (submitted) {
     return (
@@ -52,6 +60,7 @@ export function EmbeddedForm({
       onInputCapture={() => {
         if (!startedRef.current) {
           startedRef.current = true;
+          telemetry.markStarted();
           postEmbedMessage(snapshot.publicId, { event: "started" });
         }
       }}
@@ -68,10 +77,12 @@ export function EmbeddedForm({
         onSuccess={() => {
           setSubmitError(null);
           setSubmitted(true);
+          telemetry.markSubmitted();
           postEmbedMessage(snapshot.publicId, { event: "submitted" });
         }}
         onError={({ error }) => {
           setSubmitError(error instanceof Error ? error.message : String(error));
+          telemetry.markError();
           postEmbedMessage(snapshot.publicId, { event: "error", code: "submission_failed" });
         }}
         onPercentChange={(percent) => {

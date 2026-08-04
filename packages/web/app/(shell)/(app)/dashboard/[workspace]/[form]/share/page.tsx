@@ -1,6 +1,7 @@
 "use client";
 
 import type { Doc } from "@formbro/convex/_generated/dataModel";
+import { api } from "@formbro/convex/_generated/api";
 import { DEFAULT_EMBED_SETTINGS } from "@formbro/core/embed";
 import { APP_URL, EMBED_URL } from "@formbro/shared/brand";
 import { twx } from "@formbro/shared/twx";
@@ -10,6 +11,7 @@ import { Card } from "@formbro/ui/card";
 import { Input } from "@formbro/ui/input";
 import { tuiFont, TypographyH2, TypographyP } from "@formbro/ui/typography";
 import { RiClipboardLine, RiExternalLinkLine, RiFileTextLine } from "@remixicon/react";
+import { useQuery } from "convex/react";
 import { useId, useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
@@ -32,6 +34,10 @@ function getShareMessage(status: Doc<"forms">["status"]) {
   }
 }
 
+function formatTelemetryRate(value: number | null) {
+  return value == null ? "—" : `${Math.round(value * 100)}%`;
+}
+
 export default function ShareFormPage() {
   const { form, workspace } = useRequiredWorkspaceFormData();
   const [copied, setCopied] = useState<"automatic" | "iframe" | "share" | null>(null);
@@ -45,6 +51,8 @@ export default function ShareFormPage() {
     publicId: form.slug,
   });
   const canEmbed = form.status !== "draft" && Boolean(form.publishedSchemaId);
+  const telemetryResult = useQuery(api.embedTelemetry.summary, { days: 30, formId: form._id });
+  const telemetry = telemetryResult?.ok ? telemetryResult.data : null;
   const metadata = getFormMetadata({
     formName: form.name,
     formSlug: form.slug,
@@ -235,6 +243,48 @@ export default function ShareFormPage() {
               <p>Published updates within about 60 seconds</p>
             </div>
           )}
+        </div>
+
+        <div className="space-y-3 border-t pt-5">
+          <div>
+            <p className="font-medium">Embed activity</p>
+            <p className="text-xs text-muted-foreground">
+              Directional 30-day health from a 1% anonymous sample. No cookies, respondent values,
+              referrers, or persistent visitor IDs are collected.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="border bg-background p-3">
+              <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+                Sampled sessions
+              </p>
+              <p className="mt-1 text-lg font-semibold">{telemetry?.sampledViews ?? "—"}</p>
+            </div>
+            <div className="border bg-background p-3">
+              <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+                Start rate
+              </p>
+              <p className="mt-1 text-lg font-semibold">
+                {formatTelemetryRate(telemetry?.startRate ?? null)}
+              </p>
+            </div>
+            <div className="border bg-background p-3">
+              <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+                Completion
+              </p>
+              <p className="mt-1 text-lg font-semibold">
+                {formatTelemetryRate(telemetry?.completionRate ?? null)}
+              </p>
+            </div>
+            <div className="border bg-background p-3">
+              <p className="font-mono text-[10px] tracking-wider text-muted-foreground uppercase">
+                Error sessions
+              </p>
+              <p className="mt-1 text-lg font-semibold">
+                {formatTelemetryRate(telemetry?.errorRate ?? null)}
+              </p>
+            </div>
+          </div>
         </div>
       </Card>
     </Page>

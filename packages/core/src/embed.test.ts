@@ -3,6 +3,7 @@ import {
   createPublishedFormSnapshot,
   DEFAULT_EMBED_SETTINGS,
   EmbedLifecycleMessageSchema,
+  EmbedTelemetryPayloadSchema,
   FORMBRO_EMBED_PROTOCOL_VERSION,
   normalizeEmbedAllowedOrigins,
   PublishedFormSubmissionSchema,
@@ -132,6 +133,35 @@ describe("embed lifecycle protocol", () => {
         publicId: "jobs",
         event: "progress",
         percent: 101,
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe("embed telemetry payload", () => {
+  test("accepts coarse session outcomes without respondent or identity fields", () => {
+    expect(
+      EmbedTelemetryPayloadSchema.parse({
+        protocolVersion: 1,
+        publicId: "jobs",
+        revision: "revision-a",
+        started: true,
+        submitted: false,
+        hadError: true,
+        duration: "30_to_119_seconds",
+      }),
+    ).toMatchObject({ started: true, submitted: false, hadError: true });
+
+    expect(
+      EmbedTelemetryPayloadSchema.safeParse({
+        protocolVersion: 1,
+        publicId: "jobs",
+        revision: "revision-a",
+        started: false,
+        submitted: false,
+        hadError: false,
+        duration: "under_10_seconds",
+        email: "person@example.com",
       }).success,
     ).toBe(false);
   });

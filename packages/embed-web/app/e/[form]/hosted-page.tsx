@@ -1,4 +1,4 @@
-import { formbroApiUrl } from "@/config";
+import { formbroApiUrl, formbroTelemetryUrl } from "@/config";
 import { loadPublishedForm, publishedFormSubmissionUrl } from "@/published-form";
 import { EmbedFrame } from "./embed-frame";
 import { EmbeddedForm } from "./embedded-form";
@@ -58,6 +58,7 @@ export async function HostedFormPage({
         <EmbeddedForm
           snapshot={result.snapshot}
           submissionUrl={publishedFormSubmissionUrl(apiUrl, publicId)}
+          telemetryUrl={formbroTelemetryUrl()}
         />
         <footer className="embed-footer">Powered by FormBro</footer>
       </main>

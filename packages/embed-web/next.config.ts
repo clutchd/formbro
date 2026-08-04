@@ -8,9 +8,19 @@ function apiOrigin() {
   }
 }
 
+function telemetryOrigin() {
+  try {
+    return process.env.FORMBRO_TELEMETRY_URL
+      ? new URL(process.env.FORMBRO_TELEMETRY_URL).origin
+      : "";
+  } catch {
+    return "";
+  }
+}
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `connect-src 'self' ${apiOrigin()}`,
+  `connect-src 'self' ${apiOrigin()} ${telemetryOrigin()}`.trim(),
   "font-src 'self' data:",
   "frame-ancestors *",
   "img-src 'self' data: blob:",
