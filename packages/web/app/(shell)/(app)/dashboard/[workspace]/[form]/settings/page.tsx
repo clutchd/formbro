@@ -18,12 +18,13 @@ import {
 import { Spinner } from "@formbro/ui/spinner";
 import { Switch } from "@formbro/ui/switch";
 import { TypographyH2, TypographyP, TypographySubheading } from "@formbro/ui/typography";
-import { RiDeleteBinLine } from "@remixicon/react";
-import { useMutation } from "convex/react";
+import { RiDeleteBinLine, RiDownloadLine } from "@remixicon/react";
+import { useConvex, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
+import { getFormSchemaExportFilename, serializeFormSchemaExport } from "@/lib/form-schema-export";
 import { useRequiredWorkspaceFormData } from "../_data-provider";
 
 function SettingsSection({
@@ -113,11 +114,13 @@ function formatDate(value: number) {
 
 export default function FormSettingsPage() {
   const router = useRouter();
+  const convex = useConvex();
   const { form, workspace } = useRequiredWorkspaceFormData();
   const updateFormStatus = useMutation(api.forms.updateStatus);
   const deleteForm = useMutation(api.forms.deleteForm);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [pendingClosed, setPendingClosed] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -158,6 +161,37 @@ export default function FormSettingsPage() {
     [updateFormStatus, form._id],
   );
 
+  const handleExportSchema = useCallback(async () => {
+    setIsExporting(true);
+
+    try {
+      const result = await convex.query(api.forms.getDraft, { formId: form._id });
+      if (!result.ok) {
+        toast.error("Failed to export form schema.", {
+          description: getErrorMessage(result.error),
+        });
+        return;
+      }
+
+      const blob = new Blob([serializeFormSchemaExport(result.data.schema)], {
+        type: "application/json;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = getFormSchemaExportFilename(form.slug);
+      anchor.click();
+      URL.revokeObjectURL(url);
+      toast.success("Form schema downloaded");
+    } catch (error) {
+      toast.error("Failed to export form schema.", {
+        description: getErrorMessage(error),
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }, [convex, form._id, form.slug]);
+
   return (
     <Page className="space-y-8">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -170,6 +204,26 @@ export default function FormSettingsPage() {
           title="Close form"
           description="Stop accepting new submissions while keeping the form visible."
           action={<Switch checked={isClosed} onCheckedChange={handleCloseFormChange} />}
+        />
+      </SettingsSection>
+
+      <SettingsSection
+        title="Data Portability"
+        description="Keep a portable copy of the structure that defines this form."
+      >
+        <SettingsItem
+          title="Form schema"
+          description="Download the current draft as versioned FormBro JSON. Submissions are not included."
+          action={
+            <Button
+              variant="outline"
+              onClick={() => void handleExportSchema()}
+              disabled={isExporting}
+            >
+              {isExporting ? <Spinner /> : <RiDownloadLine className="size-4" />}
+              Download JSON
+            </Button>
+          }
         />
       </SettingsSection>
 
