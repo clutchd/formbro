@@ -1,4 +1,5 @@
 import { compile, type CompiledField, type CompiledForm } from "@formbro/core/compile";
+import { SubmissionDataSchema } from "@formbro/core/schema/submission";
 import { validateFormSubmission } from "@formbro/core/validation";
 import { fail, ok } from "@formbro/shared/result";
 import { getDocumentSize, v } from "convex/values";
@@ -53,7 +54,11 @@ function formatSubmissionValue(value: unknown): string {
     return "";
   }
 
-  return Array.isArray(value) ? value.join(", ") : String(value);
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
 }
 
 function isFileField(field: CompiledField) {
@@ -87,6 +92,11 @@ export const create = mutation({
     data: v.record(v.string(), SubmissionValue),
   },
   handler: async (ctx, args) => {
+    const submission = SubmissionDataSchema.safeParse(args.data);
+    if (!submission.success) {
+      return fail({ data: null, error: ERRORS.SUBMISSION_INVALID });
+    }
+
     const schema = await ctx.db.get(args.schemaId);
     if (!schema) return fail({ data: null, error: FORM_ERRORS.FORM_SCHEMA_NOT_FOUND });
 
@@ -112,7 +122,7 @@ export const create = mutation({
     const compiled = parseStoredForm(schema.schema);
     if (!compiled) return fail({ data: null, error: FORM_ERRORS.SCHEMA_INVALID });
 
-    const validation = validateFormSubmission(compiled, args.data);
+    const validation = validateFormSubmission(compiled, submission.data);
     if (!validation.success) {
       return fail({ data: null, error: ERRORS.SUBMISSION_INVALID });
     }
@@ -123,7 +133,7 @@ export const create = mutation({
       schemaId: schema._id,
       bytes: 0,
       workspaceId: form.workspaceId,
-      data: args.data,
+      data: submission.data,
       submittedTime,
     };
 

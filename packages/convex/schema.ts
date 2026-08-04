@@ -2,7 +2,9 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { PLANS } from "./billingUtils";
 
-export const SubmissionValue = v.union(v.string());
+// Convex validators cannot express recursively nested JSON. SubmissionDataSchema validates the
+// value at the mutation seam before it is persisted.
+export const SubmissionValue = v.any();
 
 export default defineSchema({
   workspaces: defineTable({
