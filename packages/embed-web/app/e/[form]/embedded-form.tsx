@@ -3,6 +3,7 @@
 import type { PublishedFormSnapshot } from "@formbro/core/embed";
 import { Form } from "@formbro/react/components/form";
 import { useRef, useState } from "react";
+import { postEmbedMessage } from "./embed-frame";
 
 type SubmissionResponse = {
   data?: {
@@ -31,6 +32,7 @@ export function EmbeddedForm({
   submissionUrl: string;
 }) {
   const idempotencyKeyRef = useRef<string | null>(null);
+  const startedRef = useRef(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -46,7 +48,14 @@ export function EmbeddedForm({
   }
 
   return (
-    <div>
+    <div
+      onInputCapture={() => {
+        if (!startedRef.current) {
+          startedRef.current = true;
+          postEmbedMessage(snapshot.publicId, { event: "started" });
+        }
+      }}
+    >
       {submitError ? (
         <div className="embed-alert" role="alert">
           <strong>Could not submit response</strong>
@@ -59,9 +68,14 @@ export function EmbeddedForm({
         onSuccess={() => {
           setSubmitError(null);
           setSubmitted(true);
+          postEmbedMessage(snapshot.publicId, { event: "submitted" });
         }}
         onError={({ error }) => {
           setSubmitError(error instanceof Error ? error.message : String(error));
+          postEmbedMessage(snapshot.publicId, { event: "error", code: "submission_failed" });
+        }}
+        onPercentChange={(percent) => {
+          postEmbedMessage(snapshot.publicId, { event: "progress", percent });
         }}
         action={async ({ values }) => {
           idempotencyKeyRef.current ??= createIdempotencyKey();

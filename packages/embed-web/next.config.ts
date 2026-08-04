@@ -24,6 +24,16 @@ const nextConfig: NextConfig = {
   skipTrailingSlashRedirect: true,
   headers: async () => [
     {
+      source: "/embed.js",
+      headers: [
+        {
+          key: "Cache-Control",
+          value: "public, max-age=300, s-maxage=86400, stale-while-revalidate=604800",
+        },
+        { key: "X-Content-Type-Options", value: "nosniff" },
+      ],
+    },
+    {
       source: "/e/:path*",
       headers: [
         { key: "Content-Security-Policy", value: contentSecurityPolicy },

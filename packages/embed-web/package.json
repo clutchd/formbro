@@ -4,8 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
-    "dev": "next dev --port 3001",
+    "build": "bun run build:loader && next build",
+    "build:loader": "bun build src/embed-loader.ts --outfile=public/embed.js --target=browser --format=iife --minify",
+    "dev": "bun run build:loader && next dev --port 3001",
     "start": "next start --port 3001",
     "test": "bun test",
     "typecheck": "tsc -p tsconfig.json --noEmit"
