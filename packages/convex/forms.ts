@@ -132,6 +132,7 @@ export const getPublic = query({
       status: form.status,
       schemaId: publishedSchema?._id ?? null,
       schema: publishedSchema?.schema ?? null,
+      publishedTime: publishedSchema?.publishedTime ?? publishedSchema?._creationTime ?? null,
     });
   },
 });
