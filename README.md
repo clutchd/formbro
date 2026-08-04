@@ -6,4 +6,5 @@ FormBro is the open-source form platform for serious workflows. Built by William
 
 Many businesses are stuck with clunky, slow, and expensive form solutions. I wanted something simple, fast and reliable.
 
-This is a work in progress. I'm not sure where this project is going long term, but I'm excited to see where it goes.
+This is a work in progress. The [product direction](docs/product-direction.md) describes the problem
+FormBro owns and the staged path from form builder to operational workflow platform.
