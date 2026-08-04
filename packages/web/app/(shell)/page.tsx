@@ -3,7 +3,7 @@ import { APP_DESCRIPTION } from "@formbro/shared/brand";
 import { HomePage } from "../home-page";
 
 export const metadata: Metadata = {
-  title: "FormBro | Serious forms without the enterprise tax",
+  title: "FormBro | Operational forms for teams and agents",
   description: APP_DESCRIPTION,
 };
 

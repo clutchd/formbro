@@ -10,5 +10,5 @@ if (!appUrl) {
 
 export const APP_URL: string = appUrl;
 export const APP_DESCRIPTION =
-  "Create, publish, and automate your forms. FormBro is the open-source form platform built for humans, teams, and agents.";
+  "Turn any request into structured data. FormBro is the open-source operational form platform for teams and agents.";
 export const TAGLINE = "Keep your forms simple, bro.";

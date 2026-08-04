@@ -1,7 +1,7 @@
 "use client";
 
-import { DEFAULT_FORM_NAME, type FormInput } from "@formbro/core/schema/form";
 import { applyFormSchemaEdit, type FormSchemaEditInput } from "@formbro/core/ai";
+import { DEFAULT_FORM_NAME, type FormInput } from "@formbro/core/schema/form";
 import { FormBuilderCanvas } from "@formbro/react/builder";
 import { Form } from "@formbro/react/components/form";
 import { APP_NAME, TAGLINE } from "@formbro/shared/brand";
@@ -11,12 +11,21 @@ import { Logo } from "@formbro/ui/logo";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbro/ui/tooltip";
 import {
   RiArrowRightLine,
+  RiBuildingLine,
   RiCheckboxCircleLine,
+  RiDatabaseLine,
+  RiDownloadLine,
+  RiFileListLine,
   RiFullscreenExitLine,
   RiFullscreenLine,
   RiGithubFill,
+  RiInboxLine,
   RiRefreshLine,
+  RiRobotLine,
+  RiRouteLine,
   RiSparklingLine,
+  RiSurveyLine,
+  RiTeamLine,
   type RemixiconComponentType,
 } from "@remixicon/react";
 import { useAppData } from "app/_data-provider";
@@ -52,51 +61,85 @@ type BuilderDemoStreamState = {
 type LinkIntent = ComponentProps<typeof Link>;
 
 const HERO_STATS = [
-  { label: "LICENSE", value: "MIT" },
-  { label: "TRIAL", value: "7 DAYS" },
-  { label: "SETUP", value: "MINUTES" },
+  { label: "BUILD", value: "AI + CANVAS" },
+  { label: "PUBLISH", value: "ONE URL" },
+  { label: "RESULTS", value: "CSV READY" },
 ];
 
 const WORKFLOW_STEPS = [
   {
-    label: "INPUT",
-    title: "Capture clean data",
+    label: "REQUEST",
+    title: "Describe the intake",
     description:
-      "Spin up polished forms for client intake, field reports, approvals, and internal requests.",
+      "Start with a prompt or shape the fields yourself. FormBro gives every request a clean structure.",
   },
   {
-    label: "PROCESS",
-    title: "Route the workflow",
-    description: "Turn every submission into a clean next step for the people who need it.",
+    label: "FORM",
+    title: "Share one live URL",
+    description: "Publish a form for your team, customers, vendors, or field crew in minutes.",
   },
   {
-    label: "OUTPUT",
-    title: "Send it anywhere",
-    description: "Email, webhooks, SMS, PDFs, exports, and automations for serious workflows.",
+    label: "DATA",
+    title: "Work with the responses",
+    description: "Review structured submissions, filter what matters, and export the data as CSV.",
   },
 ];
 
-const INTEGRATIONS = ["Email", "Webhooks", "SMS", "PDFs", "CRM", "Sheets", "Zapier", "API"];
-const POSITIONING_FEATURES = [
+const WORKSPACE_FORMS = [
+  { name: "Vendor onboarding", owner: "Operations", submissions: "148", status: "OPEN" },
+  { name: "Facilities request", owner: "Workplace", submissions: "63", status: "OPEN" },
+  { name: "Site inspection", owner: "Field ops", submissions: "91", status: "OPEN" },
+  { name: "Equipment request", owner: "Finance", submissions: "27", status: "DRAFT" },
+];
+
+const USE_CASES = [
   {
-    title: "AI-assisted form drafts",
+    icon: RiTeamLine,
+    label: "INTERNAL OPERATIONS",
+    title: "Give every recurring request one front door.",
     description:
-      "Start from a plain-language prompt, then refine the result in the builder instead of staring at a blank canvas.",
+      "Replace scattered messages and spreadsheets with structured intake for HR, IT, finance, and facilities.",
   },
   {
-    title: "Fast publishing and submissions",
+    icon: RiBuildingLine,
+    label: "FIELD & FACILITIES",
+    title: "Collect consistent data from wherever work happens.",
     description:
-      "Share a usable form quickly, collect responses, and keep the work moving without extra setup.",
+      "Standardize inspections, incident reports, service requests, and site updates with shareable URLs.",
   },
   {
-    title: "Simple enough for every team",
+    icon: RiFileListLine,
+    label: "VENDOR & CLIENT INTAKE",
+    title: "Start every handoff with complete information.",
     description:
-      "Clean defaults and familiar controls make forms approachable for ops, admin, and client-facing teams.",
+      "Gather documents, requirements, contacts, and project details before the work reaches your team.",
   },
   {
-    title: "Powerful enough for real operations",
+    icon: RiSurveyLine,
+    label: "SHORT-RUN RESEARCH",
+    title: "Launch a focused collection job, then close it.",
     description:
-      "Required fields, page breaks, draft publishing, workspace members, and response history are built in.",
+      "Create one-off surveys, feedback rounds, and temporary data calls without building permanent infrastructure.",
+  },
+];
+
+const DATA_FEATURES = [
+  {
+    icon: RiInboxLine,
+    title: "Submission history",
+    description: "Keep every response in a structured, searchable table tied to its form version.",
+  },
+  {
+    icon: RiDownloadLine,
+    title: "Portable by default",
+    description:
+      "Filter the responses you need and export them as CSV whenever the next system is ready.",
+  },
+  {
+    icon: RiDatabaseLine,
+    title: "Built around the data",
+    description:
+      "Stable field identities keep collection reliable even as the form evolves over time.",
   },
 ];
 const COPYRIGHT_YEAR = 2026;
@@ -583,13 +626,13 @@ const PLANS = [
   {
     name: "Basic",
     price: "$10",
-    description: "Everything a lean team needs to run serious forms.",
+    description: "A shared home for the forms that keep a lean operation moving.",
     features: ["Unlimited seats", "10 forms", "1,000 submissions / month", "100GB storage"],
   },
   {
     name: "Pro",
     price: "$25",
-    description: "More room for teams with heavier workflows.",
+    description: "More room for teams running data collection across the business.",
     features: ["Unlimited seats", "100 forms", "10,000 submissions / month", "1TB storage"],
   },
 ];
@@ -599,6 +642,21 @@ export function HomePage() {
   const isAuthenticated = Boolean(authUser?.ok && authUser.data);
   const dashboardPrewarmIntent = useDashboardPrewarmIntent({ eager: true });
 
+  return (
+    <HomePageContent
+      isAuthenticated={isAuthenticated}
+      dashboardPrewarmIntent={dashboardPrewarmIntent}
+    />
+  );
+}
+
+function HomePageContent({
+  isAuthenticated,
+  dashboardPrewarmIntent,
+}: {
+  isAuthenticated: boolean;
+  dashboardPrewarmIntent: LinkIntent;
+}) {
   return (
     <div className="min-h-screen overflow-x-hidden bg-background">
       <LandingHeader
@@ -611,8 +669,10 @@ export function HomePage() {
           dashboardPrewarmIntent={dashboardPrewarmIntent}
         />
         <WorkflowSection />
-        <PositioningSection />
-        <IntegrationsSection />
+        <ProductModesSection />
+        <UseCasesSection />
+        <BuilderSection />
+        <DataSection />
         <PricingSection isAuthenticated={isAuthenticated} />
       </main>
       <LandingFooter />
@@ -633,11 +693,14 @@ function LandingHeader({
         <Logo />
       </Link>
       <nav className="hidden items-center gap-6 font-mono text-xs tracking-wider text-muted-foreground uppercase md:flex">
-        <Link href="#builder" className="hover:text-foreground">
-          Builder
+        <Link href="#product" className="hover:text-foreground">
+          Product
         </Link>
-        <Link href="#workflow" className="hover:text-foreground">
-          Workflow
+        <Link href="#use-cases" className="hover:text-foreground">
+          Use cases
+        </Link>
+        <Link href="/agents" className="hover:text-foreground">
+          Agents
         </Link>
         <Link href="#pricing" className="hover:text-foreground">
           Pricing
@@ -669,44 +732,123 @@ function HeroSection({
   dashboardPrewarmIntent: LinkIntent;
 }) {
   return (
-    <section className="relative mx-auto w-full max-w-7xl px-5 pt-10 pb-16 sm:px-8 lg:pt-16">
-      <div className="absolute inset-x-0 top-0 -z-10 h-[560px] border-b bg-muted/30" />
+    <section className="relative border-b bg-muted/30">
+      <div className="mx-auto grid w-full max-w-7xl gap-12 px-5 pt-12 pb-16 sm:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:pt-20 lg:pb-24">
+        <div>
+          <Badge status="neutral" className="mb-5 rounded-none">
+            OPERATIONAL DATA COLLECTION
+          </Badge>
+          <h1 className="max-w-3xl font-display text-5xl leading-[0.95] font-bold tracking-tight text-balance sm:text-6xl lg:text-7xl">
+            Turn any request into structured data.
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+            Build internal requests, intake flows, field reports, and focused surveys. FormBro hosts
+            the form and keeps every response ready for the work that follows—with accountless agent
+            creation now in development.
+          </p>
 
-      <div className="max-w-4xl">
-        <Badge status="neutral" className="mb-5 rounded-none">
-          {TAGLINE.toUpperCase()}
-        </Badge>
-        <h1 className="max-w-3xl font-display text-5xl leading-[0.95] font-bold tracking-tight text-balance sm:text-6xl lg:text-7xl">
-          Serious forms without the enterprise tax.
-        </h1>
-        <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-          Create, publish, and automate forms for intake, approvals, field ops, and onboarding.
-          FormBro stays simple on the surface while giving teams the control to run serious
-          workflows.
-        </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <PrimaryCta
+              isAuthenticated={isAuthenticated}
+              dashboardPrewarmIntent={dashboardPrewarmIntent}
+            />
+            <SecondaryCta />
+          </div>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-          <PrimaryCta
-            isAuthenticated={isAuthenticated}
-            dashboardPrewarmIntent={dashboardPrewarmIntent}
-          />
-          <SecondaryCta isAuthenticated={isAuthenticated} />
+          <div className="mt-10 grid max-w-xl grid-cols-3 border-y bg-card/70">
+            {HERO_STATS.map((stat) => (
+              <div key={stat.label} className="border-r px-3 py-4 last:border-r-0 sm:px-4">
+                <div className="font-mono text-[0.65rem] tracking-wider text-muted-foreground uppercase">
+                  {stat.label}
+                </div>
+                <div className="mt-1 font-display text-sm font-bold tracking-tight sm:text-base">
+                  {stat.value}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="mt-10 grid max-w-xl grid-cols-3 border-y bg-card/70">
-          {HERO_STATS.map((stat) => (
-            <div key={stat.label} className="border-r px-4 py-4 last:border-r-0">
-              <div className="font-mono text-[0.65rem] tracking-wider text-muted-foreground uppercase">
-                {stat.label}
+        <WorkspaceOverview />
+      </div>
+    </section>
+  );
+}
+
+function WorkspaceOverview() {
+  return (
+    <div className="relative">
+      <div className="absolute -inset-6 -z-10 bg-[radial-gradient(circle_at_center,var(--color-brand-200),transparent_68%)] opacity-50 blur-2xl dark:opacity-15" />
+      <div className="overflow-hidden rounded-xl border bg-background shadow-2xl shadow-brand-950/10">
+        <div className="flex items-center justify-between border-b bg-card px-4 py-3 sm:px-5">
+          <div>
+            <div className="font-mono text-[0.65rem] tracking-wider text-muted-foreground uppercase">
+              Operations workspace
+            </div>
+            <div className="mt-1 font-display text-lg font-bold tracking-tight">
+              Northstar Company
+            </div>
+          </div>
+          <Badge status="success" className="rounded-none">
+            LIVE
+          </Badge>
+        </div>
+
+        <div className="grid grid-cols-3 border-b bg-muted/30">
+          <WorkspaceMetric label="FORMS" value="12" />
+          <WorkspaceMetric label="SUBMISSIONS" value="329" />
+          <WorkspaceMetric label="TEAM" value="18" />
+        </div>
+
+        <div className="p-2 sm:p-3">
+          <div className="grid grid-cols-[minmax(0,1fr)_5.5rem_4.5rem] px-3 py-2 font-mono text-[0.6rem] tracking-wider text-muted-foreground uppercase sm:grid-cols-[minmax(0,1fr)_7rem_6rem_4.5rem]">
+            <span>Form</span>
+            <span className="hidden sm:block">Owner</span>
+            <span>Responses</span>
+            <span>Status</span>
+          </div>
+          {WORKSPACE_FORMS.map((form) => (
+            <div
+              key={form.name}
+              className="grid grid-cols-[minmax(0,1fr)_5.5rem_4.5rem] items-center border border-b-0 bg-card px-3 py-3 last:border-b sm:grid-cols-[minmax(0,1fr)_7rem_6rem_4.5rem]"
+            >
+              <div className="flex min-w-0 items-center gap-2.5">
+                <div className="flex size-8 shrink-0 items-center justify-center border bg-background">
+                  <RiFileListLine className="size-4 text-muted-foreground" />
+                </div>
+                <span className="truncate text-sm font-semibold">{form.name}</span>
               </div>
-              <div className="mt-1 font-display text-xl font-bold tracking-tight">{stat.value}</div>
+              <span className="hidden truncate text-xs text-muted-foreground sm:block">
+                {form.owner}
+              </span>
+              <span className="font-mono text-xs">{form.submissions}</span>
+              <Badge
+                status={form.status === "OPEN" ? "success" : "neutral"}
+                className="rounded-none text-[0.6rem]"
+              >
+                {form.status}
+              </Badge>
             </div>
           ))}
         </div>
-      </div>
 
-      <BuilderDemo />
-    </section>
+        <div className="flex items-center justify-between border-t bg-card px-4 py-3 text-xs text-muted-foreground sm:px-5">
+          <span>One place for every operational form.</span>
+          <RiArrowRightLine className="size-4" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WorkspaceMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border-r px-3 py-3 last:border-r-0 sm:px-5 sm:py-4">
+      <div className="font-mono text-[0.6rem] tracking-wider text-muted-foreground uppercase">
+        {label}
+      </div>
+      <div className="mt-1 font-display text-xl font-bold tracking-tight">{value}</div>
+    </div>
   );
 }
 
@@ -732,14 +874,12 @@ function PrimaryCta({
   );
 }
 
-function SecondaryCta({ isAuthenticated }: { isAuthenticated: boolean }) {
-  return isAuthenticated ? (
+function SecondaryCta() {
+  return (
     <Button asChild variant="outline" size="lg">
-      <Link href="#builder">Try the builder</Link>
-    </Button>
-  ) : (
-    <Button asChild variant="outline" size="lg">
-      <Link href="/sign-in">Sign in</Link>
+      <Link href="/agents">
+        For AI agents <RiRobotLine className="size-4" />
+      </Link>
     </Button>
   );
 }
@@ -1140,7 +1280,7 @@ function WorkflowSection() {
             key={step.label}
             className="border-primary-foreground/20 py-8 lg:border-r lg:px-8 lg:last:border-r-0"
           >
-            <div className="font-mono text-xs tracking-wider text-primary-foreground/60 uppercase">
+            <div className="font-mono text-xs tracking-wider text-primary-foreground/70 uppercase">
               {step.label}
             </div>
             <h2 className="mt-3 font-display text-3xl font-bold tracking-tight">{step.title}</h2>
@@ -1152,68 +1292,234 @@ function WorkflowSection() {
   );
 }
 
-function PositioningSection() {
+function ProductModesSection() {
   return (
-    <section className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 lg:grid-cols-[0.85fr_1.15fr] lg:py-24">
-      <div>
+    <section id="product" className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:py-24">
+      <div className="max-w-3xl">
         <Badge status="neutral" className="rounded-none">
-          NOT JUST MARKETING FORMS
+          ONE PLATFORM, TWO WAYS TO CREATE
         </Badge>
         <h2 className="mt-5 font-display text-4xl font-bold tracking-tight text-balance sm:text-5xl">
-          Built for the businesses still stuck between spreadsheets and custom software.
+          Durable systems for teams. Instant infrastructure for agents.
         </h2>
-        <p className="mt-5 max-w-xl text-lg leading-8 text-muted-foreground">
-          FormBro is for intake, approvals, field ops, compliance packets, vendor onboarding, and
-          every small-but-critical workflow that should not need a six-figure build.
+        <p className="mt-5 text-lg leading-8 text-muted-foreground">
+          Whether a form runs for years or for one focused month, the job is the same: publish a
+          reliable input and turn every response into usable data.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        {POSITIONING_FEATURES.map((feature) => (
-          <div key={feature.title} className="rounded-lg border bg-card p-5">
-            <RiCheckboxCircleLine className="mb-5 size-5 text-brand" />
-            <h3 className="font-display text-xl font-bold tracking-tight">{feature.title}</h3>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">{feature.description}</p>
+      <div className="mt-10 grid gap-4 lg:grid-cols-2">
+        <article className="rounded-2xl border bg-card p-6 sm:p-8">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex size-11 items-center justify-center rounded-lg border bg-background">
+              <RiTeamLine className="size-5" />
+            </div>
+            <Badge status="success" className="rounded-none">
+              AVAILABLE TODAY
+            </Badge>
           </div>
-        ))}
+          <div className="mt-8 font-mono text-xs tracking-wider text-muted-foreground uppercase">
+            TEAM WORKSPACES
+          </div>
+          <h3 className="mt-2 font-display text-3xl font-bold tracking-tight">
+            Run the forms your operations depend on.
+          </h3>
+          <p className="mt-3 max-w-xl leading-7 text-muted-foreground">
+            Create durable intake flows, invite the team, publish clean URLs, and keep every
+            submission attached to the right workspace.
+          </p>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            <ModeFeature>Unlimited team seats</ModeFeature>
+            <ModeFeature>Draft and publish controls</ModeFeature>
+            <ModeFeature>Response history</ModeFeature>
+            <ModeFeature>Filtered CSV exports</ModeFeature>
+          </div>
+        </article>
+
+        <article className="relative overflow-hidden rounded-2xl border bg-primary p-6 text-primary-foreground sm:p-8">
+          <div className="absolute top-0 right-0 size-48 translate-x-1/3 -translate-y-1/3 rounded-full bg-brand/20 blur-3xl" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div className="flex size-11 items-center justify-center rounded-lg border border-primary-foreground/20 bg-primary-foreground/5">
+              <RiRobotLine className="size-5" />
+            </div>
+            <Badge
+              status="warning"
+              className="rounded-none border-amber-300 bg-amber-100 text-amber-950 dark:border-amber-300 dark:bg-amber-100 dark:text-amber-950"
+            >
+              IN DEVELOPMENT
+            </Badge>
+          </div>
+          <div className="relative mt-8 font-mono text-xs tracking-wider text-primary-foreground/70 uppercase">
+            INSTANT AGENT FORMS
+          </div>
+          <h3 className="relative mt-2 font-display text-3xl font-bold tracking-tight">
+            Ask for a form. Get back a live URL.
+          </h3>
+          <p className="relative mt-3 max-w-xl leading-7 text-primary-foreground/70">
+            The accountless path we are building lets an AI agent create, fund, manage, and retire a
+            hosted form through a programmatic interface.
+          </p>
+          <div className="relative mt-8 grid gap-3 sm:grid-cols-2">
+            <ModeFeature inverse>HTTP and agent-native tools</ModeFeature>
+            <ModeFeature inverse>x402 payment flow</ModeFeature>
+            <ModeFeature inverse>Fixed hosting lifetime</ModeFeature>
+            <ModeFeature inverse>Programmatic results</ModeFeature>
+          </div>
+          <Button
+            asChild
+            variant="outline"
+            className="relative mt-8 border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground dark:bg-transparent dark:hover:bg-primary-foreground/10"
+          >
+            <Link href="/agents">
+              Explore the agent workflow <RiArrowRightLine className="size-4" />
+            </Link>
+          </Button>
+        </article>
       </div>
     </section>
   );
 }
 
-function IntegrationsSection() {
+function ModeFeature({ children, inverse = false }: { children: string; inverse?: boolean }) {
   return (
-    <section className="mx-auto max-w-7xl px-5 pb-16 sm:px-8 lg:pb-24">
-      <div className="rounded-2xl border bg-card p-6 sm:p-8">
-        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
+    <div
+      className={`flex items-center gap-2 text-sm ${inverse ? "text-primary-foreground/80" : "text-muted-foreground"}`}
+    >
+      <RiCheckboxCircleLine className={`size-4 shrink-0 ${inverse ? "" : "text-brand"}`} />
+      {children}
+    </div>
+  );
+}
+
+function UseCasesSection() {
+  return (
+    <section id="use-cases" className="border-y bg-muted/30">
+      <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:py-24">
+        <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
-                Integrations
-              </div>
-              <Badge status="warning" className="rounded-none">
-                Coming soon
-              </Badge>
-            </div>
-            <h2 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              Capture once. Push everywhere.
+            <Badge status="neutral" className="rounded-none">
+              BUILT FOR OPERATIONS
+            </Badge>
+            <h2 className="mt-5 font-display text-4xl font-bold tracking-tight text-balance sm:text-5xl">
+              The work between a spreadsheet and custom software.
             </h2>
           </div>
-          <p className="max-w-xl leading-7 text-muted-foreground">
-            FormBro is built to become the input layer for every system your business depends on.
-            Capture the request once, then route the handoff without duct tape.
+          <p className="max-w-2xl text-lg leading-8 text-muted-foreground lg:justify-self-end">
+            FormBro is not optimized for marketing gimmicks. It is for the small-but-critical
+            workflows that need cleaner inputs, clearer ownership, and data your team can use.
           </p>
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
-          {INTEGRATIONS.map((integration) => (
-            <div
-              key={integration}
-              className="border bg-background px-3 py-4 text-center font-mono text-xs tracking-wider text-muted-foreground uppercase"
-            >
-              {integration}
+        <div className="mt-10 grid gap-4 md:grid-cols-2">
+          {USE_CASES.map((useCase) => {
+            const Icon = useCase.icon;
+            return (
+              <article key={useCase.label} className="rounded-xl border bg-card p-6 sm:p-7">
+                <div className="flex size-10 items-center justify-center border bg-background">
+                  <Icon className="size-5 text-brand" />
+                </div>
+                <div className="mt-6 font-mono text-xs tracking-wider text-muted-foreground uppercase">
+                  {useCase.label}
+                </div>
+                <h3 className="mt-2 font-display text-2xl font-bold tracking-tight">
+                  {useCase.title}
+                </h3>
+                <p className="mt-3 leading-7 text-muted-foreground">{useCase.description}</p>
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BuilderSection() {
+  return (
+    <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:py-24">
+      <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+        <div>
+          <Badge status="neutral" className="rounded-none">
+            BUILD IT YOUR WAY
+          </Badge>
+          <h2 className="mt-5 font-display text-4xl font-bold tracking-tight text-balance sm:text-5xl">
+            Start with a prompt. Keep control of the form.
+          </h2>
+        </div>
+        <p className="max-w-2xl text-lg leading-8 text-muted-foreground lg:justify-self-end">
+          AI gets you past the blank canvas. The real builder stays available for the details,
+          validation, pages, and wording that make operational forms dependable.
+        </p>
+      </div>
+      <BuilderDemo />
+    </div>
+  );
+}
+
+function DataSection() {
+  return (
+    <section className="border-y bg-primary text-primary-foreground">
+      <div className="mx-auto max-w-7xl px-5 py-16 sm:px-8 lg:py-24">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div>
+            <div className="font-mono text-xs tracking-wider text-primary-foreground/70 uppercase">
+              THE DATA IS THE PRODUCT
             </div>
-          ))}
+            <h2 className="mt-4 font-display text-4xl font-bold tracking-tight text-balance sm:text-5xl">
+              A form is only useful when the response is ready to move.
+            </h2>
+            <p className="mt-5 max-w-xl text-lg leading-8 text-primary-foreground/70">
+              FormBro keeps collection structured from the first field through the final export. No
+              conversion theater. No response trapped in a presentation layer.
+            </p>
+          </div>
+
+          <div className="grid gap-px border border-primary-foreground/20 bg-primary-foreground/20">
+            {DATA_FEATURES.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <article key={feature.title} className="bg-primary p-5 sm:p-6">
+                  <div className="flex gap-4">
+                    <div className="flex size-10 shrink-0 items-center justify-center border border-primary-foreground/20">
+                      <Icon className="size-5" />
+                    </div>
+                    <div>
+                      <h3 className="font-display text-xl font-bold tracking-tight">
+                        {feature.title}
+                      </h3>
+                      <p className="mt-1.5 leading-6 text-primary-foreground/65">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+            <article className="bg-primary p-5 sm:p-6">
+              <div className="flex gap-4">
+                <div className="flex size-10 shrink-0 items-center justify-center border border-primary-foreground/20">
+                  <RiRouteLine className="size-5" />
+                </div>
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="font-display text-xl font-bold tracking-tight">
+                      Direct routing
+                    </h3>
+                    <Badge
+                      status="warning"
+                      className="rounded-none border-amber-300 bg-amber-100 text-amber-950 dark:border-amber-300 dark:bg-amber-100 dark:text-amber-950"
+                    >
+                      NEXT
+                    </Badge>
+                  </div>
+                  <p className="mt-1.5 leading-6 text-primary-foreground/65">
+                    Signed webhooks and a JSON API will send new responses into the systems that
+                    already run your operation.
+                  </p>
+                </div>
+              </div>
+            </article>
+          </div>
         </div>
       </div>
     </section>
@@ -1226,14 +1532,15 @@ function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }) {
       <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
         <div>
           <Badge status="neutral" className="rounded-none">
-            SIMPLE PRICING
+            WORKSPACE PRICING
           </Badge>
           <h2 className="mt-5 font-display text-4xl font-bold tracking-tight sm:text-5xl">
-            Start lean. Upgrade when the workflow earns it.
+            Pay for capacity, not every collaborator.
           </h2>
         </div>
         <p className="max-w-md leading-7 text-muted-foreground">
-          No seat math. No quote request. Start with a trial and prove the workflow before you buy.
+          Invite the people who run the work without seat math. Start with a trial and scale when
+          your collection volume does.
         </p>
       </div>
 
@@ -1245,11 +1552,11 @@ function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }) {
 
       <div className="mt-8 rounded-2xl border bg-primary p-6 text-primary-foreground sm:flex sm:items-center sm:justify-between sm:p-8">
         <div>
-          <div className="font-mono text-xs tracking-wider text-primary-foreground/60 uppercase">
-            Launch access
+          <div className="font-mono text-xs tracking-wider text-primary-foreground/70 uppercase">
+            START COLLECTING
           </div>
           <h2 className="mt-2 font-display text-3xl font-bold tracking-tight">
-            Try the builder, then make the real thing.
+            Give the next operational request a proper home.
           </h2>
         </div>
         <Button
