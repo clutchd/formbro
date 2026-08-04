@@ -40,8 +40,8 @@ function formatTelemetryRate(value: number | null) {
 
 export default function ShareFormPage() {
   const { form, workspace } = useRequiredWorkspaceFormData();
-  const [copied, setCopied] = useState<"automatic" | "iframe" | "share" | null>(null);
-  const [embedMethod, setEmbedMethod] = useState<"automatic" | "iframe">("automatic");
+  const [copied, setCopied] = useState<"automatic" | "iframe" | "next" | "share" | null>(null);
+  const [embedMethod, setEmbedMethod] = useState<"automatic" | "iframe" | "next">("automatic");
   const shareId = useId();
   const shareUrl = `${APP_URL}/f/${form.slug}`;
   const embedCode = buildEmbedCode({
@@ -65,7 +65,7 @@ export default function ShareFormPage() {
 
   const copyToClipboard = async (
     value: string,
-    target: "automatic" | "iframe" | "share",
+    target: "automatic" | "iframe" | "next" | "share",
     successMessage: string,
   ) => {
     try {
@@ -199,19 +199,38 @@ export default function ShareFormPage() {
             >
               Plain iframe
             </Button>
-            {embedMethod === "automatic" ? <Badge status="info">Recommended</Badge> : null}
+            <Button
+              type="button"
+              size="sm"
+              variant={embedMethod === "next" ? "default" : "outline"}
+              onClick={() => setEmbedMethod("next")}
+              aria-pressed={embedMethod === "next"}
+            >
+              React / Next.js
+            </Button>
+            {embedMethod === "automatic" ? (
+              <Badge status="info">Recommended</Badge>
+            ) : embedMethod === "next" ? (
+              <Badge status="info">Native DOM</Badge>
+            ) : null}
           </div>
 
           <div className="overflow-hidden rounded-lg border bg-muted/20">
             <div className="flex items-center justify-between gap-3 border-b px-4 py-3">
               <div>
                 <p className="text-sm font-medium">
-                  {embedMethod === "automatic" ? "Responsive embed" : "Fixed-height fallback"}
+                  {embedMethod === "automatic"
+                    ? "Responsive embed"
+                    : embedMethod === "next"
+                      ? "Server-rendered React form"
+                      : "Fixed-height fallback"}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {embedMethod === "automatic"
                     ? "Loads server-rendered markup and follows the form height automatically."
-                    : "Works without the loader script; adjust the height for your page."}
+                    : embedMethod === "next"
+                      ? "Renders native host-page DOM and revalidates published revisions."
+                      : "Works without the loader script; adjust the height for your page."}
                 </p>
               </div>
               <Button

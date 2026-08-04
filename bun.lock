@@ -72,6 +72,26 @@
         "typescript": "catalog:",
       },
     },
+    "packages/embed-react": {
+      "name": "@formbro/embed-react",
+      "version": "0.1.0-alpha.0",
+      "dependencies": {
+        "@formbro/core": "workspace:*",
+        "@formbro/react": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/bun": "catalog:",
+        "@types/react": "catalog:",
+        "@types/react-dom": "catalog:",
+        "react": "catalog:",
+        "react-dom": "catalog:",
+        "typescript": "catalog:",
+      },
+      "peerDependencies": {
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+      },
+    },
     "packages/embed-web": {
       "name": "@formbro/embed-web",
       "dependencies": {
@@ -386,6 +406,8 @@
     "@formbro/core": ["@formbro/core@workspace:packages/core"],
 
     "@formbro/email": ["@formbro/email@workspace:packages/email"],
+
+    "@formbro/embed-react": ["@formbro/embed-react@workspace:packages/embed-react"],
 
     "@formbro/embed-web": ["@formbro/embed-web@workspace:packages/embed-web"],
 

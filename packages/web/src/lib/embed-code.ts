@@ -29,5 +29,6 @@ export function buildEmbedCode({
     hostedUrl,
     automatic: `<div data-formbro-id="${escapedId}" data-formbro-title="${escapedName}"${guarded ? " data-formbro-guarded" : ""}></div>\n<script async src="${embedOrigin}/embed.js"></script>`,
     iframe: `<iframe src="${hostedUrl}" title="${escapedName}" width="100%" height="640" loading="eager" style="border: 0; display: block;"></iframe>`,
+    next: `import "@formbro/embed-react/styles.css";\nimport { FormBroForm } from "@formbro/embed-react/next";\n\nexport default function Page() {\n  return <FormBroForm publicId={${JSON.stringify(publicId)}} />;\n}`,
   };
 }

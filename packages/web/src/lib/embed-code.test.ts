@@ -15,6 +15,7 @@ describe("dashboard embed code", () => {
         '<div data-formbro-id="employment-application" data-formbro-title="Employment application"></div>\n<script async src="https://embed.formbro.com/embed.js"></script>',
       iframe:
         '<iframe src="https://embed.formbro.com/e/employment-application" title="Employment application" width="100%" height="640" loading="eager" style="border: 0; display: block;"></iframe>',
+      next: 'import "@formbro/embed-react/styles.css";\nimport { FormBroForm } from "@formbro/embed-react/next";\n\nexport default function Page() {\n  return <FormBroForm publicId={"employment-application"} />;\n}',
     });
   });
 
@@ -28,6 +29,7 @@ describe("dashboard embed code", () => {
     expect(result.hostedUrl).toBe("https://embed.formbro.com/e/jobs%2Fus");
     expect(result.automatic).toContain('data-formbro-title="Jobs &amp; &quot;Careers&quot;"');
     expect(result.iframe).not.toContain('title="Jobs & "Careers""');
+    expect(result.next).toContain('publicId={"jobs/us"}');
   });
 
   test("uses the guarded route when a domain policy is enabled", () => {

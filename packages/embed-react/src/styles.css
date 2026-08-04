@@ -1,0 +1,111 @@
+[data-formbro-native] {
+  --formbro-border: color-mix(in srgb, currentColor 24%, transparent);
+  --formbro-muted: color-mix(in srgb, currentColor 65%, transparent);
+  --formbro-danger: #b42318;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+}
+
+[data-formbro-native][data-formbro-color-scheme="light"] {
+  color-scheme: light;
+}
+
+[data-formbro-native][data-formbro-color-scheme="dark"] {
+  color-scheme: dark;
+}
+
+[data-formbro-native],
+[data-formbro-native] * {
+  box-sizing: border-box;
+}
+
+[data-formbro-native] form,
+[data-formbro-native] [data-slot="field-set"],
+[data-formbro-native] [data-slot="field-group"] {
+  display: grid;
+  gap: 1.25rem;
+}
+
+[data-formbro-native] [data-slot="field-set"] {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+[data-formbro-native] [data-slot="field"] {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+[data-formbro-native] [data-slot="field-label"] {
+  display: inline-flex;
+  gap: 0.25rem;
+  font: inherit;
+  font-weight: 600;
+}
+
+[data-formbro-native] [data-slot="field-description"] {
+  margin: 0;
+  color: var(--formbro-muted);
+  font-size: 0.875em;
+}
+
+[data-formbro-native] [data-slot="input"],
+[data-formbro-native] [data-slot="textarea"],
+[data-formbro-native] [data-slot="select-trigger"] {
+  width: 100%;
+  min-height: 2.5rem;
+  border: 1px solid var(--formbro-border);
+  border-radius: 0.5rem;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 0.5rem 0.75rem;
+}
+
+[data-formbro-native] [data-slot="button"] {
+  min-height: 2.5rem;
+  border: 1px solid currentColor;
+  border-radius: 0.5rem;
+  background: CanvasText;
+  color: Canvas;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+}
+
+[data-formbro-native] [data-slot="button"] > * {
+  color: inherit;
+}
+
+[data-formbro-native] [aria-invalid="true"] {
+  border-color: var(--formbro-danger);
+}
+
+[data-formbro-native] [data-slot="field-error"],
+[data-formbro-native] [data-invalid="true"] {
+  color: var(--formbro-danger);
+}
+
+[data-formbro-native][data-formbro-density="compact"] form,
+[data-formbro-native][data-formbro-density="compact"] [data-slot="field-set"],
+[data-formbro-native][data-formbro-density="compact"] [data-slot="field-group"] {
+  gap: 0.875rem;
+}
+
+[data-formbro-alert] {
+  margin-bottom: 1rem;
+  border: 1px solid var(--formbro-danger);
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  color: var(--formbro-danger);
+}
+
+[data-formbro-alert] p {
+  margin: 0.25rem 0 0;
+}
