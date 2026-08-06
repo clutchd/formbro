@@ -10,7 +10,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess, getWorkspaceAccess } from "./access";
-import { requireWorkspaceSubscription } from "./billing";
+import { getWorkspaceSubscriptionState } from "./billing";
 import { getWorkspaceFormsUsed, isWorkspaceLimitReached } from "./billingUtils";
 import { defineErrors } from "./errors";
 import { _delete as _deleteSubmission } from "./submissions";
@@ -47,7 +47,7 @@ export const create = mutation({
     const access = await getWorkspaceAccess(ctx, args.workspaceId);
     if (!access.ok) return fail({ data: null, error: access.error });
 
-    const subscriptionState = await requireWorkspaceSubscription(ctx, args.workspaceId);
+    const subscriptionState = await getWorkspaceSubscriptionState(ctx, args.workspaceId);
     if (!subscriptionState.ok) return fail({ data: null, error: subscriptionState.error });
 
     if (

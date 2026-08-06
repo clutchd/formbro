@@ -87,6 +87,7 @@ function PlanCard({
   recommended: boolean;
 }) {
   const plan = getPlanDetails(planName);
+  const isFree = planName === "free";
 
   return (
     <Card className="row-span-4 grid h-full grid-rows-subgrid gap-y-5">
@@ -159,7 +160,7 @@ function PlanCard({
           }}
         >
           {isLoading ? <Spinner /> : null}
-          {current ? "Current plan" : `Choose ${plan.name}`}
+          {current ? "Current plan" : isFree ? "Free plan" : `Choose ${plan.name}`}
         </Button>
       </div>
     </Card>

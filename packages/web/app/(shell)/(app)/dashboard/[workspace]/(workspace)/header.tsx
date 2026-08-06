@@ -3,6 +3,7 @@
 import {
   getWorkspacePlanLabel,
   hasActiveWorkspaceSubscriptionStatus,
+  normalizeWorkspacePlan,
 } from "@formbro/convex/billingUtils";
 import { Button } from "@formbro/ui/button";
 import { RiBankCardLine } from "@remixicon/react";
@@ -53,7 +54,10 @@ export function WorkspaceHomeHeader() {
                 Billing
               </Link>
             </Button>
-            {forms && !forms.length && hasActiveWorkspaceSubscriptionStatus(workspace) ? (
+            {forms &&
+            !forms.length &&
+            (hasActiveWorkspaceSubscriptionStatus(workspace) ||
+              normalizeWorkspacePlan(workspace.plan) === "free") ? (
               <CreateForm />
             ) : null}
           </div>

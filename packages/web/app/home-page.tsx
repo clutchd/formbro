@@ -1,7 +1,7 @@
 "use client";
 
-import { DEFAULT_FORM_NAME, type FormInput } from "@formbro/core/schema/form";
 import { applyFormSchemaEdit, type FormSchemaEditInput } from "@formbro/core/ai";
+import { DEFAULT_FORM_NAME, type FormInput } from "@formbro/core/schema/form";
 import { FormBuilderCanvas } from "@formbro/react/builder";
 import { Form } from "@formbro/react/components/form";
 import { APP_NAME, TAGLINE } from "@formbro/shared/brand";
@@ -581,16 +581,22 @@ const INITIAL_BUILDER_STREAM_STATE: BuilderDemoStreamState = {
 
 const PLANS = [
   {
+    name: "Free",
+    price: "$0",
+    description: "Everything you need to try serious forms.",
+    features: ["1 seat", "3 forms", "250 submissions / month", "1GB storage"],
+  },
+  {
     name: "Basic",
-    price: "$10",
+    price: "$29",
     description: "Everything a lean team needs to run serious forms.",
-    features: ["Unlimited seats", "10 forms", "1,000 submissions / month", "100GB storage"],
+    features: ["Unlimited seats", "10 forms", "1,000 submissions / month", "10GB storage"],
   },
   {
     name: "Pro",
-    price: "$25",
+    price: "$99",
     description: "More room for teams with heavier workflows.",
-    features: ["Unlimited seats", "100 forms", "10,000 submissions / month", "1TB storage"],
+    features: ["Unlimited seats", "100 forms", "10,000 submissions / month", "100GB storage"],
   },
 ];
 

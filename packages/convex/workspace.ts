@@ -36,10 +36,6 @@ export const ERRORS = defineErrors({
     message: "Workspace not found.",
     status: "NOT_FOUND",
   },
-  UNPAID_WORKSPACE_LIMIT: {
-    message: "Unpaid workspace limit reached.",
-    status: "FORBIDDEN",
-  },
   DELETE_WORKSPACE_ACTIVE_SUBSCRIPTION: {
     message:
       "Cannot delete a workspace with an active subscription. Cancel billing first in workspace settings.",
@@ -348,22 +344,6 @@ export const create = mutation({
     if (!identity.ok) return fail({ data: undefined, error: identity.error });
 
     const profile = await resolveUserProfile(ctx, identity.data);
-
-    const ownedWorkspaces = await ctx.db
-      .query("workspaces")
-      .withIndex("by_owner", (q) => q.eq("ownerAuthId", identity.data.subject))
-      .collect();
-
-    for (const workspace of ownedWorkspaces) {
-      const subscriptionState = await getWorkspaceSubscriptionState(ctx, workspace._id);
-      if (!subscriptionState.ok) {
-        return fail({ data: undefined, error: subscriptionState.error });
-      }
-
-      if (!subscriptionState.data.hasActiveSubscription) {
-        return fail({ data: undefined, error: ERRORS.UNPAID_WORKSPACE_LIMIT });
-      }
-    }
 
     return ok(
       await _createWorkspace({

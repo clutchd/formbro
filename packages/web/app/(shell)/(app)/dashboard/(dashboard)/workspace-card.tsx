@@ -5,6 +5,7 @@ import { api } from "@formbro/convex/_generated/api";
 import {
   getWorkspacePlanLabel,
   hasActiveWorkspaceSubscriptionStatus,
+  normalizeWorkspacePlan,
 } from "@formbro/convex/billingUtils";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
@@ -114,7 +115,9 @@ function WorkspaceFormPreview({
 export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   const settingsPrewarm = useWorkspaceSettingsPrewarmIntent(workspace.slug);
   const workspacePrewarm = useWorkspacePrewarmIntent(workspace.slug);
-  const needsSubscription = !hasActiveWorkspaceSubscriptionStatus(workspace);
+  const needsSubscription =
+    normalizeWorkspacePlan(workspace.plan) !== "free" &&
+    !hasActiveWorkspaceSubscriptionStatus(workspace);
   const href = needsSubscription
     ? `/dashboard/${workspace.slug}/settings`
     : `/dashboard/${workspace.slug}`;

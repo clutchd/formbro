@@ -6,7 +6,11 @@ import { formatStorage, GIGABYTE, numberFormatter } from "./lib";
 
 export const WORKSPACE_TRIAL_DAYS = 7;
 
-export const workspacePlanValidator = v.union(v.literal("basic"), v.literal("pro"));
+export const workspacePlanValidator = v.union(
+  v.literal("free"),
+  v.literal("basic"),
+  v.literal("pro"),
+);
 export const billingIntervalValidator = v.union(v.literal("monthly"), v.literal("annual"));
 
 const BILLING_STATUSES = [
@@ -29,25 +33,27 @@ type BillingUsagePeriod = {
   end: number;
 };
 
-export const PLANS = ["basic", "pro"] as const;
+export const PLANS = ["free", "basic", "pro"] as const;
 export type Plan = (typeof PLANS)[number];
 type WorkspacePlan = "free" | Plan | "unlimited";
 
 const WORKSPACE_PLAN_LABELS: Record<WorkspacePlan, string> = {
-  free: "Unpaid",
+  free: "Free",
   basic: "Basic",
   pro: "Pro",
   unlimited: "Unlimited",
 };
 
 const WORKSPACE_PLAN_DESCRIPTIONS: Record<Plan, string> = {
+  free: "Everything you need to try serious forms.",
   basic: "Everything you need to run your forms.",
   pro: "Higher limits for growing teams and workflows.",
 };
 
 const WORKSPACE_PLAN_MONTHLY_PRICE_USD: Record<Plan, number> = {
-  basic: 10,
-  pro: 25,
+  free: 0,
+  basic: 29,
+  pro: 99,
 };
 
 const WORKSPACE_PLAN_YEARLY_PRICE_USD_MULTIPLIER = 10;
@@ -64,21 +70,21 @@ export const WORKSPACE_LIMITS: Record<
 > = {
   free: {
     members: 1,
-    forms: 0,
-    monthlySubmissions: 0,
-    storageBytes: 0,
+    forms: 3,
+    monthlySubmissions: 250,
+    storageBytes: GIGABYTE,
   },
   basic: {
     members: null,
     forms: 10,
     monthlySubmissions: 1000,
-    storageBytes: 100 * GIGABYTE,
+    storageBytes: 10 * GIGABYTE,
   },
   pro: {
     members: null,
     forms: 100,
     monthlySubmissions: 10000,
-    storageBytes: 1024 * GIGABYTE,
+    storageBytes: 100 * GIGABYTE,
   },
   unlimited: {
     members: null,
@@ -133,11 +139,15 @@ export function getPlanDetails(plan: Plan) {
   const monthlyPriceId =
     normalizedPlan === "basic"
       ? process.env.STRIPE_BASIC_MONTHLY_PRICE_ID
-      : process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
+      : normalizedPlan === "pro"
+        ? process.env.STRIPE_PRO_MONTHLY_PRICE_ID
+        : undefined;
   const yearlyPriceId =
     normalizedPlan === "basic"
       ? process.env.STRIPE_BASIC_YEARLY_PRICE_ID
-      : process.env.STRIPE_PRO_YEARLY_PRICE_ID;
+      : normalizedPlan === "pro"
+        ? process.env.STRIPE_PRO_YEARLY_PRICE_ID
+        : undefined;
 
   return {
     name,
@@ -191,6 +201,8 @@ export function getWorkspaceBillingStatusColor(billingStatus?: string) {
       return "success";
     case "paused":
       return "warning";
+    case "not_subscribed":
+      return "neutral";
     default:
       return "error";
   }

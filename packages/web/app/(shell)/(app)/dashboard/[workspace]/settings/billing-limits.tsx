@@ -76,7 +76,11 @@ export function BillingLimits() {
             {workspace.billingStatus}
           </WorkspaceBillingStateBadge>
         </Metric>
-        <Metric label="Seats">Unlimited</Metric>
+        <Metric label="Seats">
+          {billing.limits.members === null
+            ? "Unlimited"
+            : numberFormatter.format(billing.limits.members)}
+        </Metric>
       </div>
 
       <Separator className="my-6" />

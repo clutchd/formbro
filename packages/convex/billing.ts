@@ -46,13 +46,13 @@ export const ERRORS = defineErrors({
       "This workspace already has an active subscription. Use the billing portal to manage it.",
     status: "CONFLICT",
   },
-  ACTIVE_SUBSCRIPTION_REQUIRED: {
-    message: "This workspace requires an active subscription to perform this action.",
-    status: "FORBIDDEN",
-  },
   CHECKOUT_SESSION_NOT_CREATED: {
     message: "Checkout session could not be created. Please try again.",
     status: "INTERNAL_SERVER_ERROR",
+  },
+  FREE_PLAN_NOT_PURCHASABLE: {
+    message: "The free plan cannot be purchased.",
+    status: "BAD_REQUEST",
   },
   STRIPE_PRICE_NOT_CONFIGURED: {
     message: "This plan is not available for checkout yet. Please contact support.",
@@ -159,20 +159,6 @@ export const grantUnlimitedWorkspace = internalMutation({
     });
   },
 });
-
-export async function requireWorkspaceSubscription(
-  ctx: QueryCtx | MutationCtx,
-  workspaceId: Id<"workspaces">,
-) {
-  const subscriptionState = await getWorkspaceSubscriptionState(ctx, workspaceId);
-  if (!subscriptionState.ok) return fail({ data: null, error: subscriptionState.error });
-
-  if (!subscriptionState.data.hasActiveSubscription) {
-    return fail({ data: null, error: ERRORS.ACTIVE_SUBSCRIPTION_REQUIRED });
-  }
-
-  return ok(subscriptionState.data);
-}
 
 export const createWorkspaceCustomer = internalAction({
   args: {
@@ -349,6 +335,10 @@ export const createSubscriptionCheckout = action({
 
     if (workspace.data.role !== "owner") {
       return fail({ data: undefined, error: ERRORS.BILLING_OWNER_ONLY });
+    }
+
+    if (args.plan === "free") {
+      return fail({ data: undefined, error: ERRORS.FREE_PLAN_NOT_PURCHASABLE });
     }
 
     const existingSubscription = await ctx.runQuery(
