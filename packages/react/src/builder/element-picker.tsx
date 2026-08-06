@@ -91,12 +91,12 @@ export function ElementPicker({
           {trigger === "empty" ? <span>Add element</span> : null}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[min(42rem,calc(100svh-2rem))] overflow-hidden p-0 sm:max-w-2xl">
-        <DialogHeader className="border-b px-5 pt-5 pb-4">
+      <DialogContent className="flex h-[min(42rem,calc(100svh-2rem))] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 border-b px-5 pt-5 pb-4">
           <DialogTitle>Add element</DialogTitle>
           <DialogDescription>Questions, content, and page breaks for this draft.</DialogDescription>
         </DialogHeader>
-        <div className="border-b px-5 py-4">
+        <div className="shrink-0 border-b px-5 py-4">
           <div className="relative">
             <RiSearchLine className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -108,7 +108,7 @@ export function ElementPicker({
             />
           </div>
         </div>
-        <div className="max-h-[28rem] overflow-y-auto px-5 py-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {groups.length === 0 ? (
             <div className="rounded-md border border-dashed px-4 py-8 text-center text-sm text-muted-foreground">
               No elements match that search.
