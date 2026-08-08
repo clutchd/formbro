@@ -399,3 +399,54 @@ export async function getWorkspaceMonthlySubmissionsUsed(
   const stats = await aggregateWorkspaceSubmissions(ctx, workspaceId, { period, limit });
   return stats.totalSubmissions;
 }
+
+export type SubmissionQuotaCheck =
+  | { ok: true; monthlySubmissionsUsed: number; storageUsedBytes: number }
+  | { ok: false; reason: "monthly_submissions" | "storage" };
+
+export async function checkWorkspaceSubmissionQuota(
+  ctx: QueryCtx | MutationCtx,
+  input: {
+    workspaceId: Id<"workspaces">;
+    subscription?: {
+      currentPeriodEnd?: number | null;
+      priceId?: string | null;
+      status?: string | null;
+    } | null;
+    limits: {
+      monthlySubmissions: number | null;
+      storageBytes: number | null;
+    };
+    incomingBytes: number;
+    now?: number;
+  },
+): Promise<SubmissionQuotaCheck> {
+  const period = getWorkspaceMonthlySubmissionPeriod(input.subscription, input.now);
+
+  const [monthlySubmissionsUsed, storageUsedBytes] = await Promise.all([
+    input.limits.monthlySubmissions === null
+      ? Promise.resolve(0)
+      : getWorkspaceMonthlySubmissionsUsed(
+          ctx,
+          input.workspaceId,
+          period,
+          input.limits.monthlySubmissions,
+        ),
+    input.limits.storageBytes === null
+      ? Promise.resolve(0)
+      : getWorkspaceStorageUsedBytes(ctx, input.workspaceId),
+  ]);
+
+  if (isLimitReached(monthlySubmissionsUsed, input.limits.monthlySubmissions)) {
+    return { ok: false, reason: "monthly_submissions" };
+  }
+
+  if (
+    input.limits.storageBytes !== null &&
+    storageUsedBytes + input.incomingBytes > input.limits.storageBytes
+  ) {
+    return { ok: false, reason: "storage" };
+  }
+
+  return { ok: true, monthlySubmissionsUsed, storageUsedBytes };
+}
