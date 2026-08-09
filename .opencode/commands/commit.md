@@ -1,7 +1,6 @@
 ---
 description: git commit
-model: opencode/kimi-k2.5
-subtask: true
+model: opencode/deepseek-v4-flash-free
 ---
 
 commit and push
