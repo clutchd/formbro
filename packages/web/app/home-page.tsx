@@ -9,6 +9,7 @@ import {
   RiSparklingLine,
 } from "@remixicon/react";
 import Link from "next/link";
+import { HomeAuthActions } from "./home-auth-actions";
 import { HomeProductDemo } from "./home-product-demo";
 
 const HERO_STEPS = [
@@ -113,14 +114,7 @@ function LandingHeader() {
           Pricing
         </Link>
       </nav>
-      <div className="flex items-center gap-2">
-        <Button asChild variant="link" className="hidden sm:inline-flex">
-          <Link href="/sign-in">Sign in</Link>
-        </Button>
-        <Button asChild>
-          <Link href="/sign-up">Start trial</Link>
-        </Button>
-      </div>
+      <HomeAuthActions />
     </header>
   );
 }
