@@ -157,6 +157,12 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
   triggers: {
     user: {
       onCreate: async (ctx, doc) => {
+        await ctx.scheduler.runAfter(0, internal.analytics.captureSignup, {
+          createdAt: doc.createdAt,
+          email: doc.email,
+          name: doc.name,
+          userId: String(doc._id),
+        });
         await ctx.scheduler.runAfter(0, api.audience.add, {
           email: doc.email,
           name: doc.name,
