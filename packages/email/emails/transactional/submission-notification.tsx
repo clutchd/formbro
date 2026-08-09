@@ -9,23 +9,8 @@ export function SubmissionNotificationSubject({ formName }: { formName: string }
   return `New submission for ${safeFormName}`;
 }
 
-const submittedTimeFormatter = new Intl.DateTimeFormat("en-US", {
-  year: "numeric",
-  month: "short",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-  timeZone: "UTC",
-  timeZoneName: "short",
-});
-
-function formatSubmittedTime(submittedTime: number) {
-  return submittedTimeFormatter.format(new Date(submittedTime));
-}
-
 type SubmissionNotificationProps = {
   formName: string;
-  submittedTime: number;
   submissionsUrl: string;
   theme?: Theme;
   workspaceName: string;
@@ -33,7 +18,6 @@ type SubmissionNotificationProps = {
 
 export default function SubmissionNotificationComponent({
   formName,
-  submittedTime,
   submissionsUrl,
   theme = "system",
   workspaceName,
@@ -61,8 +45,7 @@ export default function SubmissionNotificationComponent({
               A new submission was received in {workspaceName}.
             </Text>
             <Text className="dark:text-muted-foreground-dark mt-5 mb-0 text-sm leading-6 text-muted-foreground">
-              Submitted {formatSubmittedTime(submittedTime)}. Open {APP_NAME} to review the response
-              with the rest of your submissions.
+              Open {APP_NAME} to review the response with the rest of your submissions.
             </Text>
           </Section>
 
@@ -75,7 +58,6 @@ export default function SubmissionNotificationComponent({
 
 SubmissionNotificationComponent.PreviewProps = {
   formName: "Customer intake",
-  submittedTime: Date.now(),
   submissionsUrl: "https://formbro.com/dashboard/acme/customer-intake/submissions",
   theme: "system",
   workspaceName: "Acme Inc",

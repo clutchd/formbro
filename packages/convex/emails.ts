@@ -58,7 +58,6 @@ const submissionNotificationEmail = v.object({
   template: v.literal("submissionNotification"),
   to: v.string(),
   formName: v.string(),
-  submittedTime: v.number(),
   submissionsUrl: v.string(),
   workspaceName: v.string(),
 });
@@ -88,7 +87,6 @@ export const transactional = internalAction({
       case "submissionNotification":
         component = SubmissionNotificationComponent({
           formName: email.formName,
-          submittedTime: email.submittedTime,
           submissionsUrl: email.submissionsUrl,
           workspaceName: email.workspaceName,
         });

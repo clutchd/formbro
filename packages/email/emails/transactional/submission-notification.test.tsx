@@ -8,7 +8,6 @@ async function renderSubmissionNotification() {
   const stream = await renderToReadableStream(
     <SubmissionNotificationComponent
       formName="Customer intake"
-      submittedTime={0}
       submissionsUrl="https://example.com/submissions"
       workspaceName="Acme Inc"
     />,
@@ -23,7 +22,8 @@ describe("SubmissionNotificationComponent", () => {
 
     expect(html).toContain("Customer intake received a new submission.");
     expect(html).toContain("Acme Inc");
-    expect(html).toContain("Jan 1, 1970, 12:00 AM UTC");
+    expect(html).not.toContain("Submitted");
+    expect(html).not.toContain("UTC");
     expect(html).toContain('href="https://example.com/submissions"');
   });
 

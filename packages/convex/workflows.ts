@@ -40,7 +40,6 @@ export const handleSubmissionCreated = internalMutation({
         template: "submissionNotification",
         to: form.submissionNotificationEmail,
         formName: form.name,
-        submittedTime: submission.submittedTime,
         submissionsUrl: getSubmissionsUrl(workspace.slug, form.slug),
         workspaceName: workspace.name,
       },
