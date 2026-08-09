@@ -10,6 +10,7 @@
 
 import type * as access from "../access.js";
 import type * as ai from "../ai.js";
+import type * as analytics from "../analytics.js";
 import type * as audience from "../audience.js";
 import type * as auth from "../auth.js";
 import type * as billing from "../billing.js";
@@ -35,6 +36,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   access: typeof access;
   ai: typeof ai;
+  analytics: typeof analytics;
   audience: typeof audience;
   auth: typeof auth;
   billing: typeof billing;
