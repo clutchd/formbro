@@ -1,28 +1,29 @@
-import posthog from "posthog-js";
-
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
-if (!posthogKey) {
-  throw new Error("NEXT_PUBLIC_POSTHOG_KEY is not set");
+async function initializePosthog() {
+  const { initializePosthog: initialize } = await import("@/lib/posthog-init");
+  initialize();
 }
 
-posthog.init(posthogKey, {
-  api_host: "/ingest",
-  capture_exceptions: {
-    capture_console_errors: false,
-    capture_unhandled_errors: true,
-    capture_unhandled_rejections: true,
-  },
-  defaults: "2026-01-30",
-  logs: {
-    captureConsoleLogs: false,
-    environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
-    serviceName: "formbro-web",
-    serviceVersion:
-      process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ??
-      process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_REF ??
-      "local",
-  },
-  person_profiles: "identified_only",
-  ui_host: "https://us.posthog.com",
-});
+function schedulePosthog() {
+  const start = () => {
+    void initializePosthog();
+  };
+
+  const requestIdle = window.requestIdleCallback?.bind(window);
+
+  if (requestIdle) {
+    requestIdle(start, { timeout: 2_000 });
+    return;
+  }
+
+  globalThis.setTimeout(start, 0);
+}
+
+if (posthogKey && typeof window !== "undefined") {
+  if (document.readyState === "complete") {
+    schedulePosthog();
+  } else {
+    window.addEventListener("load", schedulePosthog, { once: true });
+  }
+}
