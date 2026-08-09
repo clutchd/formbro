@@ -160,48 +160,6 @@ export const grantUnlimitedWorkspace = internalMutation({
   },
 });
 
-export const backfillFreePlan = internalMutation({
-  args: {
-    workspaceId: v.optional(v.id("workspaces")),
-  },
-  handler: async (ctx, args) => {
-    if (args.workspaceId) {
-      const workspace = await ctx.db.get(args.workspaceId);
-      if (!workspace) {
-        return fail({ data: null, error: WORKSPACE_ERRORS.WORKSPACE_NOT_FOUND });
-      }
-
-      if (!workspace.plan) {
-        await ctx.db.patch(workspace._id, {
-          plan: "free",
-          billingStatus: workspace.billingStatus === "active" ? "active" : "not_subscribed",
-        });
-      }
-
-      return ok({
-        workspaceId: workspace._id,
-        workspaceSlug: workspace.slug,
-        plan: workspace.plan ?? "free",
-      });
-    }
-
-    const workspaces = await ctx.db.query("workspaces").collect();
-    const updated: Id<"workspaces">[] = [];
-
-    for (const workspace of workspaces) {
-      if (!workspace.plan) {
-        await ctx.db.patch(workspace._id, {
-          plan: "free",
-          billingStatus: workspace.billingStatus === "active" ? "active" : "not_subscribed",
-        });
-        updated.push(workspace._id);
-      }
-    }
-
-    return ok({ updated });
-  },
-});
-
 export const createWorkspaceCustomer = internalAction({
   args: {
     workspace: v.object({
