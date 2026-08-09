@@ -291,7 +291,7 @@ function PreviewControl({
             })
           }
           aria-label="Description text"
-          className="min-h-0 resize-none overflow-hidden rounded-none border-0 bg-transparent px-0 py-0 text-sm leading-relaxed text-muted-foreground shadow-none focus-visible:outline-none"
+          className="min-h-0 resize-none overflow-hidden rounded-none border-0 bg-transparent px-0 py-0 text-sm leading-relaxed text-muted-foreground shadow-none focus-visible:outline-none dark:bg-transparent"
           placeholder={preview.placeholder ?? "Description"}
         />
       );
@@ -418,7 +418,7 @@ export function EditorInlineTextInput({
       onChange={(event) => onChange(event.target.value)}
       onFocus={onFocus}
       className={twx(
-        "h-auto rounded-none border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0",
+        "h-auto rounded-none border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0 dark:bg-transparent",
         className,
       )}
       placeholder={placeholder}
