@@ -1,6 +1,6 @@
 ---
 description: git commit
-model: opencode/kimi-k2.5
+model: openai/gpt-5.6-luna-fast
 subtask: true
 ---
 
