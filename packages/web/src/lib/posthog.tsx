@@ -2,12 +2,17 @@
 
 import type { Properties } from "posthog-js";
 import type { PropsWithChildren } from "react";
+import { createAnalytics } from "@formbro/core/analytics";
 import posthog from "posthog-js";
 import { PostHogProvider as Provider } from "posthog-js/react";
 import { useEffect, useRef } from "react";
 import { useSession } from "@/lib/auth/client";
 
 const IDENTIFIED_USER_STORAGE_KEY = "formbro.posthog.identified_user_id";
+
+export const analytics = createAnalytics<void>(({ name, properties }) => {
+  posthog.capture(name, properties);
+});
 
 function identifiedStorageGet() {
   try {
