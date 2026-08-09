@@ -1,10 +1,8 @@
 import { describe, expect, mock, test } from "bun:test";
 import { PathnameContext } from "next/dist/shared/lib/hooks-client-context.shared-runtime";
-import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-const pathname =
-  "/dashboard/city-mechanical-inc-1/riuamx6gue/submissions/kn71ct5aemgwgmv6wdyrmm46ys899h32";
+const pathname = "/dashboard/formbro";
 
 mock.module("app/_data-provider", () => ({
   useAppData: () => ({ authUser: { ok: false } }),
@@ -18,11 +16,9 @@ describe("AppLayout", () => {
 
     try {
       renderToStaticMarkup(
-        createElement(
-          PathnameContext.Provider,
-          { value: pathname },
-          createElement(AppLayout, { children: "Dashboard" }),
-        ),
+        <PathnameContext.Provider value={pathname}>
+          <AppLayout>Dashboard</AppLayout>
+        </PathnameContext.Provider>,
       );
     } catch (error) {
       redirectError = error;
