@@ -210,7 +210,8 @@ export function PlansPanel() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:grid-rows-[auto_auto_1fr_auto]">
         {PLANS.map((plan) => {
-          const current = billing.plan === plan && billing.hasActiveSubscription;
+          const current =
+            billing.plan === plan && (billing.hasActiveSubscription || billing.plan === "free");
           const disabled =
             isUnlimited ||
             current ||
