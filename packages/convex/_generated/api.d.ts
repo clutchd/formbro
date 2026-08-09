@@ -25,6 +25,7 @@ import type * as system_forms_create_form from "../system/forms/create_form.js";
 import type * as system_forms_create_workspace from "../system/forms/create_workspace.js";
 import type * as system_initialize from "../system/initialize.js";
 import type * as workspace from "../workspace.js";
+import type * as workflows from "../workflows.js";
 
 import type {
   ApiFromModules,
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   "system/forms/create_workspace": typeof system_forms_create_workspace;
   "system/initialize": typeof system_initialize;
   workspace: typeof workspace;
+  workflows: typeof workflows;
 }>;
 
 /**

@@ -1,15 +1,14 @@
 import { compile, type CompiledField, type CompiledForm } from "@formbro/core/compile";
 import { validateFormSubmission } from "@formbro/core/validation";
-import { APP_URL } from "@formbro/shared/brand";
 import { fail, ok } from "@formbro/shared/result";
 import { getDocumentSize, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess } from "./access";
 import { defineErrors } from "./errors";
 import { ERRORS as FORM_ERRORS } from "./forms";
 import { SubmissionValue } from "./schema";
+import { enqueuePostSubmissionWorkflows } from "./workflows";
 
 const FILE_FIELD_TYPES = new Set(["file_upload"]);
 
@@ -60,10 +59,6 @@ function formatSubmissionValue(value: unknown): string {
 
 function isFileField(field: CompiledField) {
   return FILE_FIELD_TYPES.has(field.type);
-}
-
-function getSubmissionsUrl(workspaceSlug: string, formSlug: string) {
-  return `${APP_URL}/dashboard/${encodeURIComponent(workspaceSlug)}/${encodeURIComponent(formSlug)}/submissions`;
 }
 
 function collectFileStorageIds(fields: CompiledField[], data: Record<string, unknown>): string[] {
@@ -139,21 +134,7 @@ export const create = mutation({
       bytes,
     });
 
-    if (form.submissionNotificationEmail) {
-      const workspace = await ctx.db.get(form.workspaceId);
-      if (workspace) {
-        await ctx.scheduler.runAfter(0, internal.emails.transactional, {
-          email: {
-            template: "submissionNotification",
-            to: form.submissionNotificationEmail,
-            formName: form.name,
-            submittedTime,
-            submissionsUrl: getSubmissionsUrl(workspace.slug, form.slug),
-            workspaceName: workspace.name,
-          },
-        });
-      }
-    }
+    await enqueuePostSubmissionWorkflows(ctx, submissionId);
 
     return ok({ submissionId, bytes });
   },
