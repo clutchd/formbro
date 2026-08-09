@@ -6,7 +6,9 @@ import {
 } from "@formbro/core/schema/form";
 import { nano } from "@formbro/shared/nanoid";
 import { fail, ok } from "@formbro/shared/result";
+import { normalizeEmail } from "@formbro/shared/util";
 import { v } from "convex/values";
+import { z } from "zod";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess, getWorkspaceAccess } from "./access";
@@ -36,7 +38,13 @@ export const ERRORS = defineErrors({
     message: "Form schema is invalid.",
     status: "UNPROCESSABLE_ENTITY",
   },
+  SUBMISSION_NOTIFICATION_EMAIL_INVALID: {
+    message: "Enter a valid notification email address.",
+    status: "BAD_REQUEST",
+  },
 });
+
+const SUBMISSION_NOTIFICATION_EMAIL = z.email().max(254);
 
 export const create = mutation({
   args: {
@@ -332,6 +340,30 @@ export const updateStatus = mutation({
 
     await ctx.db.patch(args.formId, { status: args.status });
     return ok({ formId: args.formId, status: args.status });
+  },
+});
+
+export const updateSubmissionNotification = mutation({
+  args: {
+    formId: v.id("forms"),
+    email: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const formWithAccess = await getFormAccess(ctx, args.formId);
+    if (!formWithAccess.ok) return fail({ data: null, error: formWithAccess.error });
+
+    const normalizedEmail = normalizeEmail(args.email);
+    if (normalizedEmail && !SUBMISSION_NOTIFICATION_EMAIL.safeParse(normalizedEmail).success) {
+      return fail({ data: null, error: ERRORS.SUBMISSION_NOTIFICATION_EMAIL_INVALID });
+    }
+
+    const email = normalizedEmail || undefined;
+    await ctx.db.patch(args.formId, { submissionNotificationEmail: email });
+
+    return ok({
+      formId: args.formId,
+      email: email ?? null,
+    });
   },
 });
 

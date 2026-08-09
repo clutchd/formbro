@@ -1,5 +1,6 @@
 "use client";
 
+import type { Id } from "@formbro/convex/_generated/dataModel";
 import { api } from "@formbro/convex/_generated/api";
 import { getErrorMessage } from "@formbro/convex/errors";
 import { twx } from "@formbro/shared/twx";
@@ -15,13 +16,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@formbro/ui/dialog";
+import { Input } from "@formbro/ui/input";
+import { Label } from "@formbro/ui/label";
 import { Spinner } from "@formbro/ui/spinner";
 import { Switch } from "@formbro/ui/switch";
 import { TypographyH2, TypographyP, TypographySubheading } from "@formbro/ui/typography";
-import { RiDeleteBinLine } from "@remixicon/react";
+import { RiDeleteBinLine, RiMailLine } from "@remixicon/react";
 import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
 import { useRequiredWorkspaceFormData } from "../_data-provider";
@@ -111,6 +114,97 @@ function formatDate(value: number) {
   }).format(new Date(value));
 }
 
+function SubmissionNotificationSettings({
+  formId,
+  initialEmail,
+}: {
+  formId: Id<"forms">;
+  initialEmail?: string;
+}) {
+  const updateSubmissionNotification = useMutation(api.forms.updateSubmissionNotification);
+  const emailInputId = useId();
+  const emailDescriptionId = useId();
+  const [email, setEmail] = useState(initialEmail ?? "");
+  const [savedEmail, setSavedEmail] = useState(initialEmail ?? "");
+  const [isSaving, setIsSaving] = useState(false);
+  const normalizedEmail = email.trim().toLowerCase();
+  const hasChanges = normalizedEmail !== savedEmail;
+
+  async function saveEmail(nextEmail: string) {
+    if (isSaving) return;
+
+    setIsSaving(true);
+    try {
+      const result = await updateSubmissionNotification({ formId, email: nextEmail });
+      if (!result.ok) {
+        toast.error("Could not update notifications", {
+          description: getErrorMessage(result.error),
+        });
+        return;
+      }
+
+      const updatedEmail = result.data.email ?? "";
+      setEmail(updatedEmail);
+      setSavedEmail(updatedEmail);
+      toast.success(
+        result.data.email ? "Notification email saved" : "Email notifications disabled",
+      );
+    } catch (error) {
+      toast.error("Could not update notifications", {
+        description: getErrorMessage(error),
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!normalizedEmail || !hasChanges) return;
+    void saveEmail(normalizedEmail);
+  }
+
+  return (
+    <form className="flex flex-col gap-4 py-5 md:flex-row md:items-end" onSubmit={handleSubmit}>
+      <div className="min-w-0 flex-1">
+        <Label htmlFor={emailInputId}>New submission email</Label>
+        <p id={emailDescriptionId} className="mt-1 text-sm text-muted-foreground">
+          Send an email to this address every time the form receives a response.
+        </p>
+      </div>
+      <div className="flex w-full flex-col gap-2 sm:flex-row md:w-auto">
+        <Input
+          id={emailInputId}
+          type="email"
+          value={email}
+          autoComplete="email"
+          aria-describedby={emailDescriptionId}
+          className="sm:w-72"
+          disabled={isSaving}
+          placeholder="notifications@example.com"
+          required
+          spellCheck={false}
+          onChange={(event) => setEmail(event.target.value)}
+        />
+        {savedEmail ? (
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isSaving}
+            onClick={() => void saveEmail("")}
+          >
+            Disable
+          </Button>
+        ) : null}
+        <Button type="submit" disabled={isSaving || !normalizedEmail || !hasChanges}>
+          {isSaving ? <Spinner /> : <RiMailLine className="size-4" />}
+          Save
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export default function FormSettingsPage() {
   const router = useRouter();
   const { form, workspace } = useRequiredWorkspaceFormData();
@@ -170,6 +264,17 @@ export default function FormSettingsPage() {
           title="Close form"
           description="Stop accepting new submissions while keeping the form visible."
           action={<Switch checked={isClosed} onCheckedChange={handleCloseFormChange} />}
+        />
+      </SettingsSection>
+
+      <SettingsSection
+        title="Notifications"
+        description="Keep your team informed when new responses arrive."
+      >
+        <SubmissionNotificationSettings
+          key={`${form._id}:${form.submissionNotificationEmail ?? "disabled"}`}
+          formId={form._id}
+          initialEmail={form.submissionNotificationEmail}
         />
       </SettingsSection>
 

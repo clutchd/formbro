@@ -4,7 +4,7 @@ import { fail, ok } from "@formbro/shared/result";
 import { hasString, normalizeEmail } from "@formbro/shared/util";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import {
   internalMutation,
   mutation,
@@ -580,7 +580,7 @@ export const inviteMember = mutation({
       expiresTime,
     });
 
-    await ctx.scheduler.runAfter(0, api.emails.transactional, {
+    await ctx.scheduler.runAfter(0, internal.emails.transactional, {
       email: {
         template: "workspaceInvite",
         to: email,
