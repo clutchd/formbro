@@ -1,7 +1,6 @@
 ---
 description: git commit
-model: openai/gpt-5.6-luna-fast
-subtask: true
+model: opencode/deepseek-v4-flash-free
 ---
 
 commit and push
