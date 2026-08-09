@@ -9,11 +9,18 @@ export function SubmissionNotificationSubject({ formName }: { formName: string }
   return `New submission for ${safeFormName}`;
 }
 
+const submittedTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  year: "numeric",
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+  timeZone: "UTC",
+  timeZoneName: "short",
+});
+
 function formatSubmittedTime(submittedTime: number) {
-  return new Intl.DateTimeFormat("en", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(submittedTime));
+  return submittedTimeFormatter.format(new Date(submittedTime));
 }
 
 type SubmissionNotificationProps = {

@@ -23,6 +23,7 @@ describe("SubmissionNotificationComponent", () => {
 
     expect(html).toContain("Customer intake received a new submission.");
     expect(html).toContain("Acme Inc");
+    expect(html).toContain("Jan 1, 1970, 12:00 AM UTC");
     expect(html).toContain('href="https://example.com/submissions"');
   });
 
