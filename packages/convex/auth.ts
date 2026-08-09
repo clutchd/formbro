@@ -7,7 +7,7 @@ import { hasString, normalizeEmail } from "@formbro/shared/util";
 import { betterAuth } from "better-auth/minimal";
 import type { DataModel } from "./_generated/dataModel";
 import type { Doc as BetterAuthDoc } from "./node_modules/@convex-dev/better-auth/src/component/_generated/dataModel";
-import { api, components, internal } from "./_generated/api";
+import { components, internal } from "./_generated/api";
 import { query, type ActionCtx, type MutationCtx, type QueryCtx } from "./_generated/server";
 import authConfig from "./auth.config";
 import { FormBroError, defineErrors } from "./errors";
@@ -157,11 +157,11 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
   triggers: {
     user: {
       onCreate: async (ctx, doc) => {
-        await ctx.scheduler.runAfter(0, api.audience.add, {
+        await ctx.scheduler.runAfter(0, internal.audience.add, {
           email: doc.email,
           name: doc.name,
         });
-        await ctx.scheduler.runAfter(0, api.emails.transactional, {
+        await ctx.scheduler.runAfter(0, internal.emails.transactional, {
           email: {
             template: "welcome",
             to: doc.email,
@@ -173,7 +173,7 @@ export const authComponent = createClient<DataModel>(components.betterAuth, {
           userAuthId: String(doc._id),
           image: hasString(doc.image) ? doc.image : undefined,
         });
-        await ctx.scheduler.runAfter(0, api.audience.update, {
+        await ctx.scheduler.runAfter(0, internal.audience.update, {
           email: doc.email,
           name: doc.name,
         });

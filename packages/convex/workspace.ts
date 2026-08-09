@@ -1,10 +1,9 @@
-import { APP_URL } from "@formbro/shared/brand";
 import { nano } from "@formbro/shared/nanoid";
 import { fail, ok } from "@formbro/shared/result";
 import { hasString, normalizeEmail } from "@formbro/shared/util";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import {
   internalMutation,
   mutation,
@@ -95,10 +94,6 @@ function buildCanonicalPath(input: { workspaceSlug: string; formSlug?: string })
 
 function buildWorkspaceInviteToken() {
   return `${nano()}${nano()}${nano()}`;
-}
-
-function buildWorkspaceInviteUrl(token: string) {
-  return `${APP_URL}/invite/${encodeURIComponent(token)}`;
 }
 
 function isPendingInvite(
@@ -580,13 +575,13 @@ export const inviteMember = mutation({
       expiresTime,
     });
 
-    await ctx.scheduler.runAfter(0, api.emails.transactional, {
+    await ctx.scheduler.runAfter(0, internal.emails.transactional, {
       email: {
         template: "workspaceInvite",
         to: email,
         workspaceName: workspaceAccess.data.workspace.name,
         inviterName: workspaceAccess.data.user.name,
-        acceptUrl: buildWorkspaceInviteUrl(token),
+        token,
         expiresTime,
       },
     });
