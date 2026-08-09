@@ -1,5 +1,9 @@
 import { api } from "@formbro/convex/_generated/api";
-import { getPlanDetails, PLANS, type Plan } from "@formbro/convex/billingUtils";
+import {
+  getPlanDetails,
+  SUBSCRIPTION_PLANS,
+  type SubscriptionPlan,
+} from "@formbro/convex/billingUtils";
 import { getErrorMessage } from "@formbro/convex/errors";
 import { formatUsd } from "@formbro/convex/lib";
 import { APP_URL } from "@formbro/shared/brand";
@@ -83,7 +87,7 @@ function PlanCard({
   interval: "monthly" | "annual";
   isLoading: boolean;
   onSelect: () => void;
-  plan: Plan;
+  plan: SubscriptionPlan;
   recommended: boolean;
 }) {
   const plan = getPlanDetails(planName);
@@ -171,12 +175,12 @@ export function PlansPanel() {
   const createSubscriptionCheckout = useAction(api.billing.createSubscriptionCheckout);
   const isUnlimited = billing.plan === "unlimited";
   const [interval, setInterval] = useState<"monthly" | "annual">("monthly");
-  const [loadingPlan, setLoadingPlan] = useState<Plan | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState<SubscriptionPlan | null>(null);
 
   const settingsUrl = `${APP_URL}/dashboard/${workspace.slug}/settings`;
 
   const handleSelectPlan = useCallback(
-    async (plan: Plan) => {
+    async (plan: SubscriptionPlan) => {
       setLoadingPlan(plan);
 
       const result = await createSubscriptionCheckout({
@@ -208,7 +212,7 @@ export function PlansPanel() {
       <BillingIntervalToggle interval={interval} onChange={setInterval} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:grid-rows-[auto_auto_1fr_auto]">
-        {PLANS.map((plan) => {
+        {SUBSCRIPTION_PLANS.map((plan) => {
           const current = billing.plan === plan && billing.hasActiveSubscription;
           const disabled =
             isUnlimited ||

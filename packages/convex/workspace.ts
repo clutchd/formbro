@@ -21,7 +21,7 @@ import {
   getWorkspaceMonthlySubmissionPeriod,
   getWorkspaceMonthlySubmissionsUsed,
   getWorkspaceStorageUsedBytes,
-  type Plan,
+  type WorkspacePlan,
 } from "./billingUtils";
 import { defineErrors } from "./errors";
 import { _deleteForm, ERRORS as FORM_ERRORS } from "./forms";
@@ -259,7 +259,7 @@ export async function _createWorkspace({
   ctx: MutationCtx;
   name: string;
   owner: WorkspaceMember;
-  plan?: Plan | "unlimited";
+  plan?: WorkspacePlan;
 }) {
   const baseSlug = generateSlug(name) || nano();
   let slug = baseSlug;
@@ -278,12 +278,14 @@ export async function _createWorkspace({
     counter++;
   }
 
+  const effectivePlan = plan ?? "free";
+
   const workspaceId = await ctx.db.insert("workspaces", {
     name,
     slug,
     ownerAuthId: owner.authId,
-    plan,
-    billingStatus: plan === "unlimited" ? "active" : "not_subscribed",
+    plan: effectivePlan,
+    billingStatus: effectivePlan === "unlimited" ? "active" : "not_subscribed",
   });
 
   await _addWorkspaceMember({

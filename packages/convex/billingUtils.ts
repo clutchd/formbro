@@ -6,7 +6,16 @@ import { formatStorage, GIGABYTE, numberFormatter } from "./lib";
 
 export const WORKSPACE_TRIAL_DAYS = 7;
 
-export const workspacePlanValidator = v.union(v.literal("basic"), v.literal("pro"));
+export const PLANS = ["free", "basic", "pro"] as const;
+export type Plan = (typeof PLANS)[number];
+
+export const SUBSCRIPTION_PLANS = ["basic", "pro"] as const;
+export type SubscriptionPlan = (typeof SUBSCRIPTION_PLANS)[number];
+
+export const workspacePlanValidator = v.union(...PLANS.map((plan) => v.literal(plan)));
+export const subscriptionPlanValidator = v.union(
+  ...SUBSCRIPTION_PLANS.map((plan) => v.literal(plan)),
+);
 export const billingIntervalValidator = v.union(v.literal("monthly"), v.literal("annual"));
 
 const BILLING_STATUSES = [
@@ -29,23 +38,21 @@ type BillingUsagePeriod = {
   end: number;
 };
 
-export const PLANS = ["basic", "pro"] as const;
-export type Plan = (typeof PLANS)[number];
-type WorkspacePlan = "free" | Plan | "unlimited";
+export type WorkspacePlan = Plan | "unlimited";
 
 const WORKSPACE_PLAN_LABELS: Record<WorkspacePlan, string> = {
-  free: "Unpaid",
+  free: "Free",
   basic: "Basic",
   pro: "Pro",
   unlimited: "Unlimited",
 };
 
-const WORKSPACE_PLAN_DESCRIPTIONS: Record<Plan, string> = {
+const WORKSPACE_PLAN_DESCRIPTIONS: Record<SubscriptionPlan, string> = {
   basic: "Everything you need to run your forms.",
   pro: "Higher limits for growing teams and workflows.",
 };
 
-const WORKSPACE_PLAN_MONTHLY_PRICE_USD: Record<Plan, number> = {
+const WORKSPACE_PLAN_MONTHLY_PRICE_USD: Record<SubscriptionPlan, number> = {
   basic: 10,
   pro: 25,
 };
@@ -114,7 +121,7 @@ function formatStorageFeature(bytes: number | null) {
   return `${formatStorage(bytes)} storage`;
 }
 
-export function getPlanFeatures(plan: Plan): readonly string[] {
+export function getPlanFeatures(plan: SubscriptionPlan): readonly string[] {
   const limits = WORKSPACE_LIMITS[plan];
 
   return [
@@ -126,39 +133,38 @@ export function getPlanFeatures(plan: Plan): readonly string[] {
   ];
 }
 
-export function getPlanDetails(plan: Plan) {
-  const normalizedPlan = normalizeWorkspacePlan(plan) as Plan;
-  const name = WORKSPACE_PLAN_LABELS[normalizedPlan];
+export function getPlanDetails(plan: SubscriptionPlan) {
+  const name = WORKSPACE_PLAN_LABELS[plan];
 
   const monthlyPriceId =
-    normalizedPlan === "basic"
+    plan === "basic"
       ? process.env.STRIPE_BASIC_MONTHLY_PRICE_ID
       : process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
   const yearlyPriceId =
-    normalizedPlan === "basic"
+    plan === "basic"
       ? process.env.STRIPE_BASIC_YEARLY_PRICE_ID
       : process.env.STRIPE_PRO_YEARLY_PRICE_ID;
 
   return {
     name,
-    description: WORKSPACE_PLAN_DESCRIPTIONS[normalizedPlan],
-    monthlyPriceUsd: WORKSPACE_PLAN_MONTHLY_PRICE_USD[normalizedPlan],
+    description: WORKSPACE_PLAN_DESCRIPTIONS[plan],
+    monthlyPriceUsd: WORKSPACE_PLAN_MONTHLY_PRICE_USD[plan],
     monthlyPriceId,
     yearlyPriceUsd:
-      WORKSPACE_PLAN_MONTHLY_PRICE_USD[normalizedPlan] * WORKSPACE_PLAN_YEARLY_PRICE_USD_MULTIPLIER,
+      WORKSPACE_PLAN_MONTHLY_PRICE_USD[plan] * WORKSPACE_PLAN_YEARLY_PRICE_USD_MULTIPLIER,
     yearlyPriceId,
-    features: getPlanFeatures(normalizedPlan),
+    features: getPlanFeatures(plan),
   };
 }
 
-export function getStripePriceIdForPlan(plan: Plan, interval: BillingInterval) {
+export function getStripePriceIdForPlan(plan: SubscriptionPlan, interval: BillingInterval) {
   const details = getPlanDetails(plan);
   const priceId = interval === "annual" ? details.yearlyPriceId : details.monthlyPriceId;
   return hasString(priceId) ? priceId : null;
 }
 
 export function resolvePlanFromStripePriceId(stripePriceId: string | undefined | null): {
-  plan: Plan;
+  plan: SubscriptionPlan;
   interval: BillingInterval;
 } | null {
   if (!hasString(stripePriceId)) return null;

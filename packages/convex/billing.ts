@@ -21,9 +21,9 @@ import {
   hasActiveWorkspaceSubscriptionStatus,
   normalizeWorkspacePlan,
   resolvePlanFromStripePriceId,
+  subscriptionPlanValidator,
   WORKSPACE_LIMITS,
   WORKSPACE_TRIAL_DAYS,
-  workspacePlanValidator,
 } from "./billingUtils";
 import { defineErrors } from "./errors";
 import { ERRORS as WORKSPACE_ERRORS } from "./workspace";
@@ -329,7 +329,7 @@ export const createPortalSession = action({
 export const createSubscriptionCheckout = action({
   args: {
     workspaceId: v.id("workspaces"),
-    plan: workspacePlanValidator,
+    plan: subscriptionPlanValidator,
     interval: billingIntervalValidator,
     successUrl: v.string(),
     cancelUrl: v.string(),

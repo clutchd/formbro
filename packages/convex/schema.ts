@@ -1,6 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
-import { PLANS } from "./billingUtils";
+import { workspacePlanValidator } from "./billingUtils";
 
 export const SubmissionValue = v.union(v.string());
 
@@ -9,7 +9,7 @@ export default defineSchema({
     name: v.string(),
     slug: v.string(),
     ownerAuthId: v.string(),
-    plan: v.optional(v.union(...PLANS.map((plan) => v.literal(plan)), v.literal("unlimited"))),
+    plan: v.optional(v.union(workspacePlanValidator, v.literal("unlimited"))),
     stripeCustomerId: v.optional(v.string()),
     stripeSubscriptionId: v.optional(v.string()),
     stripePriceId: v.optional(v.string()),
