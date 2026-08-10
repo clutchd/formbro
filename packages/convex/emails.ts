@@ -5,10 +5,11 @@ import SignupComponent, { SignupSubject } from "@formbro/email/transactional/sig
 import WorkspaceInviteComponent, {
   WorkspaceInviteSubject,
 } from "@formbro/email/transactional/workspace-invite";
+import { APP_URL } from "@formbro/shared/brand";
 import { render } from "@react-email/render";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
-import { action, type ActionCtx } from "./_generated/server";
+import { internalAction, type ActionCtx } from "./_generated/server";
 
 export const resendClient = new Resend(components.resend, {
   testMode: false,
@@ -48,11 +49,11 @@ const workspaceInviteEmail = v.object({
   to: v.string(),
   workspaceName: v.string(),
   inviterName: v.string(),
-  acceptUrl: v.string(),
+  token: v.string(),
   expiresTime: v.number(),
 });
 
-export const transactional = action({
+export const transactional = internalAction({
   args: {
     email: v.union(welcomeEmail, workspaceInviteEmail),
   },
@@ -67,7 +68,7 @@ export const transactional = action({
         break;
       case "workspaceInvite":
         component = WorkspaceInviteComponent({
-          acceptUrl: email.acceptUrl,
+          acceptUrl: `${APP_URL}/invite/${encodeURIComponent(email.token)}`,
           expiresTime: email.expiresTime,
           inviterName: email.inviterName,
           workspaceName: email.workspaceName,
