@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@convex-dev/better-auth": "catalog:",
-    "@convex-dev/resend": "0.2.4",
+    "@convex-dev/resend": "0.2.6",
     "@convex-dev/stripe": "0.1.4",
     "@formbro/core": "workspace:*",
     "@formbro/email": "workspace:*",

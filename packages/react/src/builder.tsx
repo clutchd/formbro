@@ -230,7 +230,7 @@ function FormTitle({
         onChange={(event) => onChange(event.target.value)}
         onClick={(event) => event.stopPropagation()}
         className={twx(
-          "h-auto rounded-none border-0 bg-transparent px-0 py-0 font-display font-bold tracking-tight shadow-none focus-visible:ring-0",
+          "h-auto rounded-none border-0 bg-transparent px-0 py-0 font-display font-bold tracking-tight shadow-none focus-visible:ring-0 dark:bg-transparent",
           density === "compact" ? "mb-4 text-3xl md:text-4xl" : "mb-10 text-4xl md:text-5xl",
         )}
         aria-label="Form title"
