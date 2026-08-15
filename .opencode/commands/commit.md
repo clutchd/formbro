@@ -3,7 +3,7 @@ description: git commit
 model: opencode/deepseek-v4-flash-free
 ---
 
-commit and push
+commit and push staged changes
 
 make sure it includes a prefix like
 - `feat:` or `feat(scope):` for new features
