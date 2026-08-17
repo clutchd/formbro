@@ -36,7 +36,7 @@ export const ERRORS = defineErrors({
     status: "NOT_FOUND",
   },
   UNPAID_WORKSPACE_LIMIT: {
-    message: "Unpaid workspace limit reached.",
+    message: "You can only own one Hobby workspace. Upgrade it to create another.",
     status: "FORBIDDEN",
   },
   DELETE_WORKSPACE_ACTIVE_SUBSCRIPTION: {
@@ -273,12 +273,13 @@ export async function _createWorkspace({
     counter++;
   }
 
+  const resolvedPlan = plan ?? "hobby";
   const workspaceId = await ctx.db.insert("workspaces", {
     name,
     slug,
     ownerAuthId: owner.authId,
-    plan,
-    billingStatus: plan === "unlimited" ? "active" : "not_subscribed",
+    plan: resolvedPlan,
+    billingStatus: resolvedPlan === "unlimited" ? "active" : "not_subscribed",
   });
 
   await _addWorkspaceMember({
@@ -349,8 +350,11 @@ export const create = mutation({
       .withIndex("by_owner", (q) => q.eq("ownerAuthId", identity.data.subject))
       .collect();
 
-    for (const workspace of ownedWorkspaces) {
-      const subscriptionState = await getWorkspaceSubscriptionState(ctx, workspace._id);
+    const ownedSubscriptionStates = await Promise.all(
+      ownedWorkspaces.map((workspace) => getWorkspaceSubscriptionState(ctx, workspace._id)),
+    );
+
+    for (const subscriptionState of ownedSubscriptionStates) {
       if (!subscriptionState.ok) {
         return fail({ data: undefined, error: subscriptionState.error });
       }
@@ -778,6 +782,7 @@ export const billing = query({
         storageBytes: storageUsedBytes,
       },
       hasActiveSubscription: subscriptionState.data.hasActiveSubscription,
+      hasPlanAccess: subscriptionState.data.hasPlanAccess,
       canManageBilling: userWithAccess.data.membership.role === "owner",
       canDelete: subscriptionState.data.canDelete,
     });
