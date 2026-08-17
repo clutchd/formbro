@@ -1,3 +1,4 @@
+import { getWorkspaceBillingStatusLabel } from "@formbro/convex/billingUtils";
 import { dateFormatter, formatStorage, numberFormatter } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Card } from "@formbro/ui/card";
@@ -73,7 +74,7 @@ export function BillingLimits() {
         <Metric label="Plan">
           {billing.planLabel}
           <WorkspaceBillingStateBadge workspace={workspace}>
-            {workspace.billingStatus}
+            {getWorkspaceBillingStatusLabel(workspace)}
           </WorkspaceBillingStateBadge>
         </Metric>
         <Metric label="Seats">Unlimited</Metric>
