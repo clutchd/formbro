@@ -1,6 +1,5 @@
 "use client";
 
-import { canCreateOwnedWorkspace } from "@formbro/convex/billingUtils";
 import { DashboardHeader } from "../header";
 import { useDashboardData } from "./_data-provider";
 import { CreateWorkspace } from "./create-workspace-form";
