@@ -1,6 +1,5 @@
 "use client";
 
-import { DEFAULT_FORM_NAME, type FormInput } from "@formbro/core/schema/form";
 import {
   closestCenter,
   DndContext,
@@ -23,6 +22,7 @@ import {
   createFormElementDraft,
   createFormElementId,
 } from "@formbro/core/schema/editor";
+import { DEFAULT_FORM_NAME, type FormInput } from "@formbro/core/schema/form";
 import { twx } from "@formbro/shared/twx";
 import { Input } from "@formbro/ui/input";
 import { useEffect, useMemo, useState } from "react";

@@ -1,8 +1,11 @@
+import { JsonSerialize } from "@formbro/core/schema/form";
 import { APP_NAME } from "@formbro/shared/brand";
 import { ok } from "@formbro/shared/result";
+import { Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { getAdminAccounts } from "../auth";
 import { defineErrors, FormBroError } from "../errors";
+import { _createForm, _publishForm } from "../forms";
 import {
   _addWorkspaceMember,
   _createWorkspace,
@@ -11,9 +14,6 @@ import {
 } from "../workspace";
 import { CREATE_FORM } from "./forms/create_form";
 import { CREATE_WORKSPACE } from "./forms/create_workspace";
-import { JsonSerialize } from "@formbro/core/schema/form";
-import { Id } from "../_generated/dataModel";
-import { _createForm, _publishForm } from "../forms";
 
 const ERRORS = defineErrors({
   SYSTEM_OWNER_NOT_FOUND: {
@@ -41,7 +41,6 @@ export const init = internalMutation({
     } else {
       console.log("System owner initialized");
     }
-
 
     const workspace = await initWorkspace(ctx, owner, admins.data);
 
@@ -116,7 +115,6 @@ const initWorkspace = async (
   };
 };
 
-
 export async function syncSystemForm({
   ctx,
   workspaceId,
@@ -147,10 +145,7 @@ export async function syncSystemForm({
     : null;
 
   if (publishedSchema && publishedSchema.schema === codeSchema) {
-    if (
-      existing.name !== definition.typed.name ||
-      existing.status !== "closed"
-    ) {
+    if (existing.name !== definition.typed.name || existing.status !== "closed") {
       await ctx.db.patch(existing._id, {
         name: definition.typed.name,
         status: "closed",
@@ -181,7 +176,11 @@ export async function syncSystemForm({
   };
 }
 
-async function initSystemForm(ctx: MutationCtx, workspaceId: Id<"workspaces">, definition: (typeof SYSTEM_FORMS)[number]) {
+async function initSystemForm(
+  ctx: MutationCtx,
+  workspaceId: Id<"workspaces">,
+  definition: (typeof SYSTEM_FORMS)[number],
+) {
   const created = await _createForm({
     ctx,
     workspaceId,
@@ -193,9 +192,7 @@ async function initSystemForm(ctx: MutationCtx, workspaceId: Id<"workspaces">, d
   const form = await ctx.db.get(created.formId);
 
   if (!form) {
-    throw new Error(
-      `Could not load system form "${definition.slug}" after creating it.`,
-    );
+    throw new Error(`Could not load system form "${definition.slug}" after creating it.`);
   }
 
   const published = await _publishForm({

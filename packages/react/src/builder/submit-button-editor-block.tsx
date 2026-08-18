@@ -41,6 +41,7 @@ export function SubmitButtonEditorBlock({
       className={twx(
         "group/editor relative w-full px-3 sm:px-6",
         density === "compact" ? "py-0.5" : "py-1",
+        !selected && "cursor-pointer",
       )}
       onClick={(event) => {
         event.stopPropagation();

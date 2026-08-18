@@ -20,7 +20,7 @@ const BILLING_STATUSES = [
   "unpaid",
   "paused",
 ] as const;
-type BillingStatus = (typeof BILLING_STATUSES)[number];
+type _BillingStatus = (typeof BILLING_STATUSES)[number];
 
 type BillingInterval = "monthly" | "annual";
 
