@@ -1,6 +1,7 @@
 ---
 description: git commit
-model: opencode/deepseek-v4-flash-free
+model: openai/gpt-5.6-luna-fast
+variant: max
 ---
 
 commit and push staged changes atomically

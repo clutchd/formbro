@@ -1,7 +1,7 @@
 import { JsonSerialize } from "@formbro/core/schema/form";
 import { APP_NAME } from "@formbro/shared/brand";
 import { ok } from "@formbro/shared/result";
-import { Id } from "../_generated/dataModel";
+import type { Id } from "../_generated/dataModel";
 import { internalMutation, type MutationCtx } from "../_generated/server";
 import { getAdminAccounts } from "../auth";
 import { defineErrors, FormBroError } from "../errors";

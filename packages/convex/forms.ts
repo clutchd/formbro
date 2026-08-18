@@ -1,10 +1,10 @@
 import {
   createDefaultFormSchema,
-  FormInput,
   FormSchema,
   JsonParse,
   JsonSerialize,
 } from "@formbro/core/schema/form";
+import type { FormInput } from "@formbro/core/schema/form";
 import { nano } from "@formbro/shared/nanoid";
 import { fail, ok } from "@formbro/shared/result";
 import { v } from "convex/values";
