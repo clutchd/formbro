@@ -1,5 +1,6 @@
 import {
   createDefaultFormSchema,
+  FormInput,
   FormSchema,
   JsonParse,
   JsonSerialize,
@@ -7,7 +8,7 @@ import {
 import { nano } from "@formbro/shared/nanoid";
 import { fail, ok } from "@formbro/shared/result";
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess, getWorkspaceAccess } from "./access";
 import { requireWorkspaceSubscription } from "./billing";
@@ -37,6 +38,88 @@ export const ERRORS = defineErrors({
     status: "UNPROCESSABLE_ENTITY",
   },
 });
+
+export type FormStatus = "draft" | "open" | "closed";
+
+export async function _createForm({
+  ctx,
+  workspaceId,
+  slug,
+  schema,
+  createdBy,
+  status = "draft",
+}: {
+  ctx: MutationCtx;
+  workspaceId: Id<"workspaces">;
+  slug: string;
+  schema: FormInput;
+  createdBy?: Id<"workspaceMembers">;
+  status?: FormStatus;
+}) {
+  const formId = await ctx.db.insert("forms", {
+    name: schema.name,
+    slug,
+    workspaceId,
+    status,
+  });
+
+  const draftSchemaId = await ctx.db.insert("formSchemas", {
+    formId,
+    schema: JsonSerialize(schema),
+    status: "draft",
+    ...(createdBy ? { createdBy } : {}),
+  });
+
+  await ctx.db.patch(formId, { draftSchemaId });
+
+  return {
+    formId,
+    draftSchemaId,
+    schema,
+    slug,
+    status,
+  };
+}
+
+export async function _publishForm({
+  ctx,
+  form,
+  schema,
+  serialized,
+  createdBy,
+  status,
+}: {
+  ctx: MutationCtx;
+  form: Doc<"forms">;
+  schema: FormInput;
+  serialized: string;
+  createdBy?: Id<"workspaceMembers">;
+  status?: FormStatus;
+}) {
+  const publishedTime = Date.now();
+  const nextStatus = status ?? (form.status === "draft" ? "open" : form.status);
+
+  const publishedSchemaId = await ctx.db.insert("formSchemas", {
+    formId: form._id,
+    schema: serialized,
+    status: "published",
+    publishedTime,
+    ...(createdBy ? { createdBy } : {}),
+  });
+
+  await ctx.db.patch(form._id, {
+    name: schema.name,
+    publishedSchemaId,
+    status: nextStatus,
+  });
+
+  return {
+    schema,
+    publishedSchemaId,
+    publishedTime,
+    status: nextStatus,
+  };
+}
 
 export const create = mutation({
   args: {
@@ -68,22 +151,15 @@ export const create = mutation({
       slug = nano();
     }
 
-    const formId = await ctx.db.insert("forms", {
-      status: "draft",
-      slug,
-      workspaceId: args.workspaceId,
-      name: args.name,
-    });
-
     const schema = createDefaultFormSchema({ id: slug, name: args.name });
-    const draftSchemaId = await ctx.db.insert("formSchemas", {
-      formId,
-      schema: JsonSerialize(schema),
-      status: "draft",
+
+    await _createForm({
+      ctx,
+      workspaceId: args.workspaceId,
+      slug,
+      schema,
       createdBy: access.data.membership._id,
     });
-
-    await ctx.db.patch(formId, { draftSchemaId });
 
     return ok({ slug });
   },
@@ -227,34 +303,25 @@ export const publish = mutation({
     try {
       const schema = JsonParse(draftSchema.schema);
       const serialized = JsonSerialize(schema);
-      const now = Date.now();
 
       if (draftSchema.schema !== serialized) {
         await ctx.db.patch(draftSchema._id, { schema: serialized });
       }
 
-      const publishedSchemaId = await ctx.db.insert("formSchemas", {
-        formId: form._id,
-        schema: serialized,
-        status: "published",
+      const published = await _publishForm({
+        ctx,
+        form,
+        schema,
+        serialized,
         createdBy: access.membership._id,
-        publishedTime: now,
-      });
-      const status = form.status === "draft" ? "open" : form.status;
-
-      await ctx.db.patch(form._id, {
-        draftSchemaId: draftSchema._id,
-        name: schema.name,
-        publishedSchemaId,
-        status,
       });
 
       return ok({
-        schema,
+        schema: published.schema,
         draftSchemaId: draftSchema._id,
-        publishedSchemaId,
-        status,
-        publishedTime: now,
+        publishedSchemaId: published.publishedSchemaId,
+        status: published.status,
+        publishedTime: published.publishedTime,
         hasUnpublishedChanges: false,
       });
     } catch {
