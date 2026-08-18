@@ -5,6 +5,8 @@ import { getDocumentSize, v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess } from "./access";
+import { requireWorkspaceSubscription } from "./billing";
+import { checkWorkspaceSubmissionQuota } from "./billingUtils";
 import { defineErrors } from "./errors";
 import { ERRORS as FORM_ERRORS } from "./forms";
 import { SubmissionValue } from "./schema";
@@ -31,6 +33,14 @@ export const ERRORS = defineErrors({
   SUBMISSION_INVALID: {
     message: "Submitted form data is invalid.",
     status: "BAD_REQUEST",
+  },
+  SUBMISSION_LIMIT: {
+    message: "This form has reached its submission limit for this period. Please try again later.",
+    status: "FORBIDDEN",
+  },
+  STORAGE_LIMIT: {
+    message: "This form can no longer accept submissions because its storage limit has been reached.",
+    status: "FORBIDDEN",
   },
 });
 
@@ -128,6 +138,23 @@ export const create = mutation({
     };
 
     const bytes = getDocumentSize(data);
+
+    const subscriptionState = await requireWorkspaceSubscription(ctx, form.workspaceId);
+    if (!subscriptionState.ok) return fail({ data: null, error: subscriptionState.error });
+
+    const quota = await checkWorkspaceSubmissionQuota(ctx, {
+      workspaceId: form.workspaceId,
+      subscription: subscriptionState.data.subscription,
+      limits: subscriptionState.data.limits,
+      incomingBytes: bytes,
+    });
+    if (!quota.ok) {
+      return fail({
+        data: null,
+        error: quota.reason === "storage" ? ERRORS.STORAGE_LIMIT : ERRORS.SUBMISSION_LIMIT,
+      });
+    }
+
     const submissionId = await ctx.db.insert("submissions", {
       ...data,
       bytes,
