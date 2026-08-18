@@ -163,10 +163,6 @@ export function SubmitButtonEditorBlock({
             </div>
           ) : (
             <div className={twx(density === "compact" ? "space-y-1.5" : "space-y-2")}>
-              <div className="flex items-center gap-2 font-mono text-xs tracking-wider text-muted-foreground uppercase">
-                <RiSendPlaneLine className="size-4" />
-                Submit button
-              </div>
               <div
                 className={twx("flex", size === "full-width" ? "justify-stretch" : "justify-end")}
               >
@@ -176,7 +172,7 @@ export function SubmitButtonEditorBlock({
                   size={density === "compact" ? "dense" : "default"}
                   className={twx(
                     "pointer-events-none font-semibold",
-                    size === "full-width" ? "w-full" : "min-w-[120px]",
+                    size === "full-width" ? "w-full" : "min-w-30",
                   )}
                 >
                   {label}
