@@ -28,7 +28,22 @@ const ERRORS = defineErrors({
 
 const SYSTEM_WORKSPACE_NAME = APP_NAME;
 const SYSTEM_WORKSPACE_SLUG = generateSlug(SYSTEM_WORKSPACE_NAME);
-const SYSTEM_FORMS = [CREATE_WORKSPACE, CREATE_FORM] as const;
+export const SYSTEM_FORMS = {
+  [CREATE_WORKSPACE.slug]: CREATE_WORKSPACE,
+  [CREATE_FORM.slug]: CREATE_FORM,
+} as const;
+
+export type SystemFormSlug = keyof typeof SYSTEM_FORMS;
+
+export function isSystemFormSlug(slug: string): slug is SystemFormSlug {
+  switch (slug) {
+    case CREATE_WORKSPACE.slug:
+    case CREATE_FORM.slug:
+      return true;
+    default:
+      return false;
+  }
+}
 
 export const init = internalMutation({
   args: {},
@@ -50,7 +65,7 @@ export const init = internalMutation({
       console.log("System workspace initialized");
     }
 
-    for (const form of SYSTEM_FORMS) {
+    for (const form of Object.values(SYSTEM_FORMS)) {
       const result = await syncSystemForm({
         ctx,
         workspaceId: workspace.workspaceId,
@@ -122,7 +137,7 @@ export async function syncSystemForm({
 }: {
   ctx: MutationCtx;
   workspaceId: Id<"workspaces">;
-  definition: (typeof SYSTEM_FORMS)[number];
+  definition: (typeof SYSTEM_FORMS)[SystemFormSlug];
 }) {
   const existing = await ctx.db
     .query("forms")
@@ -179,7 +194,7 @@ export async function syncSystemForm({
 async function initSystemForm(
   ctx: MutationCtx,
   workspaceId: Id<"workspaces">,
-  definition: (typeof SYSTEM_FORMS)[number],
+  definition: (typeof SYSTEM_FORMS)[SystemFormSlug],
 ) {
   const created = await _createForm({
     ctx,

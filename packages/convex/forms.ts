@@ -1,10 +1,10 @@
+import type { FormInput } from "@formbro/core/schema/form";
 import {
   createDefaultFormSchema,
   FormSchema,
   JsonParse,
   JsonSerialize,
 } from "@formbro/core/schema/form";
-import type { FormInput } from "@formbro/core/schema/form";
 import { nano } from "@formbro/shared/nanoid";
 import { fail, ok } from "@formbro/shared/result";
 import { v } from "convex/values";
@@ -14,7 +14,8 @@ import { getFormAccess, getWorkspaceAccess } from "./access";
 import { requireWorkspaceSubscription } from "./billing";
 import { getWorkspaceFormsUsed, isWorkspaceLimitReached } from "./billingUtils";
 import { defineErrors } from "./errors";
-import { _delete as _deleteSubmission } from "./submissions";
+import { _delete as _deleteSubmission, _createFromSlug } from "./submissions";
+import { CREATE_FORM } from "./system/forms/create_form";
 
 export const ERRORS = defineErrors({
   ACTIVE_FORM_LIMIT: {
@@ -153,13 +154,20 @@ export const create = mutation({
 
     const schema = createDefaultFormSchema({ id: slug, name: args.name });
 
-    await _createForm({
-      ctx,
-      workspaceId: args.workspaceId,
-      slug,
-      schema,
-      createdBy: access.data.membership._id,
-    });
+    const [_created, _published] = await Promise.all([
+      await _createForm({
+        ctx,
+        workspaceId: args.workspaceId,
+        slug,
+        schema,
+        createdBy: access.data.membership._id,
+      }),
+
+      await _createFromSlug(ctx, {
+        slug: CREATE_FORM.slug,
+        data: { name: args.name },
+      }),
+    ]);
 
     return ok({ slug });
   },
