@@ -88,7 +88,7 @@ export const WORKSPACE_LIMITS: Record<
   pro: {
     members: null,
     forms: null,
-    monthlySubmissions: 1000000,
+    monthlySubmissions: null,
     storageBytes: 500 * GIGABYTE,
   },
   unlimited: {
