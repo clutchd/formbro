@@ -24,7 +24,8 @@ import {
 } from "./billingUtils";
 import { defineErrors } from "./errors";
 import { _deleteForm, ERRORS as FORM_ERRORS } from "./forms";
-import { datetimeFormatter } from "./lib";
+import { _createFromSlug, _createFromSlug as _createFromSlugSubmission } from "./submissions";
+import { CREATE_WORKSPACE } from "./system/forms/create_workspace";
 
 export const ERRORS = defineErrors({
   DELETE_WORKSPACE_PERMISSION_DENIED: {
@@ -364,7 +365,7 @@ export const create = mutation({
       }
     }
 
-    return ok(
+    const [created, _published] = await Promise.all([
       await _createWorkspace({
         ctx,
         name: args.name,
@@ -375,7 +376,13 @@ export const create = mutation({
           avatarUrl: profile.image,
         },
       }),
-    );
+      await _createFromSlugSubmission(ctx, {
+        slug: CREATE_WORKSPACE.slug,
+        data: { name: args.name },
+      }),
+    ]);
+
+    return ok(created);
   },
 });
 

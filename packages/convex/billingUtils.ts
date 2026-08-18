@@ -1,3 +1,4 @@
+import { SYSTEM_WORKSPACE_SLUG } from "@formbro/shared/brand";
 import { hasString } from "@formbro/shared/util";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
@@ -20,7 +21,7 @@ const BILLING_STATUSES = [
   "unpaid",
   "paused",
 ] as const;
-type BillingStatus = (typeof BILLING_STATUSES)[number];
+type _BillingStatus = (typeof BILLING_STATUSES)[number];
 
 type BillingInterval = "monthly" | "annual";
 

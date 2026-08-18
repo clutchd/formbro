@@ -1239,13 +1239,7 @@ function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }) {
   );
 }
 
-function FreePlanCard({
-  isAuthenticated,
-  plan,
-}: {
-  isAuthenticated: boolean;
-  plan: PlanDetails;
-}) {
+function FreePlanCard({ isAuthenticated, plan }: { isAuthenticated: boolean; plan: PlanDetails }) {
   return (
     <article className="relative overflow-hidden rounded-2xl border-2 border-brand bg-card">
       <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-brand/12 via-transparent to-brand-secondary/10" />

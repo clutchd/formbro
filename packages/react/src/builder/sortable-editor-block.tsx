@@ -77,6 +77,7 @@ export function SortableEditorBlock({
       className={twx(
         "group/editor relative w-full px-3 sm:px-6",
         density === "compact" ? "py-0.5" : "py-1",
+        !selected && "cursor-pointer",
         isDragging && "z-40",
       )}
       onClick={handleClick}
@@ -84,7 +85,7 @@ export function SortableEditorBlock({
       role="button"
       tabIndex={0}
     >
-      <div className="mx-auto grid w-full max-w-[52rem] grid-cols-[2.25rem_minmax(0,48rem)] gap-2">
+      <div className="mx-auto grid w-full max-w-208 grid-cols-[2.25rem_minmax(0,48rem)] gap-2">
         <div
           data-editor-actions={element.id}
           className={twx(

@@ -1,11 +1,13 @@
 ---
 description: git commit
-model: opencode/deepseek-v4-flash-free
+model: openai/gpt-5.6-luna-fast
+variant: max
 ---
 
-commit and push staged changes
+commit and push staged changes atomically
 
 make sure it includes a prefix like
+
 - `feat:` or `feat(scope):` for new features
 - `fix:` or `fix(scope):` for bug fixes
 - `docs:` or `docs(scope):` for documentation changes

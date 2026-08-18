@@ -2,12 +2,14 @@ import { compile, type CompiledField, type CompiledForm } from "@formbro/core/co
 import { validateFormSubmission } from "@formbro/core/validation";
 import { fail, ok } from "@formbro/shared/result";
 import { getDocumentSize, v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess } from "./access";
+import { getUser } from "./auth";
 import { defineErrors } from "./errors";
 import { ERRORS as FORM_ERRORS } from "./forms";
 import { SubmissionValue } from "./schema";
+import { isSystemFormSlug } from "./system/initialize";
 
 const FILE_FIELD_TYPES = new Set(["file_upload"]);
 
@@ -80,6 +82,113 @@ function collectFileStorageIds(fields: CompiledField[], data: Record<string, unk
   return ids;
 }
 
+async function canAcceptSubmission(ctx: MutationCtx, form: Doc<"forms">) {
+  switch (form.status) {
+    case "open":
+      return true;
+    case "draft":
+      return false;
+    case "closed": {
+      if (!isSystemFormSlug(form.slug)) return false;
+      return (await getUser(ctx)).ok;
+    }
+    default: {
+      const _exhaustive: never = form.status;
+      return _exhaustive;
+    }
+  }
+}
+
+async function _insertSubmission(
+  ctx: MutationCtx,
+  {
+    form,
+    schemaId,
+    data,
+  }: {
+    form: Doc<"forms">;
+    schemaId: Id<"formSchemas">;
+    data: Record<string, string>;
+  },
+) {
+  const submittedTime = Date.now();
+  const document = {
+    formId: form._id,
+    schemaId,
+    bytes: 0,
+    workspaceId: form.workspaceId,
+    data,
+    submittedTime,
+  };
+
+  const bytes = getDocumentSize(document);
+  const submissionId = await ctx.db.insert("submissions", {
+    ...document,
+    bytes,
+  });
+
+  return { submissionId, bytes };
+}
+
+export async function _createSubmission(
+  ctx: MutationCtx,
+  args: {
+    formId: Id<"forms">;
+    schemaId: Id<"formSchemas">;
+    data: Record<string, string>;
+  },
+) {
+  const schema = await ctx.db.get(args.schemaId);
+  if (!schema) return fail({ data: null, error: FORM_ERRORS.FORM_SCHEMA_NOT_FOUND });
+
+  if (schema.status !== "published") {
+    return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_PUBLISHED });
+  }
+
+  if (schema.formId !== args.formId) {
+    return fail({ data: null, error: ERRORS.FORM_SCHEMA_MISMATCH });
+  }
+
+  const form = await ctx.db.get(args.formId);
+  if (!form) return fail({ data: null, error: FORM_ERRORS.FORM_NOT_FOUND });
+
+  if (!(await canAcceptSubmission(ctx, form))) {
+    return fail({ data: null, error: ERRORS.FORM_NOT_OPEN });
+  }
+
+  if (form.publishedSchemaId !== schema._id) {
+    return fail({ data: null, error: ERRORS.FORM_SCHEMA_MISMATCH });
+  }
+
+  const compiled = parseStoredForm(schema.schema);
+  if (!compiled) return fail({ data: null, error: FORM_ERRORS.SCHEMA_INVALID });
+
+  const validation = validateFormSubmission(compiled, args.data);
+  if (!validation.success) {
+    return fail({ data: null, error: ERRORS.SUBMISSION_INVALID });
+  }
+
+  return ok(await _insertSubmission(ctx, { form, schemaId: schema._id, data: args.data }));
+}
+
+export async function _createFromSlug(
+  ctx: MutationCtx,
+  args: { slug: string; data: Record<string, string> },
+) {
+  const form = await ctx.db
+    .query("forms")
+    .withIndex("by_slug", (q) => q.eq("slug", args.slug))
+    .unique();
+
+  if (!form?.publishedSchemaId) return;
+
+  await _createSubmission(ctx, {
+    formId: form._id,
+    schemaId: form.publishedSchemaId,
+    data: args.data,
+  });
+}
+
 export const create = mutation({
   args: {
     formId: v.id("forms"),
@@ -87,53 +196,7 @@ export const create = mutation({
     data: v.record(v.string(), SubmissionValue),
   },
   handler: async (ctx, args) => {
-    const schema = await ctx.db.get(args.schemaId);
-    if (!schema) return fail({ data: null, error: FORM_ERRORS.FORM_SCHEMA_NOT_FOUND });
-
-    if (schema.status !== "published") {
-      return fail({ data: null, error: ERRORS.FORM_SCHEMA_NOT_PUBLISHED });
-    }
-
-    if (schema.formId !== args.formId) {
-      return fail({ data: null, error: ERRORS.FORM_SCHEMA_MISMATCH });
-    }
-
-    const form = await ctx.db.get(args.formId);
-    if (!form) return fail({ data: null, error: FORM_ERRORS.FORM_NOT_FOUND });
-
-    if (form.status !== "open") {
-      return fail({ data: null, error: ERRORS.FORM_NOT_OPEN });
-    }
-
-    if (form.publishedSchemaId !== schema._id) {
-      return fail({ data: null, error: ERRORS.FORM_SCHEMA_MISMATCH });
-    }
-
-    const compiled = parseStoredForm(schema.schema);
-    if (!compiled) return fail({ data: null, error: FORM_ERRORS.SCHEMA_INVALID });
-
-    const validation = validateFormSubmission(compiled, args.data);
-    if (!validation.success) {
-      return fail({ data: null, error: ERRORS.SUBMISSION_INVALID });
-    }
-
-    const submittedTime = Date.now();
-    const data = {
-      formId: form._id,
-      schemaId: schema._id,
-      bytes: 0,
-      workspaceId: form.workspaceId,
-      data: args.data,
-      submittedTime,
-    };
-
-    const bytes = getDocumentSize(data);
-    const submissionId = await ctx.db.insert("submissions", {
-      ...data,
-      bytes,
-    });
-
-    return ok({ submissionId, bytes });
+    return _createSubmission(ctx, args);
   },
 });
 

@@ -1,5 +1,10 @@
 import { api } from "@formbro/convex/_generated/api";
-import { getAnnualBillingMonths, getPlanDetails, PLANS, type Plan } from "@formbro/convex/billingUtils";
+import {
+  getAnnualBillingMonths,
+  getPlanDetails,
+  PLANS,
+  type Plan,
+} from "@formbro/convex/billingUtils";
 import { getErrorMessage } from "@formbro/convex/errors";
 import { formatUsd } from "@formbro/convex/lib";
 import { APP_URL } from "@formbro/shared/brand";
