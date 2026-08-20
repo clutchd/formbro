@@ -8,7 +8,7 @@ import { getRegistryEditorPreview, labelForFormElement } from "@formbro/core/sch
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { RiDeleteBinLine, RiDraggable } from "@remixicon/react";
-import { editorTransformOptions, getRegistryEditor, getRegistryVisual } from "../registry";
+import { editorTransformOptions, getRegistryEditor } from "../registry";
 import { handleKeyboardSelect, type EditorElement } from "./canvas-utils";
 import { ElementPicker } from "./element-picker";
 
@@ -34,7 +34,6 @@ export function SortableEditorBlock({
   selected: boolean;
 }) {
   const item = Registry[element.type as RegistryKey];
-  const visual = getRegistryVisual(element.type);
   const Editor = getRegistryEditor(element.type);
   const {
     attributes,

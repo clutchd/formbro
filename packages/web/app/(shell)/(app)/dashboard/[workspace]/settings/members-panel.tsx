@@ -2,30 +2,20 @@
 
 import { api } from "@formbro/convex/_generated/api";
 import { getErrorMessage } from "@formbro/convex/errors";
+import { INVITE_MEMBER } from "@formbro/convex/system/forms/invite_member";
 import { initials } from "@formbro/shared/names";
 import { twx } from "@formbro/shared/twx";
 import { Avatar, AvatarFallback, AvatarImage } from "@formbro/ui/avatar";
 import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
 import { Card } from "@formbro/ui/card";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@formbro/ui/dialog";
-import { Input } from "@formbro/ui/input";
-import { Label } from "@formbro/ui/label";
 import { Spinner } from "@formbro/ui/spinner";
 import { tuiFont, TypographySubheading } from "@formbro/ui/typography";
 import { RiCloseLine, RiDeleteBinLine, RiMailLine, RiUserAddLine } from "@remixicon/react";
 import { useMutation } from "convex/react";
-import { useId, useReducer, type FormEvent } from "react";
+import { useReducer } from "react";
 import { toast } from "sonner";
+import { InternalDialogForm } from "@/components/internal-dialog-form";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
 
 type SettingsData = NonNullable<ReturnType<typeof useRequiredWorkspaceSettingsData>>;
@@ -45,27 +35,17 @@ function formatInviteExpiration(expiresTime: number) {
 
 type MembersPanelState = {
   cancelingInviteId: string | null;
-  email: string;
-  inviteDialogOpen: boolean;
-  isInviting: boolean;
   removingMemberId: string | null;
 };
 
 type MembersPanelAction =
   | { type: "cancel-invite-finished" }
   | { type: "cancel-invite-started"; inviteId: string }
-  | { type: "invite-email-changed"; email: string }
-  | { type: "invite-finished"; sent: boolean }
-  | { type: "invite-started" }
   | { type: "remove-member-finished" }
-  | { type: "remove-member-started"; memberId: string }
-  | { type: "set-invite-dialog-open"; open: boolean };
+  | { type: "remove-member-started"; memberId: string };
 
 const initialMembersPanelState: MembersPanelState = {
   cancelingInviteId: null,
-  email: "",
-  inviteDialogOpen: false,
-  isInviting: false,
   removingMemberId: null,
 };
 
@@ -78,23 +58,10 @@ function membersPanelReducer(
       return { ...state, cancelingInviteId: null };
     case "cancel-invite-started":
       return { ...state, cancelingInviteId: action.inviteId };
-    case "invite-email-changed":
-      return { ...state, email: action.email };
-    case "invite-finished":
-      return {
-        ...state,
-        email: action.sent ? "" : state.email,
-        inviteDialogOpen: action.sent ? false : state.inviteDialogOpen,
-        isInviting: false,
-      };
-    case "invite-started":
-      return { ...state, isInviting: true };
     case "remove-member-finished":
       return { ...state, removingMemberId: null };
     case "remove-member-started":
       return { ...state, removingMemberId: action.memberId };
-    case "set-invite-dialog-open":
-      return { ...state, inviteDialogOpen: action.open };
   }
 }
 
@@ -194,32 +161,9 @@ export function MembersPanel() {
   const inviteMember = useMutation(api.workspace.inviteMember);
   const cancelInvite = useMutation(api.workspace.cancelInvite);
   const removeMember = useMutation(api.workspace.removeMember);
-  const emailInputId = useId();
   const [state, dispatch] = useReducer(membersPanelReducer, initialMembersPanelState);
   const canManageMembers =
     workspace.role === "owner" || workspace.role === "admin" || workspace.role === "member";
-
-  async function handleInvite(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const nextEmail = state.email.trim();
-    if (!nextEmail || state.isInviting) return;
-
-    dispatch({ type: "invite-started" });
-    try {
-      const result = await inviteMember({ workspaceId: workspace._id, email: nextEmail });
-      if (!result.ok) {
-        toast.error("Could not send invite", { description: getErrorMessage(result.error) });
-        return;
-      }
-
-      toast.success("Invite sent");
-      dispatch({ type: "invite-finished", sent: true });
-    } catch (error) {
-      toast.error("Could not send invite", { description: getErrorMessage(error) });
-    } finally {
-      dispatch({ type: "invite-finished", sent: false });
-    }
-  }
 
   async function handleCancelInvite(invite: Invite) {
     if (state.cancelingInviteId) return;
@@ -266,53 +210,27 @@ export function MembersPanel() {
           Members - {members.length}
         </TypographySubheading>
         {canManageMembers ? (
-          <Dialog
-            open={state.inviteDialogOpen}
-            onOpenChange={(open) => dispatch({ type: "set-invite-dialog-open", open })}
+          <InternalDialogForm
+            title="Invite member"
+            description={
+              <>
+                Send an invite to join {workspace.name}. New members can edit forms, review
+                submissions, and update workspace settings.
+              </>
+            }
+            schema={INVITE_MEMBER.typed}
+            action={({ values }) =>
+              inviteMember({
+                workspaceId: workspace._id,
+                email: values.email ?? "",
+              })
+            }
           >
-            <DialogTrigger asChild>
-              <Button type="button" size="dense">
-                <RiUserAddLine className="size-4" />
-                Invite
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <form onSubmit={handleInvite}>
-                <DialogHeader>
-                  <DialogTitle>Invite member</DialogTitle>
-                  <DialogDescription>
-                    Send an invite to join {workspace.name}. New members can edit forms, review
-                    submissions, and update workspace settings.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="mt-5 space-y-2">
-                  <Label htmlFor={emailInputId}>Email address</Label>
-                  <Input
-                    id={emailInputId}
-                    type="email"
-                    value={state.email}
-                    autoComplete="email"
-                    placeholder="teammate@example.com"
-                    disabled={state.isInviting}
-                    onChange={(event) =>
-                      dispatch({ type: "invite-email-changed", email: event.target.value })
-                    }
-                  />
-                </div>
-                <DialogFooter className="mt-6">
-                  <DialogClose asChild>
-                    <Button type="button" variant="outline" disabled={state.isInviting}>
-                      Cancel
-                    </Button>
-                  </DialogClose>
-                  <Button type="submit" disabled={state.isInviting || !state.email.trim()}>
-                    {state.isInviting ? <Spinner /> : <RiMailLine className="size-4" />}
-                    Send invite
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+            <Button type="button" size="dense">
+              <RiUserAddLine className="size-4" />
+              Invite
+            </Button>
+          </InternalDialogForm>
         ) : null}
       </div>
 

@@ -23,6 +23,7 @@ import type * as submissions from "../submissions.js";
 import type * as system_forms__init from "../system/forms/_init.js";
 import type * as system_forms_create_form from "../system/forms/create_form.js";
 import type * as system_forms_create_workspace from "../system/forms/create_workspace.js";
+import type * as system_forms_invite_member from "../system/forms/invite_member.js";
 import type * as system_initialize from "../system/initialize.js";
 import type * as workspace from "../workspace.js";
 
@@ -48,6 +49,7 @@ declare const fullApi: ApiFromModules<{
   "system/forms/_init": typeof system_forms__init;
   "system/forms/create_form": typeof system_forms_create_form;
   "system/forms/create_workspace": typeof system_forms_create_workspace;
+  "system/forms/invite_member": typeof system_forms_invite_member;
   "system/initialize": typeof system_initialize;
   workspace: typeof workspace;
 }>;

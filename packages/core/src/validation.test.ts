@@ -66,4 +66,79 @@ describe("validateFormSubmission", () => {
       ]);
     }
   });
+
+  it("validates required radio groups", () => {
+    const radioForm = compile({
+      id: "radio_validation",
+      name: "Radio validation",
+      elements: [
+        {
+          id: "attendance",
+          name: "Attendance",
+          type: "radio_group",
+          label: "Will you attend?",
+          options: ["Yes", "No"],
+          rules: [{ type: "required", value: true, event: "onSubmit" }],
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(radioForm, { attendance: "Yes" })).toEqual({ success: true });
+    expect(validateFormSubmission(radioForm, { attendance: "" })).toEqual({
+      issues: [{ fieldId: "attendance", message: "Will you attend? is required" }],
+      success: false,
+    });
+  });
+
+  it("validates date fields as ISO calendar dates", () => {
+    const dateForm = compile({
+      id: "date_validation",
+      name: "Date validation",
+      elements: [
+        {
+          id: "start_date",
+          name: "Start date",
+          type: "date",
+          label: "Start date",
+          rules: [{ type: "required", value: true, event: "onSubmit" }],
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(dateForm, { start_date: "2026-08-19" })).toEqual({
+      success: true,
+    });
+    expect(validateFormSubmission(dateForm, { start_date: "2026-02-29" })).toEqual({
+      issues: [{ fieldId: "start_date", message: "Invalid ISO date" }],
+      success: false,
+    });
+    expect(validateFormSubmission(dateForm, { start_date: "August 19, 2026" })).toEqual({
+      issues: [{ fieldId: "start_date", message: "Invalid ISO date" }],
+      success: false,
+    });
+  });
+
+  it("accepts broad phone formats but rejects whitespace-only required values", () => {
+    const phoneForm = compile({
+      id: "phone_validation",
+      name: "Phone validation",
+      elements: [
+        {
+          id: "phone",
+          name: "Phone",
+          type: "phone",
+          label: "Phone",
+          rules: [{ type: "required", value: true, event: "onSubmit" }],
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(phoneForm, { phone: "+44 (0)20 7946 0958 ext. 2" })).toEqual({
+      success: true,
+    });
+    expect(validateFormSubmission(phoneForm, { phone: "   " })).toEqual({
+      issues: [{ fieldId: "phone", message: "Phone is required" }],
+      success: false,
+    });
+  });
 });

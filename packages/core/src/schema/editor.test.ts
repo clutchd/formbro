@@ -29,11 +29,34 @@ describe("form editor schema helpers", () => {
       type: "email",
     });
 
+    expect(createFormElementDraft({ id: "event_date", type: "date" })).toMatchObject({
+      id: "event_date",
+      label: "Date",
+      name: "Date",
+      type: "date",
+    });
+
+    expect(createFormElementDraft({ id: "phone", type: "phone" })).toMatchObject({
+      id: "phone",
+      label: "Phone",
+      name: "Phone",
+      placeholder: "+1 555 123 4567",
+      type: "phone",
+    });
+
     expect(createFormElementDraft({ id: "heading", type: "heading" })).toMatchObject({
       id: "heading",
       label: "New heading",
       level: 2,
       type: "heading",
+    });
+
+    expect(createFormElementDraft({ id: "choice", type: "radio_group" })).toMatchObject({
+      id: "choice",
+      label: "Choose one",
+      name: "Radio Group",
+      options: ["Option 1", "Option 2", "Option 3"],
+      type: "radio_group",
     });
   });
 
@@ -72,6 +95,9 @@ describe("form editor schema helpers", () => {
     };
 
     expect(convertFormElementDraftType({ element: source, type: "single_select" })).toMatchObject({
+      options: ["A", "B"],
+    });
+    expect(convertFormElementDraftType({ element: source, type: "radio_group" })).toMatchObject({
       options: ["A", "B"],
     });
     expect(convertFormElementDraftType({ element: source, type: "short_text" })).not.toHaveProperty(

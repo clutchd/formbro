@@ -148,6 +148,33 @@ function fields<const TFields extends readonly [FormRegistryField, ...FormRegist
   return fields;
 }
 
+const date = field({
+  key: "date",
+  display: "Date",
+  description: "Date input for start dates, event days, and establishment dates",
+  editor: {
+    defaults: {
+      label: "Date",
+    },
+    preview: {
+      control: "input",
+      inputType: "date",
+    },
+    properties: [
+      { key: "label", label: "Question", control: "text", placeholder: "Question" },
+      {
+        key: "description",
+        label: "Helper text",
+        control: "text",
+        placeholder: "Optional helper text",
+      },
+      { key: "required", label: "Required", control: "rule", section: "validation" },
+    ],
+  },
+  rules: ["required"],
+  schema: z.iso.date(),
+});
+
 const email = field({
   key: "email",
   display: "Email",
@@ -319,6 +346,41 @@ const number = field({
   schema: z.union([z.number(), z.literal("")]),
 });
 
+const phone = field({
+  key: "phone",
+  display: "Phone",
+  description: "Telephone input for local and international phone numbers",
+  editor: {
+    defaults: {
+      label: "Phone",
+      placeholder: "+1 555 123 4567",
+    },
+    preview: {
+      control: "input",
+      inputType: "tel",
+      placeholder: "+1 555 123 4567",
+    },
+    properties: [
+      { key: "label", label: "Question", control: "text", placeholder: "Question" },
+      {
+        key: "description",
+        label: "Helper text",
+        control: "text",
+        placeholder: "Optional helper text",
+      },
+      {
+        key: "placeholder",
+        label: "Placeholder",
+        control: "text",
+        placeholder: "Input placeholder",
+      },
+      { key: "required", label: "Required", control: "rule", section: "validation" },
+    ],
+  },
+  rules: ["required"],
+  schema: z.string().trim(),
+});
+
 const short_text = field({
   key: "short_text",
   display: "Short Text",
@@ -413,8 +475,53 @@ const single_select = field({
   schema: z.string(),
 });
 
+const radio_group = field({
+  key: "radio_group",
+  display: "Radio Group",
+  description: "Visible radio options for selecting a single choice",
+  editor: {
+    defaults: {
+      label: "Choose one",
+      options: ["Option 1", "Option 2", "Option 3"],
+    },
+    preview: {
+      control: "radio_group",
+    },
+    properties: [
+      { key: "label", label: "Question", control: "text", placeholder: "Question" },
+      {
+        key: "description",
+        label: "Helper text",
+        control: "text",
+        placeholder: "Optional helper text",
+      },
+      {
+        key: "options",
+        label: "Options",
+        control: "options",
+        placeholder: "Option 1\nOption 2\nOption 3",
+        section: "content",
+        span: "full",
+      },
+      { key: "required", label: "Required", control: "rule", section: "validation" },
+    ],
+  },
+  rules: ["required"],
+  schema: z.string(),
+});
+
 export const ElementRegistry = elements([description, divider, heading, page_break]);
-export const FieldRegistry = fields([email, link, long_text, number, short_text, single_select]);
+export const FieldRegistry = fields([
+  date,
+  email,
+  link,
+  long_text,
+  number,
+  phone,
+  short_text,
+  single_select,
+  radio_group,
+]);
 export type ElementRegistryItem = (typeof ElementRegistry)[number];
 export type FieldRegistryItem = (typeof FieldRegistry)[number];
 export type RegistryItem = ElementRegistryItem | FieldRegistryItem;

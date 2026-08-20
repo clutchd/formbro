@@ -39,6 +39,75 @@ describe("FormSchema", () => {
     expect(parsed.elements[0]).not.toHaveProperty("rules");
   });
 
+  it("parses radio groups as choice fields", () => {
+    const parsed = FormSchema.parse({
+      id: "survey",
+      name: "Survey",
+      elements: [
+        {
+          id: "satisfaction",
+          name: "Satisfaction",
+          type: "radio_group",
+          label: "How satisfied are you?",
+          options: ["Very satisfied", "Satisfied", "Not satisfied"],
+          rules: [{ type: "required", value: true }],
+        },
+      ],
+    });
+
+    expect(parsed.elements[0]).toMatchObject({
+      category: "field",
+      options: ["Very satisfied", "Satisfied", "Not satisfied"],
+      type: "radio_group",
+    });
+  });
+
+  it("parses dates as ISO string fields", () => {
+    const parsed = FormSchema.parse({
+      id: "event",
+      name: "Event",
+      elements: [
+        {
+          id: "start_date",
+          name: "Start date",
+          type: "date",
+          label: "Start date",
+          default: "2026-08-19",
+          rules: [{ type: "required", value: true }],
+        },
+      ],
+    });
+
+    expect(parsed.elements[0]).toMatchObject({
+      category: "field",
+      default: "2026-08-19",
+      type: "date",
+    });
+  });
+
+  it("parses phone numbers as string fields", () => {
+    const parsed = FormSchema.parse({
+      id: "contact",
+      name: "Contact",
+      elements: [
+        {
+          id: "phone",
+          name: "Phone",
+          type: "phone",
+          label: "Phone",
+          default: "+1 (415) 555-0100",
+          rules: [{ type: "required", value: true }],
+        },
+      ],
+    });
+
+    expect(parsed.elements[0]).toMatchObject({
+      category: "field",
+      default: "+1 (415) 555-0100",
+      type: "phone",
+    });
+  });
+
   it("rejects invalid ids", () => {
     expect(() =>
       FormSchema.parse({

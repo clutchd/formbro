@@ -42,6 +42,8 @@ export const ERRORS = defineErrors({
 
 export type FormStatus = "draft" | "open" | "closed";
 
+const TEMPLATE_ID = /^[a-z][a-z0-9_]*$/;
+
 export async function _createForm({
   ctx,
   workspaceId,
@@ -49,6 +51,8 @@ export async function _createForm({
   schema,
   createdBy,
   status = "draft",
+  sourceTemplateId,
+  sourceTemplateVersion,
 }: {
   ctx: MutationCtx;
   workspaceId: Id<"workspaces">;
@@ -56,12 +60,16 @@ export async function _createForm({
   schema: FormInput;
   createdBy?: Id<"workspaceMembers">;
   status?: FormStatus;
+  sourceTemplateId?: string;
+  sourceTemplateVersion?: number;
 }) {
   const formId = await ctx.db.insert("forms", {
     name: schema.name,
     slug,
     workspaceId,
     status,
+    ...(sourceTemplateId ? { sourceTemplateId } : {}),
+    ...(sourceTemplateVersion !== undefined ? { sourceTemplateVersion } : {}),
   });
 
   const draftSchemaId = await ctx.db.insert("formSchemas", {
@@ -122,54 +130,100 @@ export async function _publishForm({
   };
 }
 
+async function reserveFormCreate(ctx: MutationCtx, workspaceId: Id<"workspaces">) {
+  const access = await getWorkspaceAccess(ctx, workspaceId);
+  if (!access.ok) return fail({ data: null, error: access.error });
+
+  const subscriptionState = await requireWorkspaceSubscription(ctx, workspaceId);
+  if (!subscriptionState.ok) return fail({ data: null, error: subscriptionState.error });
+
+  if (
+    await isWorkspaceLimitReached(subscriptionState.data.limits.forms, (limit) =>
+      getWorkspaceFormsUsed(ctx, workspaceId, limit),
+    )
+  ) {
+    return fail({ data: null, error: ERRORS.ACTIVE_FORM_LIMIT });
+  }
+
+  let slug = nano();
+  while (
+    await ctx.db
+      .query("forms")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .unique()
+  ) {
+    slug = nano();
+  }
+
+  return ok({
+    createdBy: access.data.membership._id,
+    slug,
+  });
+}
+
 export const create = mutation({
   args: {
     workspaceId: v.id("workspaces"),
     name: v.string(),
+    source: v.optional(
+      v.object({
+        templateId: v.string(),
+        templateVersion: v.number(),
+        schema: v.any(),
+      }),
+    ),
   },
   handler: async (ctx, args) => {
-    const access = await getWorkspaceAccess(ctx, args.workspaceId);
-    if (!access.ok) return fail({ data: null, error: access.error });
+    const reserved = await reserveFormCreate(ctx, args.workspaceId);
+    if (!reserved.ok) return reserved;
 
-    const subscriptionState = await requireWorkspaceSubscription(ctx, args.workspaceId);
-    if (!subscriptionState.ok) return fail({ data: null, error: subscriptionState.error });
+    let schema;
+    let sourceTemplateId: string | undefined;
+    let sourceTemplateVersion: number | undefined;
 
-    if (
-      await isWorkspaceLimitReached(subscriptionState.data.limits.forms, (limit) =>
-        getWorkspaceFormsUsed(ctx, args.workspaceId, limit),
-      )
-    ) {
-      return fail({ data: null, error: ERRORS.ACTIVE_FORM_LIMIT });
+    if (args.source) {
+      if (
+        !TEMPLATE_ID.test(args.source.templateId) ||
+        !Number.isInteger(args.source.templateVersion) ||
+        args.source.templateVersion < 1
+      ) {
+        return fail({ data: null, error: ERRORS.SCHEMA_INVALID });
+      }
+
+      try {
+        schema = FormSchema.parse({
+          ...args.source.schema,
+          id: reserved.data.slug,
+          name: args.name.trim() || args.source.schema.name,
+        });
+      } catch {
+        return fail({ data: null, error: ERRORS.SCHEMA_INVALID });
+      }
+
+      sourceTemplateId = args.source.templateId;
+      sourceTemplateVersion = args.source.templateVersion;
+    } else {
+      schema = createDefaultFormSchema({ id: reserved.data.slug, name: args.name });
     }
-
-    let slug = nano();
-    while (
-      await ctx.db
-        .query("forms")
-        .withIndex("by_slug", (q) => q.eq("slug", slug))
-        .unique()
-    ) {
-      slug = nano();
-    }
-
-    const schema = createDefaultFormSchema({ id: slug, name: args.name });
 
     const [_created, _published] = await Promise.all([
-      await _createForm({
+      _createForm({
         ctx,
         workspaceId: args.workspaceId,
-        slug,
+        slug: reserved.data.slug,
         schema,
-        createdBy: access.data.membership._id,
+        createdBy: reserved.data.createdBy,
+        sourceTemplateId,
+        sourceTemplateVersion,
       }),
 
-      await _createFromSlug(ctx, {
+      _createFromSlug(ctx, {
         slug: CREATE_FORM.slug,
         data: { name: args.name },
       }),
     ]);
 
-    return ok({ slug });
+    return ok({ slug: reserved.data.slug });
   },
 });
 
@@ -185,6 +239,20 @@ export const get = query({
       return fail({ data: null, error: ERRORS.FORM_NOT_FOUND });
     }
     return ok(form);
+  },
+});
+
+export const countByTemplate = query({
+  args: { templateId: v.string() },
+  handler: async (ctx, args) => {
+    if (!TEMPLATE_ID.test(args.templateId)) return 0;
+
+    const forms = await ctx.db
+      .query("forms")
+      .withIndex("by_source_template", (q) => q.eq("sourceTemplateId", args.templateId))
+      .collect();
+
+    return forms.length;
   },
 });
 

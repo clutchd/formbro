@@ -9,6 +9,7 @@ import type {
   FormOnSuccess,
 } from "@formbro/core/schema/form";
 import { twx } from "@formbro/shared/twx";
+import { Alert, AlertDescription, AlertTitle } from "@formbro/ui/alert";
 import { Button } from "@formbro/ui/button";
 import { Progress } from "@formbro/ui/progress";
 import {
@@ -80,9 +81,7 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   });
 
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
-  const [previewValidationStatus, setPreviewValidationStatus] = useState<
-    "invalid" | "valid" | null
-  >(null);
+  const [previewStatus, setPreviewStatus] = useState<"invalid" | "valid" | null>(null);
 
   const isMultiPage = state.schema.pages.length > 1;
   const currentPage = state.schema.pages[currentPageIndex];
@@ -95,10 +94,11 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   const percent = computePercent(currentPageIndex);
 
   useEffect(() => {
-    setPreviewValidationStatus(null);
+    setPreviewStatus(null);
   }, [state.schema]);
 
   const setPageIndex = (next: number) => {
+    setPreviewStatus(null);
     setCurrentPageIndex(next);
     onPercentChange?.(computePercent(next));
   };
@@ -133,7 +133,7 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
     const valid = await state.validate();
 
     if (preview) {
-      setPreviewValidationStatus(valid ? "valid" : "invalid");
+      setPreviewStatus(valid ? "valid" : "invalid");
       return;
     }
 
@@ -143,7 +143,14 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   };
 
   return (
-    <form onSubmit={handleSubmit} className={twx("text-wrap", className)} {...props}>
+    <form
+      onSubmit={handleSubmit}
+      className={twx("text-wrap", className)}
+      {...props}
+      onChange={() => {
+        if (previewStatus) setPreviewStatus(null);
+      }}
+    >
       <state.tanstack.AppForm>
         <Page
           tanstack={state.tanstack}
@@ -173,16 +180,25 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
                 <RiArrowRightLine className="size-4" />
               </Button>
             ) : (
-              <FormSubmitArea previewValidationStatus={previewValidationStatus} preview={preview}>
-                <state.tanstack.SubmitButton schema={state.schema} disabled={disabled} />
-              </FormSubmitArea>
+              <state.tanstack.SubmitButton schema={state.schema} disabled={disabled} />
             )}
           </div>
         ) : (
-          <FormSubmitArea previewValidationStatus={previewValidationStatus} preview={preview}>
-            <state.tanstack.SubmitButton schema={state.schema} disabled={disabled} />
-          </FormSubmitArea>
+          <state.tanstack.SubmitButton schema={state.schema} disabled={disabled} />
         )}
+        {preview && previewStatus ? (
+          <Alert className="mt-4" variant={previewStatus === "invalid" ? "destructive" : "success"}>
+            {previewStatus === "valid" ? <RiCheckboxCircleLine /> : <RiErrorWarningLine />}
+            <AlertTitle>
+              {previewStatus === "valid" ? "Preview only" : "Check the highlighted fields"}
+            </AlertTitle>
+            <AlertDescription>
+              {previewStatus === "valid"
+                ? "Nothing was submitted."
+                : "This is a preview. Fix the errors to continue."}
+            </AlertDescription>
+          </Alert>
+        ) : null}
       </state.tanstack.AppForm>
 
       {children?.(state)}
@@ -195,43 +211,5 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
 
       {debug && <pre>{JSON.stringify(state.tanstack.state, null, 2)}</pre>}
     </form>
-  );
-}
-
-function FormSubmitArea({
-  children,
-  preview,
-  previewValidationStatus,
-}: {
-  children: React.ReactNode;
-  preview?: boolean;
-  previewValidationStatus: "invalid" | "valid" | null;
-}) {
-  return (
-    <div className="space-y-2">
-      {preview && previewValidationStatus ? (
-        <div
-          className={twx(
-            "flex items-center gap-2 rounded-md border px-3 py-2 text-sm",
-            previewValidationStatus === "valid"
-              ? "border-green-300 bg-green-50 text-green-950 dark:border-green-400/40 dark:bg-green-400/10 dark:text-green-200"
-              : "border-destructive-border bg-destructive/5 text-destructive",
-          )}
-          aria-live="polite"
-        >
-          {previewValidationStatus === "valid" ? (
-            <RiCheckboxCircleLine className="size-4 shrink-0" />
-          ) : (
-            <RiErrorWarningLine className="size-4 shrink-0" />
-          )}
-          <span className="font-medium">
-            {previewValidationStatus === "valid"
-              ? "Preview validation passed."
-              : "Check the highlighted fields."}
-          </span>
-        </div>
-      ) : null}
-      {children}
-    </div>
   );
 }

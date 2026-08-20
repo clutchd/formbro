@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Changes"
+  short_description: "Create atomic, well-explained commits"
+  default_prompt: "Use $commit to inspect the worktree and create the requested atomic commit."
