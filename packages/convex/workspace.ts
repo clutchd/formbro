@@ -578,7 +578,7 @@ export const inviteMember = mutation({
 
     const token = buildWorkspaceInviteToken();
     const expiresTime = now + WORKSPACE_INVITE_TTL_MS;
-    const inviteIdPromise: Promise<Id<"workspaceInvites">> = ctx.db.insert("workspaceInvites", {
+    const inviteId: Id<"workspaceInvites"> = await ctx.db.insert("workspaceInvites", {
       workspaceId: args.workspaceId,
       email,
       token,
@@ -586,8 +586,8 @@ export const inviteMember = mutation({
       createdTime: now,
       expiresTime,
     });
+
     await Promise.all([
-      inviteIdPromise,
       ctx.scheduler.runAfter(0, internal.emails.transactional, {
         email: {
           template: "workspaceInvite",
@@ -603,7 +603,6 @@ export const inviteMember = mutation({
         data: { email },
       }),
     ]);
-    const inviteId: Id<"workspaceInvites"> = await inviteIdPromise;
 
     return ok({
       _id: inviteId,
