@@ -121,6 +121,10 @@ describe("validateFormSubmission", () => {
       issues: [{ fieldId: "skills", message: "Select your skills must be a list of choices" }],
       success: false,
     });
+    expect(validateFormSubmission(checkboxForm, { skills: null })).toEqual({
+      issues: [{ fieldId: "skills", message: "Select your skills must be a list of choices" }],
+      success: false,
+    });
   });
 
   it("enforces checkbox group array values without validation rules", () => {

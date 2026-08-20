@@ -51,7 +51,7 @@ export function validateFormSubmission(
 
   for (const field of fields) {
     const emptyValue = field.type === "checkbox_group" ? [] : "";
-    const rawValue = data[field.id] ?? emptyValue;
+    const rawValue = data[field.id] === undefined ? emptyValue : data[field.id];
 
     if (field.type === "checkbox_group") {
       const parsed = Registry.checkbox_group.schema.safeParse(rawValue);
