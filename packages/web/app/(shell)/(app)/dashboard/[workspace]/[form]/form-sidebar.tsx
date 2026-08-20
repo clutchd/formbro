@@ -29,7 +29,10 @@ export function FormSidebar() {
           <SidebarMenuButton
             asChild
             className="data-[active=true]:bg-accent"
-            isActive={pathname === `${formPath}/submissions`}
+            isActive={
+              pathname === `${formPath}/submissions` ||
+              pathname.startsWith(`${formPath}/submissions/`)
+            }
           >
             <Link {...submissionsPrewarm}>
               <RiInboxLine /> Submissions
