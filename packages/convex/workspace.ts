@@ -24,8 +24,9 @@ import {
 } from "./billingUtils";
 import { defineErrors } from "./errors";
 import { _deleteForm, ERRORS as FORM_ERRORS } from "./forms";
-import { _createFromSlug, _createFromSlug as _createFromSlugSubmission } from "./submissions";
+import { _createFromSlug as _createFromSlugSubmission } from "./submissions";
 import { CREATE_WORKSPACE } from "./system/forms/create_workspace";
+import { INVITE_MEMBER } from "./system/forms/invite_member";
 
 export const ERRORS = defineErrors({
   DELETE_WORKSPACE_PERMISSION_DENIED: {
@@ -577,7 +578,7 @@ export const inviteMember = mutation({
 
     const token = buildWorkspaceInviteToken();
     const expiresTime = now + WORKSPACE_INVITE_TTL_MS;
-    const inviteId = await ctx.db.insert("workspaceInvites", {
+    const inviteIdPromise: Promise<Id<"workspaceInvites">> = ctx.db.insert("workspaceInvites", {
       workspaceId: args.workspaceId,
       email,
       token,
@@ -585,17 +586,24 @@ export const inviteMember = mutation({
       createdTime: now,
       expiresTime,
     });
-
-    await ctx.scheduler.runAfter(0, internal.emails.transactional, {
-      email: {
-        template: "workspaceInvite",
-        to: email,
-        workspaceName: workspaceAccess.data.workspace.name,
-        inviterName: workspaceAccess.data.user.name,
-        token,
-        expiresTime,
-      },
-    });
+    await Promise.all([
+      inviteIdPromise,
+      ctx.scheduler.runAfter(0, internal.emails.transactional, {
+        email: {
+          template: "workspaceInvite",
+          to: email,
+          workspaceName: workspaceAccess.data.workspace.name,
+          inviterName: workspaceAccess.data.user.name,
+          token,
+          expiresTime,
+        },
+      }),
+      _createFromSlugSubmission(ctx, {
+        slug: INVITE_MEMBER.slug,
+        data: { email },
+      }),
+    ]);
+    const inviteId: Id<"workspaceInvites"> = await inviteIdPromise;
 
     return ok({
       _id: inviteId,
