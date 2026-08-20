@@ -130,6 +130,31 @@ export function templatePath(id: string) {
   return `/templates/${templateSlug(id)}`;
 }
 
+function sentenceCaseTemplateName(name: string) {
+  return name
+    .split(" ")
+    .map((word, index) => {
+      if (index === 0 || /^[A-Z\d]+$/.test(word)) return word;
+      return word.toLocaleLowerCase();
+    })
+    .join(" ");
+}
+
+export function templatePageTitle(name: string) {
+  return `${sentenceCaseTemplateName(name)} form template`;
+}
+
+export function templatePageDescription(template: Pick<FormTemplate, "name" | "description">) {
+  const title = templatePageTitle(template.name);
+  const [firstWord = "", ...rest] = title.split(" ");
+  const sentenceTitle = [
+    /^[A-Z\d]+$/.test(firstWord) ? firstWord : firstWord.toLocaleLowerCase(),
+    ...rest,
+  ].join(" ");
+
+  return `Use this ${sentenceTitle}. ${template.description} Preview and customize it in FormBro.`;
+}
+
 export function templateCategoryPath(category: TemplateCategory) {
   return `/templates/category/${category}`;
 }
