@@ -58,6 +58,14 @@ describe("form editor schema helpers", () => {
       options: ["Option 1", "Option 2", "Option 3"],
       type: "radio_group",
     });
+
+    expect(createFormElementDraft({ id: "choices", type: "checkbox_group" })).toMatchObject({
+      id: "choices",
+      label: "Select all that apply",
+      name: "Checkbox Group",
+      options: ["Option 1", "Option 2", "Option 3"],
+      type: "checkbox_group",
+    });
   });
 
   it("converts element type while preserving useful author state", () => {
@@ -100,9 +108,38 @@ describe("form editor schema helpers", () => {
     expect(convertFormElementDraftType({ element: source, type: "radio_group" })).toMatchObject({
       options: ["A", "B"],
     });
+    expect(convertFormElementDraftType({ element: source, type: "checkbox_group" })).toMatchObject({
+      options: ["A", "B"],
+    });
     expect(convertFormElementDraftType({ element: source, type: "short_text" })).not.toHaveProperty(
       "options",
     );
+  });
+
+  it("does not carry incompatible defaults across scalar and array fields", () => {
+    const checkbox: FormElementInput = {
+      id: "choice",
+      name: "Choice",
+      type: "checkbox_group",
+      label: "Favorite options",
+      options: ["A", "B"],
+      default: ["A"],
+    };
+    const singleSelect: FormElementInput = {
+      id: "choice",
+      name: "Choice",
+      type: "single_select",
+      label: "Favorite option",
+      options: ["A", "B"],
+      default: "A",
+    };
+
+    expect(
+      convertFormElementDraftType({ element: checkbox, type: "radio_group" }),
+    ).not.toHaveProperty("default");
+    expect(
+      convertFormElementDraftType({ element: singleSelect, type: "checkbox_group" }),
+    ).not.toHaveProperty("default");
   });
 
   it("declares editor preview and properties for every registry item", () => {

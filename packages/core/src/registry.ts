@@ -510,6 +510,42 @@ const radio_group = field({
   schema: z.string(),
 });
 
+const checkbox_group = field({
+  key: "checkbox_group",
+  display: "Checkbox Group",
+  description: "Visible checkboxes for confirmations or selecting multiple choices",
+  default: [],
+  editor: {
+    defaults: {
+      label: "Select all that apply",
+      options: ["Option 1", "Option 2", "Option 3"],
+    },
+    preview: {
+      control: "checkbox_group",
+    },
+    properties: [
+      { key: "label", label: "Question", control: "text", placeholder: "Question" },
+      {
+        key: "description",
+        label: "Helper text",
+        control: "text",
+        placeholder: "Optional helper text",
+      },
+      {
+        key: "options",
+        label: "Options",
+        control: "options",
+        placeholder: "Option 1\nOption 2\nOption 3",
+        section: "content",
+        span: "full",
+      },
+      { key: "required", label: "Required", control: "rule", section: "validation" },
+    ],
+  },
+  rules: ["required"],
+  schema: z.array(z.string()),
+});
+
 export const ElementRegistry = elements([description, divider, heading, page_break]);
 export const FieldRegistry = fields([
   date,
@@ -521,6 +557,7 @@ export const FieldRegistry = fields([
   short_text,
   single_select,
   radio_group,
+  checkbox_group,
 ]);
 export type ElementRegistryItem = (typeof ElementRegistry)[number];
 export type FieldRegistryItem = (typeof FieldRegistry)[number];

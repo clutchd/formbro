@@ -167,6 +167,23 @@ describe("compile:elements", () => {
     });
   });
 
+  it("uses an empty array as the checkbox group default", () => {
+    const elements = parseElements([
+      {
+        id: "skills",
+        name: "Skills",
+        type: "checkbox_group",
+        label: "Select your skills",
+        options: ["TypeScript", "React"],
+      },
+    ]);
+
+    const compiled = _private.compileElements(elements);
+
+    expect(compiled.defaults).toEqual({ skills: [] });
+    expect(compiled.elements[0]).toMatchObject({ default: [], type: "checkbox_group" });
+  });
+
   it("builds validator plans by event and omits fields without rules", () => {
     const elements = parseElements([
       {

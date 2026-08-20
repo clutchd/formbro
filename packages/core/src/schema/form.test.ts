@@ -1,5 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import { createDefaultFormSchema, FormSchema, JsonParse, JsonSerialize } from "./form";
+import {
+  createDefaultFormSchema,
+  type FormInput,
+  FormSchema,
+  type FormValues,
+  JsonParse,
+  JsonSerialize,
+} from "./form";
 
 describe("FormSchema", () => {
   it("parses valid schema input", () => {
@@ -60,6 +67,51 @@ describe("FormSchema", () => {
       options: ["Very satisfied", "Satisfied", "Not satisfied"],
       type: "radio_group",
     });
+  });
+
+  it("parses checkbox groups as multi-choice fields", () => {
+    const parsed = FormSchema.parse({
+      id: "skills_form",
+      name: "Skills",
+      elements: [
+        {
+          id: "skills",
+          name: "Skills",
+          type: "checkbox_group",
+          label: "Which skills do you use?",
+          options: ["TypeScript", "React", "Convex"],
+          default: ["TypeScript"],
+          rules: [{ type: "required", value: true }],
+        },
+      ],
+    });
+
+    expect(parsed.elements[0]).toMatchObject({
+      category: "field",
+      default: ["TypeScript"],
+      options: ["TypeScript", "React", "Convex"],
+      type: "checkbox_group",
+    });
+  });
+
+  it("infers checkbox group submission values as string arrays", () => {
+    const schema = {
+      id: "skills_form",
+      name: "Skills",
+      elements: [
+        {
+          id: "skills",
+          name: "Skills",
+          type: "checkbox_group",
+          label: "Which skills do you use?",
+          options: ["TypeScript", "React"],
+        },
+      ],
+    } as const satisfies FormInput;
+    const values: FormValues<typeof schema> = { skills: ["TypeScript"] };
+    const skills: string[] = values.skills;
+
+    expect(skills).toEqual(["TypeScript"]);
   });
 
   it("parses dates as ISO string fields", () => {

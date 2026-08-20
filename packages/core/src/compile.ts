@@ -3,6 +3,7 @@ import type { FormEvent } from "./schema/event";
 import type { FormLabel } from "./schema/label";
 import type { FormListener } from "./schema/listener";
 import type { FormRule } from "./schema/rule";
+import { Registry } from "./registry";
 import { type FormInput, FormSchema } from "./schema/form";
 import { FORMBRO_SCHEMA_VERSION } from "./schema/version";
 
@@ -69,6 +70,9 @@ function compileLabel(label: FormLabel, fallback?: string): string | undefined {
 
 function compileField(field: Extract<ReturnType<typeof compileElement>, { category: "field" }>) {
   const { default: defaultValue, rules, label, ...rest } = field;
+  const registryField = Registry[field.type];
+  const registryDefault = "default" in registryField ? registryField.default : undefined;
+  const resolvedDefault = defaultValue ?? registryDefault ?? "";
 
   let required = false;
 
@@ -90,7 +94,7 @@ function compileField(field: Extract<ReturnType<typeof compileElement>, { catego
   return {
     ...rest,
     label: compileLabel(label, field.name),
-    default: defaultValue ?? "",
+    default: Array.isArray(resolvedDefault) ? [...resolvedDefault] : resolvedDefault,
     events,
     required,
   };
