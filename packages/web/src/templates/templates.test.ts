@@ -67,6 +67,20 @@ describe("templates catalog", () => {
     expect(listTemplates({ query: "zzzz-missing" })).toEqual([]);
   });
 
+  it("includes a phone field in every registration and vendor template", () => {
+    const contactTemplates = TEMPLATE_DEFINITIONS.filter(
+      (definition) => definition.category === "registration" || definition.tags.includes("vendors"),
+    );
+
+    expect(contactTemplates).toHaveLength(10);
+    for (const definition of contactTemplates) {
+      expect(
+        definition.schema.elements.some((element) => element.type === "phone"),
+        `${definition.id} should include a phone field`,
+      ).toBe(true);
+    }
+  });
+
   it("instantiates a template onto a new form id", () => {
     const schema = instantiateTemplate("vendor_registration", {
       formId: "abc123xyz0",

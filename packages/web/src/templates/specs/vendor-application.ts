@@ -2,7 +2,7 @@ import type { TemplateDefinition } from "../types";
 
 export const template: TemplateDefinition = {
   id: "vendor_application",
-  version: 1,
+  version: 2,
   description: "Assess whether a vendor is a fit before adding them to the roster.",
   category: "application",
   tags: ["vendors", "procurement"],
@@ -61,6 +61,13 @@ export const template: TemplateDefinition = {
             value: true,
           },
         ],
+      },
+      {
+        id: "contact_phone",
+        name: "Phone",
+        type: "phone",
+        label: "Phone",
+        placeholder: "+1 555 123 4567",
       },
       {
         id: "website",

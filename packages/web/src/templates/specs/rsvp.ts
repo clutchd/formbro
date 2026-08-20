@@ -2,7 +2,7 @@ import type { TemplateDefinition } from "../types";
 
 export const template: TemplateDefinition = {
   id: "rsvp",
-  version: 1,
+  version: 2,
   description: "Collect attendance, guest count, and a note for the host.",
   category: "registration",
   categories: ["registration", "event-registration"],
@@ -49,6 +49,13 @@ export const template: TemplateDefinition = {
             value: true,
           },
         ],
+      },
+      {
+        id: "guest_phone",
+        name: "Phone",
+        type: "phone",
+        label: "Phone",
+        placeholder: "+1 555 123 4567",
       },
       {
         id: "attending",
