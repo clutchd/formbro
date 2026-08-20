@@ -1,6 +1,6 @@
 "use client";
 
-import { hasActiveWorkspaceSubscriptionStatus } from "@formbro/convex/billingUtils";
+import { hasWorkspacePlanAccess } from "@formbro/convex/billingUtils";
 import { datetimeFormatter, formatStorage, numberFormatter } from "@formbro/convex/lib";
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
@@ -87,7 +87,7 @@ export default function FormsDashboardContent() {
     return <Loading title="forms" />;
   }
 
-  if (workspace && !hasActiveWorkspaceSubscriptionStatus(workspace)) {
+  if (workspace && !hasWorkspacePlanAccess(workspace)) {
     return (
       <PageState
         icon={<RiBankCardLine />}

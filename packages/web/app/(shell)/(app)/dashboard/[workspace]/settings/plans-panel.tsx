@@ -1,5 +1,10 @@
 import { api } from "@formbro/convex/_generated/api";
-import { getPlanDetails, PLANS, type Plan } from "@formbro/convex/billingUtils";
+import {
+  getAnnualBillingMonths,
+  getPlanDetails,
+  PLANS,
+  type Plan,
+} from "@formbro/convex/billingUtils";
 import { getErrorMessage } from "@formbro/convex/errors";
 import { formatUsd } from "@formbro/convex/lib";
 import { APP_URL } from "@formbro/shared/brand";
@@ -16,6 +21,14 @@ import { redirect } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useRequiredWorkspaceSettingsData } from "./_data-provider";
+
+type PaidPlan = Exclude<Plan, "hobby">;
+
+const ANNUAL_BILLING_MONTHS = getAnnualBillingMonths();
+
+function formatMonthCount(count: number) {
+  return `${count} ${count === 1 ? "month" : "months"}`;
+}
 
 function BillingIntervalToggle({
   interval,
@@ -51,7 +64,7 @@ function BillingIntervalToggle({
         >
           Annual
           <Badge variant="outline" status="success" className="px-1.5 py-0 text-[10px] uppercase">
-            2 mo free
+            {ANNUAL_BILLING_MONTHS.free} mo free
           </Badge>
         </button>
       </div>
@@ -59,10 +72,11 @@ function BillingIntervalToggle({
       <p className={twx(tuiFont, "text-muted-foreground")}>
         {interval === "annual" ? (
           <>
-            Pay for 10 months, get <span className="text-foreground">12 months</span>
+            Pay for {formatMonthCount(ANNUAL_BILLING_MONTHS.paid)}, get{" "}
+            <span className="text-foreground">{formatMonthCount(ANNUAL_BILLING_MONTHS.total)}</span>
           </>
         ) : (
-          "Save 2 months with annual billing"
+          `Save ${formatMonthCount(ANNUAL_BILLING_MONTHS.free)} with annual billing`
         )}
       </p>
     </div>
@@ -123,7 +137,7 @@ function PlanCard({
           </p>
         </div>
 
-        {interval === "annual" ? (
+        {interval === "annual" && plan.monthlyPriceUsd > 0 ? (
           <p className={twx(tuiFont, "mt-2 text-muted-foreground")}>
             per month, billed yearly · save{" "}
             {formatUsd(plan.monthlyPriceUsd * 12 - plan.yearlyPriceUsd)}
@@ -176,7 +190,7 @@ export function PlansPanel() {
   const settingsUrl = `${APP_URL}/dashboard/${workspace.slug}/settings`;
 
   const handleSelectPlan = useCallback(
-    async (plan: Plan) => {
+    async (plan: PaidPlan) => {
       setLoadingPlan(plan);
 
       const result = await createSubscriptionCheckout({
@@ -209,10 +223,11 @@ export function PlansPanel() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:grid-rows-[auto_auto_1fr_auto]">
         {PLANS.map((plan) => {
-          const current = billing.plan === plan && billing.hasActiveSubscription;
+          const current = billing.plan === plan;
           const disabled =
             isUnlimited ||
             current ||
+            plan === "hobby" ||
             !billing.canManageBilling ||
             (billing.hasActiveSubscription && !current);
 
@@ -225,7 +240,10 @@ export function PlansPanel() {
               recommended={plan === "pro" && !current}
               disabled={disabled}
               isLoading={loadingPlan === plan}
-              onSelect={() => void handleSelectPlan(plan)}
+              onSelect={() => {
+                if (plan === "hobby") return;
+                void handleSelectPlan(plan);
+              }}
             />
           );
         })}

@@ -54,7 +54,7 @@ export default function BillingSettingsPage() {
   return (
     <Page className="space-y-5">
       <ManageBilling />
-      {billing.hasActiveSubscription ? <BillingLimits /> : null}
+      {billing.hasPlanAccess ? <BillingLimits /> : null}
       <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-3 lg:gap-4">
         <PlansPanel />
         <MembersPanel />

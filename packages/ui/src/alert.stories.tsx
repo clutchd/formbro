@@ -13,6 +13,7 @@ Use it for inline notices, warnings, and destructive state messaging.
 
 ### Variants
 - \`default\` for general messaging.
+- \`success\` for completed or confirmed states.
 - \`destructive\` for errors and critical issues.
 
 ### Accessibility
@@ -39,6 +40,15 @@ export const Default = {
     <Alert className="max-w-md">
       <AlertTitle>Heads up!</AlertTitle>
       <AlertDescription>You can add components to your app using the CLI.</AlertDescription>
+    </Alert>
+  ),
+};
+
+export const Success = {
+  render: () => (
+    <Alert variant="success" className="max-w-md">
+      <AlertTitle>Preview only</AlertTitle>
+      <AlertDescription>Nothing was submitted.</AlertDescription>
     </Alert>
   ),
 };

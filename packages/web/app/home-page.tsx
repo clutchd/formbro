@@ -1,20 +1,20 @@
 "use client";
 
-import { DEFAULT_FORM_NAME, type FormInput } from "@formbro/core/schema/form";
+import { getPlanDetails, PLANS } from "@formbro/convex/billingUtils";
+import { formatUsd } from "@formbro/convex/lib";
 import { applyFormSchemaEdit, type FormSchemaEditInput } from "@formbro/core/ai";
+import { DEFAULT_FORM_NAME, type FormInput } from "@formbro/core/schema/form";
 import { FormBuilderCanvas } from "@formbro/react/builder";
 import { Form } from "@formbro/react/components/form";
 import { APP_NAME, TAGLINE } from "@formbro/shared/brand";
 import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
-import { Logo } from "@formbro/ui/logo";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbro/ui/tooltip";
 import {
   RiArrowRightLine,
   RiCheckboxCircleLine,
   RiFullscreenExitLine,
   RiFullscreenLine,
-  RiGithubFill,
   RiRefreshLine,
   RiSparklingLine,
   type RemixiconComponentType,
@@ -30,8 +30,8 @@ import {
   type RefObject,
   type SetStateAction,
 } from "react";
-import { ThemeIcon, useToggleTheme } from "@/components/theme";
 import { useDashboardPrewarmIntent } from "./(shell)/(app)/dashboard/(dashboard)/_data-provider";
+import { LandingPage } from "./landing-chrome";
 
 type BuilderTemplate = {
   id: string;
@@ -50,10 +50,11 @@ type BuilderDemoStreamState = {
   summary: string | null;
 };
 type LinkIntent = ComponentProps<typeof Link>;
+type PlanDetails = ReturnType<typeof getPlanDetails>;
 
 const HERO_STATS = [
   { label: "LICENSE", value: "MIT" },
-  { label: "TRIAL", value: "7 DAYS" },
+  { label: "HOBBY", value: "FREE" },
   { label: "SETUP", value: "MINUTES" },
 ];
 
@@ -99,7 +100,6 @@ const POSITIONING_FEATURES = [
       "Required fields, page breaks, draft publishing, workspace members, and response history are built in.",
   },
 ];
-const COPYRIGHT_YEAR = 2026;
 const BUILDER_DEMO_STEP_DELAY_MS = 620;
 const BUILDER_DEMO_BETWEEN_STEP_DELAY_MS = 160;
 
@@ -578,21 +578,8 @@ const INITIAL_BUILDER_STREAM_STATE: BuilderDemoStreamState = {
   status: "idle",
   summary: INITIAL_BUILDER_TEMPLATE.summary,
 };
-
-const PLANS = [
-  {
-    name: "Basic",
-    price: "$10",
-    description: "Everything a lean team needs to run serious forms.",
-    features: ["Unlimited seats", "10 forms", "1,000 submissions / month", "100GB storage"],
-  },
-  {
-    name: "Pro",
-    price: "$25",
-    description: "More room for teams with heavier workflows.",
-    features: ["Unlimited seats", "100 forms", "10,000 submissions / month", "1TB storage"],
-  },
-];
+const HOBBY_PLAN = getPlanDetails("hobby");
+const PAID_PLANS = PLANS.filter((plan) => plan !== "hobby").map(getPlanDetails);
 
 export function HomePage() {
   const { authUser } = useAppData();
@@ -600,64 +587,16 @@ export function HomePage() {
   const dashboardPrewarmIntent = useDashboardPrewarmIntent({ eager: true });
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-background">
-      <LandingHeader
+    <LandingPage>
+      <HeroSection
         isAuthenticated={isAuthenticated}
         dashboardPrewarmIntent={dashboardPrewarmIntent}
       />
-      <main>
-        <HeroSection
-          isAuthenticated={isAuthenticated}
-          dashboardPrewarmIntent={dashboardPrewarmIntent}
-        />
-        <WorkflowSection />
-        <PositioningSection />
-        <IntegrationsSection />
-        <PricingSection isAuthenticated={isAuthenticated} />
-      </main>
-      <LandingFooter />
-    </div>
-  );
-}
-
-function LandingHeader({
-  isAuthenticated,
-  dashboardPrewarmIntent,
-}: {
-  isAuthenticated: boolean;
-  dashboardPrewarmIntent: LinkIntent;
-}) {
-  return (
-    <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
-      <Link href="/" aria-label="FormBro home">
-        <Logo />
-      </Link>
-      <nav className="hidden items-center gap-6 font-mono text-xs tracking-wider text-muted-foreground uppercase md:flex">
-        <Link href="#builder" className="hover:text-foreground">
-          Builder
-        </Link>
-        <Link href="#workflow" className="hover:text-foreground">
-          Workflow
-        </Link>
-        <Link href="#pricing" className="hover:text-foreground">
-          Pricing
-        </Link>
-      </nav>
-      {isAuthenticated ? (
-        <Button asChild variant="outline">
-          <Link {...dashboardPrewarmIntent}>Dashboard</Link>
-        </Button>
-      ) : (
-        <div className="flex items-center gap-2">
-          <Button asChild variant="link" className="hidden sm:inline-flex">
-            <Link href="/sign-in">Sign in</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/sign-up">Start trial</Link>
-          </Button>
-        </div>
-      )}
-    </header>
+      <WorkflowSection />
+      <PositioningSection />
+      <IntegrationsSection />
+      <PricingSection isAuthenticated={isAuthenticated} />
+    </LandingPage>
   );
 }
 
@@ -670,7 +609,7 @@ function HeroSection({
 }) {
   return (
     <section className="relative mx-auto w-full max-w-7xl px-5 pt-10 pb-16 sm:px-8 lg:pt-16">
-      <div className="absolute inset-x-0 top-0 -z-10 h-[560px] border-b bg-muted/30" />
+      <div className="absolute inset-x-0 top-0 -z-10 h-140 border-b bg-muted/30" />
 
       <div className="max-w-4xl">
         <Badge status="neutral" className="mb-5 rounded-none">
@@ -726,7 +665,7 @@ function PrimaryCta({
   ) : (
     <Button asChild size="lg">
       <Link href="/sign-up">
-        Start free trial <RiArrowRightLine className="size-4" />
+        Start for free <RiArrowRightLine className="size-4" />
       </Link>
     </Button>
   );
@@ -948,7 +887,7 @@ function BuilderDemoWorkbench({
       className={
         viewMode === "fullscreen"
           ? "grid h-full min-h-0 overflow-hidden rounded-xl border bg-background shadow-2xl lg:grid-cols-[1.05fr_0.95fr]"
-          : "grid overflow-hidden rounded-lg border bg-background lg:h-[640px] lg:max-h-[76vh] lg:min-h-[520px] lg:grid-cols-[1.05fr_0.95fr]"
+          : "grid overflow-hidden rounded-lg border bg-background lg:h-160 lg:max-h-[76vh] lg:min-h-130 lg:grid-cols-[1.05fr_0.95fr]"
       }
     >
       <div className="flex min-h-0 flex-col border-b bg-muted/40 lg:border-r lg:border-b-0">
@@ -1233,41 +1172,70 @@ function PricingSection({ isAuthenticated }: { isAuthenticated: boolean }) {
           </h2>
         </div>
         <p className="max-w-md leading-7 text-muted-foreground">
-          No seat math. No quote request. Start with a trial and prove the workflow before you buy.
+          No seat math. No quote request. Start free, then upgrade when the workflow earns it.
         </p>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {PLANS.map((plan) => (
-          <PlanCard key={plan.name} plan={plan} />
-        ))}
-      </div>
-
-      <div className="mt-8 rounded-2xl border bg-primary p-6 text-primary-foreground sm:flex sm:items-center sm:justify-between sm:p-8">
-        <div>
-          <div className="font-mono text-xs tracking-wider text-primary-foreground/60 uppercase">
-            Launch access
-          </div>
-          <h2 className="mt-2 font-display text-3xl font-bold tracking-tight">
-            Try the builder, then make the real thing.
-          </h2>
+      <div className="space-y-4">
+        <FreePlanCard isAuthenticated={isAuthenticated} plan={HOBBY_PLAN} />
+        <div className="grid gap-4 lg:grid-cols-2">
+          {PAID_PLANS.map((plan) => (
+            <PlanCard key={plan.name} plan={plan} />
+          ))}
         </div>
-        <Button
-          asChild
-          size="lg"
-          className="mt-6 bg-background text-foreground hover:bg-background/90 sm:mt-0"
-        >
-          <Link href={isAuthenticated ? "/dashboard" : "/sign-up"}>
-            {isAuthenticated ? "Open dashboard" : "Start free trial"}
-            <RiArrowRightLine className="size-4" />
-          </Link>
-        </Button>
       </div>
     </section>
   );
 }
 
-function PlanCard({ plan }: { plan: (typeof PLANS)[number] }) {
+function FreePlanCard({ isAuthenticated, plan }: { isAuthenticated: boolean; plan: PlanDetails }) {
+  return (
+    <article className="relative overflow-hidden rounded-2xl border-2 border-brand bg-card">
+      <div className="pointer-events-none absolute inset-0 bg-linear-to-br from-brand/12 via-transparent to-brand-secondary/10" />
+      <div className="relative grid gap-10 p-6 sm:p-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(16rem,0.85fr)] lg:items-end lg:p-10">
+        <div>
+          <h3 className="mt-5 max-w-xl font-display text-4xl font-bold tracking-tight text-balance text-brand sm:text-5xl">
+            Get started for free with unlimited forms.
+          </h3>
+          <p className="mt-4 max-w-xl text-lg leading-8 text-muted-foreground">
+            {plan.description} Publish and collect without a paywall, then move to Basic or Pro when
+            the workflow needs more room.
+          </p>
+          <Button asChild size="lg" className="mt-8">
+            <Link href={isAuthenticated ? "/dashboard" : "/sign-up"}>
+              {isAuthenticated ? "Open dashboard" : "Start for free"}
+              <RiArrowRightLine className="size-4" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-px overflow-hidden border bg-border">
+          <div className="col-span-2 bg-card p-5">
+            <div className="font-mono text-[0.65rem] tracking-wider text-muted-foreground uppercase">
+              Price
+            </div>
+            <div className="mt-2 font-display text-5xl font-bold tracking-tight">
+              {formatUsd(plan.monthlyPriceUsd)}
+            </div>
+            <div className="mt-1 font-mono text-xs tracking-wider text-muted-foreground uppercase">
+              / month
+            </div>
+          </div>
+          {plan.features.slice(0, 4).map((feature) => (
+            <div key={feature} className="bg-card p-5">
+              <div className="flex items-start gap-2 text-sm leading-6">
+                <RiCheckboxCircleLine className="mt-0.5 size-4 shrink-0 text-brand" />
+                {feature}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PlanCard({ plan }: { plan: PlanDetails }) {
   return (
     <article className="rounded-2xl border bg-card p-6 sm:p-8">
       <div className="flex items-start justify-between gap-4">
@@ -1276,7 +1244,9 @@ function PlanCard({ plan }: { plan: (typeof PLANS)[number] }) {
           <p className="mt-2 text-muted-foreground">{plan.description}</p>
         </div>
         <div className="text-right">
-          <div className="font-display text-4xl font-bold tracking-tight">{plan.price}</div>
+          <div className="font-display text-4xl font-bold tracking-tight">
+            {formatUsd(plan.monthlyPriceUsd)}
+          </div>
           <div className="font-mono text-xs tracking-wider text-muted-foreground uppercase">
             / month
           </div>
@@ -1291,41 +1261,5 @@ function PlanCard({ plan }: { plan: (typeof PLANS)[number] }) {
         ))}
       </div>
     </article>
-  );
-}
-
-function LandingFooter() {
-  const { isDark, toggle } = useToggleTheme();
-
-  return (
-    <footer className="border-t bg-muted/30">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-5 py-8 sm:px-8 md:flex-row md:items-center md:justify-between">
-        <div>
-          <Logo className="text-xl" />
-          <p className="mt-2 text-sm text-muted-foreground">
-            © {COPYRIGHT_YEAR} Clutchd, LLC. {TAGLINE}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="outline" size="dense">
-            <Link href="https://github.com/clutchd/formbro" target="_blank" rel="noreferrer">
-              <RiGithubFill className="size-4" />
-              GitHub
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="dense"
-            onClick={toggle}
-            aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
-          >
-            <ThemeIcon />
-            {isDark ? "Light mode" : "Dark mode"}
-          </Button>
-        </div>
-      </div>
-    </footer>
   );
 }

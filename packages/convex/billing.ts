@@ -19,10 +19,10 @@ import {
   getStripePriceIdForPlan,
   getWorkspacePlanLabel,
   hasActiveWorkspaceSubscriptionStatus,
+  hasWorkspacePlanAccess,
   normalizeWorkspacePlan,
   resolvePlanFromStripePriceId,
   WORKSPACE_LIMITS,
-  WORKSPACE_TRIAL_DAYS,
   workspacePlanValidator,
 } from "./billingUtils";
 import { defineErrors } from "./errors";
@@ -102,6 +102,10 @@ export async function getWorkspaceSubscriptionState(
     hasActiveWorkspaceSubscriptionStatus(subscription?.status) ||
     hasActiveWorkspaceSubscriptionStatus(workspace.billingStatus) ||
     plan === "unlimited";
+  const hasPlanAccess = hasWorkspacePlanAccess({
+    plan,
+    billingStatus: workspace.billingStatus,
+  });
   const canDelete = canDeleteWorkspace({
     subscriptionStatus: subscription?.status,
     subscriptionCancelAtPeriodEnd: subscription?.cancelAtPeriodEnd,
@@ -116,6 +120,7 @@ export async function getWorkspaceSubscriptionState(
     plan,
     planLabel: getWorkspacePlanLabel(plan),
     hasActiveSubscription,
+    hasPlanAccess,
     canDelete,
     limits,
   });
@@ -167,7 +172,7 @@ export async function requireWorkspaceSubscription(
   const subscriptionState = await getWorkspaceSubscriptionState(ctx, workspaceId);
   if (!subscriptionState.ok) return fail({ data: null, error: subscriptionState.error });
 
-  if (!subscriptionState.data.hasActiveSubscription) {
+  if (!subscriptionState.data.hasPlanAccess) {
     return fail({ data: null, error: ERRORS.ACTIVE_SUBSCRIPTION_REQUIRED });
   }
 
@@ -384,8 +389,6 @@ export const createSubscriptionCheckout = action({
       return fail({ data: undefined, error: ERRORS.STRIPE_PRICE_NOT_CONFIGURED });
     }
 
-    const shouldStartTrial = !existingSubscription && !workspace.data.stripeSubscriptionId;
-
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       mode: "subscription",
       customer: stripeCustomerId,
@@ -405,7 +408,6 @@ export const createSubscriptionCheckout = action({
           interval: args.interval,
           slug: workspace.data.slug,
         },
-        ...(shouldStartTrial ? { trial_period_days: WORKSPACE_TRIAL_DAYS } : {}),
       },
     };
 

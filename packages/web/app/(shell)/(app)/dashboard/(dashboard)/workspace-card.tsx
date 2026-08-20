@@ -2,10 +2,7 @@
 
 import type { FunctionReturnType } from "convex/server";
 import { api } from "@formbro/convex/_generated/api";
-import {
-  getWorkspacePlanLabel,
-  hasActiveWorkspaceSubscriptionStatus,
-} from "@formbro/convex/billingUtils";
+import { getWorkspacePlanLabel, hasWorkspacePlanAccess } from "@formbro/convex/billingUtils";
 import { twx } from "@formbro/shared/twx";
 import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
@@ -114,7 +111,7 @@ function WorkspaceFormPreview({
 export function WorkspaceCard({ workspace }: { workspace: Workspace }) {
   const settingsPrewarm = useWorkspaceSettingsPrewarmIntent(workspace.slug);
   const workspacePrewarm = useWorkspacePrewarmIntent(workspace.slug);
-  const needsSubscription = !hasActiveWorkspaceSubscriptionStatus(workspace);
+  const needsSubscription = !hasWorkspacePlanAccess(workspace);
   const href = needsSubscription
     ? `/dashboard/${workspace.slug}/settings`
     : `/dashboard/${workspace.slug}`;

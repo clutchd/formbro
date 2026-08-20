@@ -6,7 +6,7 @@ import { useFieldContext } from "../hooks/tanstack-context";
 export const icon = RiHashtag;
 export const color = "bg-blue-100 text-blue-600";
 
-export const component = function NumberComponent({ schema, ariaInvalid }: IFieldProps) {
+export const component = function NumberComponent({ schema, ...ariaAttributes }: IFieldProps) {
   const field = useFieldContext<number | "">();
 
   return (
@@ -19,7 +19,7 @@ export const component = function NumberComponent({ schema, ariaInvalid }: IFiel
       value={field.state.value ?? ""}
       onChange={(e) => field.handleChange(e.target.value ? Number(e.target.value) : "")}
       onBlur={field.handleBlur}
-      aria-invalid={ariaInvalid}
+      {...ariaAttributes}
     />
   );
 };

@@ -1,3 +1,4 @@
+import type { FormInput } from "@formbro/core/schema/form";
 import {
   createDefaultFormSchema,
   FormSchema,
@@ -7,13 +8,14 @@ import {
 import { nano } from "@formbro/shared/nanoid";
 import { fail, ok } from "@formbro/shared/result";
 import { v } from "convex/values";
-import type { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 import { mutation, query, type MutationCtx } from "./_generated/server";
 import { getFormAccess, getWorkspaceAccess } from "./access";
 import { requireWorkspaceSubscription } from "./billing";
 import { getWorkspaceFormsUsed, isWorkspaceLimitReached } from "./billingUtils";
 import { defineErrors } from "./errors";
-import { _delete as _deleteSubmission } from "./submissions";
+import { _delete as _deleteSubmission, _createFromSlug } from "./submissions";
+import { CREATE_FORM } from "./system/forms/create_form";
 
 export const ERRORS = defineErrors({
   ACTIVE_FORM_LIMIT: {
@@ -38,54 +40,190 @@ export const ERRORS = defineErrors({
   },
 });
 
+export type FormStatus = "draft" | "open" | "closed";
+
+const TEMPLATE_ID = /^[a-z][a-z0-9_]*$/;
+
+export async function _createForm({
+  ctx,
+  workspaceId,
+  slug,
+  schema,
+  createdBy,
+  status = "draft",
+  sourceTemplateId,
+  sourceTemplateVersion,
+}: {
+  ctx: MutationCtx;
+  workspaceId: Id<"workspaces">;
+  slug: string;
+  schema: FormInput;
+  createdBy?: Id<"workspaceMembers">;
+  status?: FormStatus;
+  sourceTemplateId?: string;
+  sourceTemplateVersion?: number;
+}) {
+  const formId = await ctx.db.insert("forms", {
+    name: schema.name,
+    slug,
+    workspaceId,
+    status,
+    ...(sourceTemplateId ? { sourceTemplateId } : {}),
+    ...(sourceTemplateVersion !== undefined ? { sourceTemplateVersion } : {}),
+  });
+
+  const draftSchemaId = await ctx.db.insert("formSchemas", {
+    formId,
+    schema: JsonSerialize(schema),
+    status: "draft",
+    ...(createdBy ? { createdBy } : {}),
+  });
+
+  await ctx.db.patch(formId, { draftSchemaId });
+
+  return {
+    formId,
+    draftSchemaId,
+    schema,
+    slug,
+    status,
+  };
+}
+
+export async function _publishForm({
+  ctx,
+  form,
+  schema,
+  serialized,
+  createdBy,
+  status,
+}: {
+  ctx: MutationCtx;
+  form: Doc<"forms">;
+  schema: FormInput;
+  serialized: string;
+  createdBy?: Id<"workspaceMembers">;
+  status?: FormStatus;
+}) {
+  const publishedTime = Date.now();
+  const nextStatus = status ?? (form.status === "draft" ? "open" : form.status);
+
+  const publishedSchemaId = await ctx.db.insert("formSchemas", {
+    formId: form._id,
+    schema: serialized,
+    status: "published",
+    publishedTime,
+    ...(createdBy ? { createdBy } : {}),
+  });
+
+  await ctx.db.patch(form._id, {
+    name: schema.name,
+    publishedSchemaId,
+    status: nextStatus,
+  });
+
+  return {
+    schema,
+    publishedSchemaId,
+    publishedTime,
+    status: nextStatus,
+  };
+}
+
+async function reserveFormCreate(ctx: MutationCtx, workspaceId: Id<"workspaces">) {
+  const access = await getWorkspaceAccess(ctx, workspaceId);
+  if (!access.ok) return fail({ data: null, error: access.error });
+
+  const subscriptionState = await requireWorkspaceSubscription(ctx, workspaceId);
+  if (!subscriptionState.ok) return fail({ data: null, error: subscriptionState.error });
+
+  if (
+    await isWorkspaceLimitReached(subscriptionState.data.limits.forms, (limit) =>
+      getWorkspaceFormsUsed(ctx, workspaceId, limit),
+    )
+  ) {
+    return fail({ data: null, error: ERRORS.ACTIVE_FORM_LIMIT });
+  }
+
+  let slug = nano();
+  while (
+    await ctx.db
+      .query("forms")
+      .withIndex("by_slug", (q) => q.eq("slug", slug))
+      .unique()
+  ) {
+    slug = nano();
+  }
+
+  return ok({
+    createdBy: access.data.membership._id,
+    slug,
+  });
+}
+
 export const create = mutation({
   args: {
     workspaceId: v.id("workspaces"),
     name: v.string(),
+    source: v.optional(
+      v.object({
+        templateId: v.string(),
+        templateVersion: v.number(),
+        schema: v.any(),
+      }),
+    ),
   },
   handler: async (ctx, args) => {
-    const access = await getWorkspaceAccess(ctx, args.workspaceId);
-    if (!access.ok) return fail({ data: null, error: access.error });
+    const reserved = await reserveFormCreate(ctx, args.workspaceId);
+    if (!reserved.ok) return reserved;
 
-    const subscriptionState = await requireWorkspaceSubscription(ctx, args.workspaceId);
-    if (!subscriptionState.ok) return fail({ data: null, error: subscriptionState.error });
+    let schema;
+    let sourceTemplateId: string | undefined;
+    let sourceTemplateVersion: number | undefined;
 
-    if (
-      await isWorkspaceLimitReached(subscriptionState.data.limits.forms, (limit) =>
-        getWorkspaceFormsUsed(ctx, args.workspaceId, limit),
-      )
-    ) {
-      return fail({ data: null, error: ERRORS.ACTIVE_FORM_LIMIT });
+    if (args.source) {
+      if (
+        !TEMPLATE_ID.test(args.source.templateId) ||
+        !Number.isInteger(args.source.templateVersion) ||
+        args.source.templateVersion < 1
+      ) {
+        return fail({ data: null, error: ERRORS.SCHEMA_INVALID });
+      }
+
+      try {
+        schema = FormSchema.parse({
+          ...args.source.schema,
+          id: reserved.data.slug,
+          name: args.name.trim() || args.source.schema.name,
+        });
+      } catch {
+        return fail({ data: null, error: ERRORS.SCHEMA_INVALID });
+      }
+
+      sourceTemplateId = args.source.templateId;
+      sourceTemplateVersion = args.source.templateVersion;
+    } else {
+      schema = createDefaultFormSchema({ id: reserved.data.slug, name: args.name });
     }
 
-    let slug = nano();
-    while (
-      await ctx.db
-        .query("forms")
-        .withIndex("by_slug", (q) => q.eq("slug", slug))
-        .unique()
-    ) {
-      slug = nano();
-    }
+    const [_created, _published] = await Promise.all([
+      _createForm({
+        ctx,
+        workspaceId: args.workspaceId,
+        slug: reserved.data.slug,
+        schema,
+        createdBy: reserved.data.createdBy,
+        sourceTemplateId,
+        sourceTemplateVersion,
+      }),
 
-    const formId = await ctx.db.insert("forms", {
-      status: "draft",
-      slug,
-      workspaceId: args.workspaceId,
-      name: args.name,
-    });
+      _createFromSlug(ctx, {
+        slug: CREATE_FORM.slug,
+        data: { name: args.name },
+      }),
+    ]);
 
-    const schema = createDefaultFormSchema({ id: slug, name: args.name });
-    const draftSchemaId = await ctx.db.insert("formSchemas", {
-      formId,
-      schema: JsonSerialize(schema),
-      status: "draft",
-      createdBy: access.data.membership._id,
-    });
-
-    await ctx.db.patch(formId, { draftSchemaId });
-
-    return ok({ slug });
+    return ok({ slug: reserved.data.slug });
   },
 });
 
@@ -101,6 +239,20 @@ export const get = query({
       return fail({ data: null, error: ERRORS.FORM_NOT_FOUND });
     }
     return ok(form);
+  },
+});
+
+export const countByTemplate = query({
+  args: { templateId: v.string() },
+  handler: async (ctx, args) => {
+    if (!TEMPLATE_ID.test(args.templateId)) return 0;
+
+    const forms = await ctx.db
+      .query("forms")
+      .withIndex("by_source_template", (q) => q.eq("sourceTemplateId", args.templateId))
+      .collect();
+
+    return forms.length;
   },
 });
 
@@ -227,34 +379,25 @@ export const publish = mutation({
     try {
       const schema = JsonParse(draftSchema.schema);
       const serialized = JsonSerialize(schema);
-      const now = Date.now();
 
       if (draftSchema.schema !== serialized) {
         await ctx.db.patch(draftSchema._id, { schema: serialized });
       }
 
-      const publishedSchemaId = await ctx.db.insert("formSchemas", {
-        formId: form._id,
-        schema: serialized,
-        status: "published",
+      const published = await _publishForm({
+        ctx,
+        form,
+        schema,
+        serialized,
         createdBy: access.membership._id,
-        publishedTime: now,
-      });
-      const status = form.status === "draft" ? "open" : form.status;
-
-      await ctx.db.patch(form._id, {
-        draftSchemaId: draftSchema._id,
-        name: schema.name,
-        publishedSchemaId,
-        status,
       });
 
       return ok({
-        schema,
+        schema: published.schema,
         draftSchemaId: draftSchema._id,
-        publishedSchemaId,
-        status,
-        publishedTime: now,
+        publishedSchemaId: published.publishedSchemaId,
+        status: published.status,
+        publishedTime: published.publishedTime,
         hasUnpublishedChanges: false,
       });
     } catch {

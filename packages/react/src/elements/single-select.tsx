@@ -6,7 +6,10 @@ import { useFieldContext } from "../hooks/tanstack-context";
 export const icon = RiListCheck;
 export const color = "bg-emerald-100 text-emerald-600";
 
-export const component = function SingleSelectComponent({ schema, ariaInvalid }: IFieldProps) {
+export const component = function SingleSelectComponent({
+  schema,
+  ...ariaAttributes
+}: IFieldProps) {
   const field = useFieldContext<string>();
   const options =
     Array.isArray(schema.options) && schema.options.length > 0
@@ -24,9 +27,9 @@ export const component = function SingleSelectComponent({ schema, ariaInvalid }:
     <Select value={selectedValue} onValueChange={(value) => field.handleChange(value)}>
       <SelectTrigger
         id={schema.id}
-        aria-invalid={ariaInvalid}
         className="w-full"
         onBlur={field.handleBlur}
+        {...ariaAttributes}
       >
         <SelectValue placeholder={schema.placeholder ?? "Select an option"} />
       </SelectTrigger>

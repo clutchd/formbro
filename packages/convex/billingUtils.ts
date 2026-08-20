@@ -20,7 +20,7 @@ const BILLING_STATUSES = [
   "unpaid",
   "paused",
 ] as const;
-type BillingStatus = (typeof BILLING_STATUSES)[number];
+type _BillingStatus = (typeof BILLING_STATUSES)[number];
 
 type BillingInterval = "monthly" | "annual";
 
@@ -29,29 +29,40 @@ type BillingUsagePeriod = {
   end: number;
 };
 
-export const PLANS = ["basic", "pro"] as const;
+export const PLANS = ["hobby", "basic", "pro"] as const;
 export type Plan = (typeof PLANS)[number];
-type WorkspacePlan = "free" | Plan | "unlimited";
+export type WorkspacePlan = "hobby" | Plan | "unlimited";
 
 const WORKSPACE_PLAN_LABELS: Record<WorkspacePlan, string> = {
-  free: "Unpaid",
+  hobby: "Hobby",
   basic: "Basic",
   pro: "Pro",
   unlimited: "Unlimited",
 };
 
 const WORKSPACE_PLAN_DESCRIPTIONS: Record<Plan, string> = {
-  basic: "Everything you need to run your forms.",
-  pro: "Higher limits for growing teams and workflows.",
+  hobby: "Everything you need to get started.",
+  basic: "Everything you need to run your form system.",
+  pro: "Higher limits for growing teams and mission critical workflows.",
 };
 
 const WORKSPACE_PLAN_MONTHLY_PRICE_USD: Record<Plan, number> = {
-  basic: 10,
-  pro: 25,
+  hobby: 0,
+  basic: 29,
+  pro: 99,
 };
 
-const WORKSPACE_PLAN_YEARLY_PRICE_USD_MULTIPLIER = 10;
+export const WORKSPACE_PLAN_YEARLY_PRICE_USD_MULTIPLIER = 6;
+const WORKSPACE_PLAN_YEAR_MONTHS = 12;
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+export function getAnnualBillingMonths() {
+  return {
+    paid: WORKSPACE_PLAN_YEARLY_PRICE_USD_MULTIPLIER,
+    free: WORKSPACE_PLAN_YEAR_MONTHS - WORKSPACE_PLAN_YEARLY_PRICE_USD_MULTIPLIER,
+    total: WORKSPACE_PLAN_YEAR_MONTHS,
+  };
+}
 
 export const WORKSPACE_LIMITS: Record<
   WorkspacePlan,
@@ -62,23 +73,23 @@ export const WORKSPACE_LIMITS: Record<
     storageBytes: number | null;
   }
 > = {
-  free: {
-    members: 1,
-    forms: 0,
-    monthlySubmissions: 0,
-    storageBytes: 0,
+  hobby: {
+    members: null,
+    forms: null,
+    monthlySubmissions: 5000,
+    storageBytes: 10 * GIGABYTE,
   },
   basic: {
     members: null,
-    forms: 10,
-    monthlySubmissions: 1000,
+    forms: null,
+    monthlySubmissions: 100000,
     storageBytes: 100 * GIGABYTE,
   },
   pro: {
     members: null,
-    forms: 100,
-    monthlySubmissions: 10000,
-    storageBytes: 1024 * GIGABYTE,
+    forms: null,
+    monthlySubmissions: null,
+    storageBytes: 500 * GIGABYTE,
   },
   unlimited: {
     members: null,
@@ -90,13 +101,13 @@ export const WORKSPACE_LIMITS: Record<
 
 export function normalizeWorkspacePlan(plan?: WorkspacePlan): WorkspacePlan {
   switch (plan) {
-    case "free":
+    case "hobby":
     case "unlimited":
     case "basic":
     case "pro":
       return plan;
     default:
-      return "free";
+      return "hobby";
   }
 }
 
@@ -118,6 +129,7 @@ export function getPlanFeatures(plan: Plan): readonly string[] {
   const limits = WORKSPACE_LIMITS[plan];
 
   return [
+    plan === "hobby" ? "1 workspace" : "Unlimited workspaces",
     formatLimitFeature(limits.members, "seat", "seats"),
     formatLimitFeature(limits.forms, "form", "forms"),
     formatLimitFeature(limits.monthlySubmissions, "submission", "submissions", " / month"),
@@ -184,7 +196,17 @@ export function resolvePlanFromStripePriceId(stripePriceId: string | undefined |
   return null;
 }
 
-export function getWorkspaceBillingStatusColor(billingStatus?: string) {
+export function getWorkspaceBillingStatusColor(input: {
+  billingStatus?: string;
+  plan?: WorkspacePlan;
+}) {
+  const plan = normalizeWorkspacePlan(input.plan);
+  const billingStatus = input.billingStatus;
+
+  if (plan === "hobby" && (billingStatus === "not_subscribed" || billingStatus == null)) {
+    return "success";
+  }
+
   switch (billingStatus) {
     case "active":
     case "trialing":
@@ -200,17 +222,67 @@ export function getWorkspacePlanLabel(plan?: WorkspacePlan) {
   return WORKSPACE_PLAN_LABELS[normalizeWorkspacePlan(plan)];
 }
 
-export function hasActiveWorkspaceSubscriptionStatus(
-  status: string | undefined | null | { plan?: WorkspacePlan; billingStatus?: string },
-): boolean {
-  if (typeof status === "object") {
-    return (
-      hasActiveWorkspaceSubscriptionStatus(status?.billingStatus) ||
-      normalizeWorkspacePlan(status?.plan) === "unlimited"
-    );
+export function getWorkspaceBillingStatusLabel(input: {
+  billingStatus?: string;
+  plan?: WorkspacePlan;
+}) {
+  const plan = normalizeWorkspacePlan(input.plan);
+  if (
+    plan === "hobby" &&
+    (input.billingStatus === "not_subscribed" || input.billingStatus == null)
+  ) {
+    return "Free";
   }
 
+  return input.billingStatus ?? "Unknown";
+}
+
+export function hasActiveWorkspaceSubscriptionStatus(status: string | undefined | null): boolean {
   return status === "active" || status === "trialing" || status === "past_due";
+}
+
+export function hasWorkspacePlanAccess(input: {
+  plan?: WorkspacePlan;
+  billingStatus?: string | null;
+}): boolean {
+  const plan = normalizeWorkspacePlan(input.plan);
+
+  switch (plan) {
+    case "hobby":
+    case "unlimited":
+      return true;
+    case "basic":
+    case "pro":
+      return hasActiveWorkspaceSubscriptionStatus(input.billingStatus);
+    default: {
+      const _exhaustive: never = plan;
+      return _exhaustive;
+    }
+  }
+}
+
+export function canCreateOwnedWorkspace(
+  ownedWorkspaces: ReadonlyArray<{
+    plan?: WorkspacePlan;
+    billingStatus?: string | null;
+  }>,
+): boolean {
+  return ownedWorkspaces.every((workspace) => {
+    const plan = normalizeWorkspacePlan(workspace.plan);
+    switch (plan) {
+      case "hobby":
+        return false;
+      case "unlimited":
+        return true;
+      case "basic":
+      case "pro":
+        return hasActiveWorkspaceSubscriptionStatus(workspace.billingStatus);
+      default: {
+        const _exhaustive: never = plan;
+        return _exhaustive;
+      }
+    }
+  });
 }
 
 export function canDeleteWorkspace(input: {

@@ -1,7 +1,6 @@
 "use client";
 
 import type { Doc } from "@formbro/convex/_generated/dataModel";
-import type { Metadata } from "next";
 import { APP_URL } from "@formbro/shared/brand";
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";

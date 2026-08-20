@@ -1,37 +1,20 @@
 ---
-description: git commit
-model: opencode/kimi-k2.5
-subtask: true
+description: create atomic commits and push them
+model: openai/gpt-5.6-luna-fast
 ---
 
-commit and push
+Commit and push the staged changes. Invoking this command authorizes both operations.
 
-make sure it includes a prefix like
-- `feat:` or `feat(scope):` for new features
-- `fix:` or `fix(scope):` for bug fixes
-- `docs:` or `docs(scope):` for documentation changes
-- `chore:` or `chore(scope):` for maintenance tasks
-- `refactor:` or `refactor(scope):` for code refactoring
-- `test:` or `test(scope):` for adding or updating tests
+Follow the shared commit policy below. It is the canonical policy for every agent:
 
-Where `scope` is the package name (e.g., `web`, `convex`, `core`).
+@.agents/skills/commit/SKILL.md
 
-prefer to explain WHY something was done from an end user perspective instead of
-WHAT was done.
+Additional instructions: $ARGUMENTS
 
-do not do generic messages like "improved agent experience" be very specific
-about what user facing changes were made
-
-if there are conflicts DO NOT FIX THEM. notify me and I will fix them
-
-## GIT DIFF
-
-!`git diff`
-
-## GIT DIFF --cached
+## Staged diff
 
 !`git diff --cached`
 
-## GIT STATUS --short
+## Worktree status
 
 !`git status --short`

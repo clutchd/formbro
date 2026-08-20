@@ -9,7 +9,7 @@ import {
   type UpdateContactOptions,
   type UpdateContactResponse,
 } from "resend";
-import { action } from "./_generated/server";
+import { internalAction } from "./_generated/server";
 import { defineErrors, FormBroError } from "./errors";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -76,7 +76,7 @@ async function syncToAudience(
   return ok();
 }
 
-export const add = action({
+export const add = internalAction({
   args: {
     email: v.string(),
     name: v.optional(v.string()),
@@ -90,7 +90,7 @@ export const add = action({
   },
 });
 
-export const update = action({
+export const update = internalAction({
   args: {
     email: v.string(),
     name: v.optional(v.string()),

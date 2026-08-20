@@ -1,10 +1,9 @@
-import { APP_URL } from "@formbro/shared/brand";
 import { nano } from "@formbro/shared/nanoid";
 import { fail, ok } from "@formbro/shared/result";
 import { hasString, normalizeEmail } from "@formbro/shared/util";
 import { v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import {
   internalMutation,
   mutation,
@@ -25,7 +24,9 @@ import {
 } from "./billingUtils";
 import { defineErrors } from "./errors";
 import { _deleteForm, ERRORS as FORM_ERRORS } from "./forms";
-import { datetimeFormatter } from "./lib";
+import { _createFromSlug as _createFromSlugSubmission } from "./submissions";
+import { CREATE_WORKSPACE } from "./system/forms/create_workspace";
+import { INVITE_MEMBER } from "./system/forms/invite_member";
 
 export const ERRORS = defineErrors({
   DELETE_WORKSPACE_PERMISSION_DENIED: {
@@ -37,7 +38,7 @@ export const ERRORS = defineErrors({
     status: "NOT_FOUND",
   },
   UNPAID_WORKSPACE_LIMIT: {
-    message: "Unpaid workspace limit reached.",
+    message: "You can only own one Hobby workspace. Upgrade it to create another.",
     status: "FORBIDDEN",
   },
   DELETE_WORKSPACE_ACTIVE_SUBSCRIPTION: {
@@ -95,10 +96,6 @@ function buildCanonicalPath(input: { workspaceSlug: string; formSlug?: string })
 
 function buildWorkspaceInviteToken() {
   return `${nano()}${nano()}${nano()}`;
-}
-
-function buildWorkspaceInviteUrl(token: string) {
-  return `${APP_URL}/invite/${encodeURIComponent(token)}`;
 }
 
 function isPendingInvite(
@@ -278,12 +275,13 @@ export async function _createWorkspace({
     counter++;
   }
 
+  const resolvedPlan = plan ?? "hobby";
   const workspaceId = await ctx.db.insert("workspaces", {
     name,
     slug,
     ownerAuthId: owner.authId,
-    plan,
-    billingStatus: plan === "unlimited" ? "active" : "not_subscribed",
+    plan: resolvedPlan,
+    billingStatus: resolvedPlan === "unlimited" ? "active" : "not_subscribed",
   });
 
   await _addWorkspaceMember({
@@ -354,8 +352,11 @@ export const create = mutation({
       .withIndex("by_owner", (q) => q.eq("ownerAuthId", identity.data.subject))
       .collect();
 
-    for (const workspace of ownedWorkspaces) {
-      const subscriptionState = await getWorkspaceSubscriptionState(ctx, workspace._id);
+    const ownedSubscriptionStates = await Promise.all(
+      ownedWorkspaces.map((workspace) => getWorkspaceSubscriptionState(ctx, workspace._id)),
+    );
+
+    for (const subscriptionState of ownedSubscriptionStates) {
       if (!subscriptionState.ok) {
         return fail({ data: undefined, error: subscriptionState.error });
       }
@@ -365,8 +366,8 @@ export const create = mutation({
       }
     }
 
-    return ok(
-      await _createWorkspace({
+    const [created, _published] = await Promise.all([
+      _createWorkspace({
         ctx,
         name: args.name,
         owner: {
@@ -376,7 +377,13 @@ export const create = mutation({
           avatarUrl: profile.image,
         },
       }),
-    );
+      _createFromSlugSubmission(ctx, {
+        slug: CREATE_WORKSPACE.slug,
+        data: { name: args.name },
+      }),
+    ]);
+
+    return ok(created);
   },
 });
 
@@ -571,7 +578,7 @@ export const inviteMember = mutation({
 
     const token = buildWorkspaceInviteToken();
     const expiresTime = now + WORKSPACE_INVITE_TTL_MS;
-    const inviteId = await ctx.db.insert("workspaceInvites", {
+    const inviteId: Id<"workspaceInvites"> = await ctx.db.insert("workspaceInvites", {
       workspaceId: args.workspaceId,
       email,
       token,
@@ -580,16 +587,22 @@ export const inviteMember = mutation({
       expiresTime,
     });
 
-    await ctx.scheduler.runAfter(0, api.emails.transactional, {
-      email: {
-        template: "workspaceInvite",
-        to: email,
-        workspaceName: workspaceAccess.data.workspace.name,
-        inviterName: workspaceAccess.data.user.name,
-        acceptUrl: buildWorkspaceInviteUrl(token),
-        expiresTime,
-      },
-    });
+    await Promise.all([
+      ctx.scheduler.runAfter(0, internal.emails.transactional, {
+        email: {
+          template: "workspaceInvite",
+          to: email,
+          workspaceName: workspaceAccess.data.workspace.name,
+          inviterName: workspaceAccess.data.user.name,
+          token,
+          expiresTime,
+        },
+      }),
+      _createFromSlugSubmission(ctx, {
+        slug: INVITE_MEMBER.slug,
+        data: { email },
+      }),
+    ]);
 
     return ok({
       _id: inviteId,
@@ -783,6 +796,7 @@ export const billing = query({
         storageBytes: storageUsedBytes,
       },
       hasActiveSubscription: subscriptionState.data.hasActiveSubscription,
+      hasPlanAccess: subscriptionState.data.hasPlanAccess,
       canManageBilling: userWithAccess.data.membership.role === "owner",
       canDelete: subscriptionState.data.canDelete,
     });
