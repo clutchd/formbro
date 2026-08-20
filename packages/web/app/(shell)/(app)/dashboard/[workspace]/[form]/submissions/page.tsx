@@ -28,6 +28,7 @@ import {
   RiFileDownloadLine,
   RiFilterLine,
   RiInboxLine,
+  RiArrowRightUpLine,
 } from "@remixicon/react";
 import {
   flexRender,
@@ -40,15 +41,23 @@ import {
   type ColumnDef,
   type ColumnFiltersState,
   type ColumnSizingState,
+  type Row as TanStackRow,
   type RowSelectionState,
   type SortingState,
   type VisibilityState,
 } from "@tanstack/react-table";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { type CSSProperties, type Dispatch, type SetStateAction, useMemo, useState } from "react";
 import { Loading } from "@/components/loading";
 import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
-import { useFormSubmissionsData } from "./_data-provider";
+import { useRequiredWorkspaceFormData } from "../_data-provider";
+import {
+  FormSubmissionsDataProvider,
+  useFormSubmissionsData,
+  useSubmissionPrewarmIntent,
+} from "./_data-provider";
 
 type SubmissionsResult = FunctionReturnType<typeof api.submissions.list>;
 type SubmissionsData = NonNullable<Extract<SubmissionsResult, { ok: true }>["data"]>;
@@ -263,13 +272,19 @@ function ColumnHeader({
 }
 
 function SubmissionsTable({
+  basePath,
   data,
+  formId,
   rowSelection,
   setRowSelection,
+  workspaceSlug,
 }: {
+  basePath: string;
   data: SubmissionsData;
+  formId: SubmissionsData["form"]["_id"];
   rowSelection: RowSelectionState;
   setRowSelection: Dispatch<SetStateAction<RowSelectionState>>;
+  workspaceSlug: string;
 }) {
   const [sorting, setSorting] = useState<SortingState>([{ id: submittedAtColumnId, desc: true }]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -313,9 +328,14 @@ function SubmissionsTable({
           <ColumnHeader column={column} title="Submitted" subtitle="Timestamp" />
         ),
         cell: ({ row }) => (
-          <span className="font-medium whitespace-nowrap">
+          <Link
+            href={`${basePath}/${row.original.id}`}
+            prefetch={false}
+            className="inline-flex items-center gap-1.5 font-medium whitespace-nowrap underline-offset-4 hover:underline"
+          >
             {formatTableDate(row.original.submittedTime)}
-          </span>
+            <RiArrowRightUpLine className="size-3 text-muted-foreground" />
+          </Link>
         ),
       },
       ...data.columns.map((submissionColumn): ColumnDef<SubmissionRow> => {
@@ -338,7 +358,7 @@ function SubmissionsTable({
         };
       }),
     ],
-    [data.columns],
+    [basePath, data.columns],
   );
 
   const columnLabels = useMemo(
@@ -494,20 +514,13 @@ function SubmissionsTable({
           <TableBody>
             {visibleRows.length > 0 ? (
               visibleRows.map((row) => (
-                <TableRow key={row.id} className="group">
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      style={getColumnSizeStyle(cell.column.getSize())}
-                      className={twx(
-                        "h-9 border-r border-b px-2 py-1.5 align-top text-xs whitespace-normal group-hover:bg-muted/30",
-                        getStickyCellClass(cell.column.id),
-                      )}
-                    >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <SubmissionTableRow
+                  key={row.id}
+                  formId={formId}
+                  formSlug={data.form.slug}
+                  row={row}
+                  workspaceSlug={workspaceSlug}
+                />
               ))
             ) : (
               <TableRow>
@@ -591,8 +604,54 @@ function SubmissionsTable({
   );
 }
 
-export default function FormSubmissionsPage() {
+function SubmissionTableRow({
+  formId,
+  formSlug,
+  row,
+  workspaceSlug,
+}: {
+  formId: SubmissionsData["form"]["_id"];
+  formSlug: string;
+  row: TanStackRow<SubmissionRow>;
+  workspaceSlug: string;
+}) {
+  const router = useRouter();
+  const {
+    href,
+    prefetch: _prefetch,
+    ...prewarm
+  } = useSubmissionPrewarmIntent(workspaceSlug, formSlug, formId, row.original.id);
+
+  return (
+    <TableRow
+      {...prewarm}
+      className="group cursor-pointer"
+      onClick={(event) => {
+        const target = event.target as HTMLElement;
+        if (target.closest("a, button, input, select, textarea")) return;
+        if (window.getSelection()?.toString()) return;
+        router.push(href);
+      }}
+    >
+      {row.getVisibleCells().map((cell) => (
+        <TableCell
+          key={cell.id}
+          style={getColumnSizeStyle(cell.column.getSize())}
+          className={twx(
+            "h-9 border-r border-b px-2 py-1.5 align-top text-xs whitespace-normal group-hover:bg-muted/30",
+            getStickyCellClass(cell.column.id),
+          )}
+        >
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </TableCell>
+      ))}
+    </TableRow>
+  );
+}
+
+function FormSubmissionsPageContent() {
   const { submissions } = useFormSubmissionsData();
+  const { form, workspace } = useRequiredWorkspaceFormData();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   if (submissions === undefined) {
@@ -613,6 +672,7 @@ export default function FormSubmissionsPage() {
   const selectedRows = data.rows.filter((row) => rowSelection[row.id]);
   const rowsForDownload = selectedRows.length > 0 ? selectedRows : data.rows;
   const downloadBaseName = getDownloadBaseName(data.form.slug);
+  const submissionsPath = `/dashboard/${workspace.slug}/${form.slug}/submissions`;
   const downloadCsv = () => {
     downloadBlob(
       new Blob([makeCsv(data, rowsForDownload)], { type: "text/csv;charset=utf-8" }),
@@ -657,11 +717,22 @@ export default function FormSubmissionsPage() {
         </Empty>
       ) : (
         <SubmissionsTable
+          basePath={submissionsPath}
           data={data}
+          formId={form._id}
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
+          workspaceSlug={workspace.slug}
         />
       )}
     </Page>
+  );
+}
+
+export default function FormSubmissionsPage() {
+  return (
+    <FormSubmissionsDataProvider>
+      <FormSubmissionsPageContent />
+    </FormSubmissionsDataProvider>
   );
 }

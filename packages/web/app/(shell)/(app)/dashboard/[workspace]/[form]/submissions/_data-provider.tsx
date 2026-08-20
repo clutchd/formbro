@@ -1,11 +1,16 @@
 "use client";
 
+import type { Id } from "@formbro/convex/_generated/dataModel";
 import type { FunctionReturnType } from "convex/server";
 import type { ReactNode } from "react";
 import { api } from "@formbro/convex/_generated/api";
 import { useConvex, useQuery } from "convex/react";
 import { useMemo } from "react";
-import { type RoutePrewarmOptions, useRoutePrewarm } from "@/lib/convex/route-prewarm";
+import {
+  prewarmRoute,
+  type RoutePrewarmOptions,
+  useRoutePrewarm,
+} from "@/lib/convex/route-prewarm";
 import { createSegmentData } from "@/lib/data-segment";
 import { useRequiredWorkspaceFormData } from "../_data-provider";
 import { prewarmFormSubmissionsRoute } from "./_prewarm";
@@ -23,6 +28,29 @@ export function useFormSubmissionsPrewarmIntent(
   return useRoutePrewarm(
     `/dashboard/${workspaceSlug}/${formSlug}/submissions`,
     () => prewarmFormSubmissionsRoute(convex, workspaceSlug, formSlug),
+    options,
+  );
+}
+
+export function useSubmissionPrewarmIntent(
+  workspaceSlug: string,
+  formSlug: string,
+  formId: Id<"forms">,
+  submissionId: string,
+  options: RoutePrewarmOptions = {},
+) {
+  const convex = useConvex();
+  const href = `/dashboard/${workspaceSlug}/${formSlug}/submissions/${submissionId}`;
+
+  return useRoutePrewarm(
+    href,
+    () =>
+      prewarmRoute(convex, [
+        {
+          query: api.submissions.get,
+          args: { formId, submissionId },
+        },
+      ]),
     options,
   );
 }

@@ -2,7 +2,7 @@ import type { TemplateDefinition } from "../types";
 
 export const template: TemplateDefinition = {
   id: "volunteer_registration",
-  version: 1,
+  version: 2,
   description: "Collect contact details, skills, and availability for volunteer shifts.",
   category: "registration",
   tags: ["nonprofit", "volunteers"],
@@ -48,6 +48,13 @@ export const template: TemplateDefinition = {
             value: true,
           },
         ],
+      },
+      {
+        id: "volunteer_phone",
+        name: "Phone",
+        type: "phone",
+        label: "Phone",
+        placeholder: "+1 555 123 4567",
       },
       {
         id: "skills",

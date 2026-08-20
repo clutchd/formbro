@@ -13,7 +13,7 @@ const RegistryEditorPreviewSchema = z.object({
     "divider",
     "page_break",
   ]),
-  inputType: z.enum(["email", "number", "text", "url"]).optional(),
+  inputType: z.enum(["date", "email", "number", "tel", "text", "url"]).optional(),
   placeholder: z.string().optional(),
   align: z.enum(["center", "start"]).optional(),
   spacing: z.enum(["compact", "normal"]).optional(),

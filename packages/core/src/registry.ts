@@ -148,6 +148,33 @@ function fields<const TFields extends readonly [FormRegistryField, ...FormRegist
   return fields;
 }
 
+const date = field({
+  key: "date",
+  display: "Date",
+  description: "Date input for start dates, event days, and establishment dates",
+  editor: {
+    defaults: {
+      label: "Date",
+    },
+    preview: {
+      control: "input",
+      inputType: "date",
+    },
+    properties: [
+      { key: "label", label: "Question", control: "text", placeholder: "Question" },
+      {
+        key: "description",
+        label: "Helper text",
+        control: "text",
+        placeholder: "Optional helper text",
+      },
+      { key: "required", label: "Required", control: "rule", section: "validation" },
+    ],
+  },
+  rules: ["required"],
+  schema: z.iso.date(),
+});
+
 const email = field({
   key: "email",
   display: "Email",
@@ -319,6 +346,41 @@ const number = field({
   schema: z.union([z.number(), z.literal("")]),
 });
 
+const phone = field({
+  key: "phone",
+  display: "Phone",
+  description: "Telephone input for local and international phone numbers",
+  editor: {
+    defaults: {
+      label: "Phone",
+      placeholder: "+1 555 123 4567",
+    },
+    preview: {
+      control: "input",
+      inputType: "tel",
+      placeholder: "+1 555 123 4567",
+    },
+    properties: [
+      { key: "label", label: "Question", control: "text", placeholder: "Question" },
+      {
+        key: "description",
+        label: "Helper text",
+        control: "text",
+        placeholder: "Optional helper text",
+      },
+      {
+        key: "placeholder",
+        label: "Placeholder",
+        control: "text",
+        placeholder: "Input placeholder",
+      },
+      { key: "required", label: "Required", control: "rule", section: "validation" },
+    ],
+  },
+  rules: ["required"],
+  schema: z.string().trim(),
+});
+
 const short_text = field({
   key: "short_text",
   display: "Short Text",
@@ -486,10 +548,12 @@ const checkbox_group = field({
 
 export const ElementRegistry = elements([description, divider, heading, page_break]);
 export const FieldRegistry = fields([
+  date,
   email,
   link,
   long_text,
   number,
+  phone,
   short_text,
   single_select,
   radio_group,

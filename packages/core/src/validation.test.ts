@@ -148,6 +148,58 @@ describe("validateFormSubmission", () => {
     });
   });
 
+  it("validates date fields as ISO calendar dates", () => {
+    const dateForm = compile({
+      id: "date_validation",
+      name: "Date validation",
+      elements: [
+        {
+          id: "start_date",
+          name: "Start date",
+          type: "date",
+          label: "Start date",
+          rules: [{ type: "required", value: true, event: "onSubmit" }],
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(dateForm, { start_date: "2026-08-19" })).toEqual({
+      success: true,
+    });
+    expect(validateFormSubmission(dateForm, { start_date: "2026-02-29" })).toEqual({
+      issues: [{ fieldId: "start_date", message: "Invalid ISO date" }],
+      success: false,
+    });
+    expect(validateFormSubmission(dateForm, { start_date: "August 19, 2026" })).toEqual({
+      issues: [{ fieldId: "start_date", message: "Invalid ISO date" }],
+      success: false,
+    });
+  });
+
+  it("accepts broad phone formats but rejects whitespace-only required values", () => {
+    const phoneForm = compile({
+      id: "phone_validation",
+      name: "Phone validation",
+      elements: [
+        {
+          id: "phone",
+          name: "Phone",
+          type: "phone",
+          label: "Phone",
+          rules: [{ type: "required", value: true, event: "onSubmit" }],
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(phoneForm, { phone: "+44 (0)20 7946 0958 ext. 2" })).toEqual({
+      success: true,
+    });
+    expect(validateFormSubmission(phoneForm, { phone: "   " })).toEqual({
+      issues: [{ fieldId: "phone", message: "Phone is required" }],
+      success: false,
+    });
+  });
+
   it("enforces checkbox group array values without validation rules", () => {
     const checkboxForm = compile({
       id: "optional_checkbox_validation",

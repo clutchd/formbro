@@ -2,7 +2,7 @@ import type { TemplateDefinition } from "../types";
 
 export const template: TemplateDefinition = {
   id: "vendor_registration",
-  version: 1,
+  version: 2,
   description: "Register a vendor with company contact, services, and payment details.",
   category: "registration",
   categories: ["registration", "event-registration"],
@@ -67,9 +67,9 @@ export const template: TemplateDefinition = {
       {
         id: "phone",
         name: "Phone",
-        type: "short_text",
+        type: "phone",
         label: "Phone",
-        placeholder: "555-0100",
+        placeholder: "+1 555 123 4567",
       },
       {
         id: "website",

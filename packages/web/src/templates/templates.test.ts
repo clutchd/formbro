@@ -11,6 +11,8 @@ import {
   TEMPLATE_CATEGORIES,
   templateCategoryLabel,
   templateCategoryPath,
+  templatePageDescription,
+  templatePageTitle,
   templatePath,
 } from "./index";
 
@@ -67,6 +69,20 @@ describe("templates catalog", () => {
     expect(listTemplates({ query: "zzzz-missing" })).toEqual([]);
   });
 
+  it("includes a phone field in every registration and vendor template", () => {
+    const contactTemplates = TEMPLATE_DEFINITIONS.filter(
+      (definition) => definition.category === "registration" || definition.tags.includes("vendors"),
+    );
+
+    expect(contactTemplates).toHaveLength(10);
+    for (const definition of contactTemplates) {
+      expect(
+        definition.schema.elements.some((element) => element.type === "phone"),
+        `${definition.id} should include a phone field`,
+      ).toBe(true);
+    }
+  });
+
   it("instantiates a template onto a new form id", () => {
     const schema = instantiateTemplate("vendor_registration", {
       formId: "abc123xyz0",
@@ -107,5 +123,22 @@ describe("templates catalog", () => {
     expect(templateCategoryPath("event-registration")).toBe(
       "/templates/category/event-registration",
     );
+  });
+
+  it("builds intent-matched page titles and descriptions for every template", () => {
+    expect(templatePageTitle("Contact")).toBe("Contact form template");
+    expect(templatePageTitle("Job Application")).toBe("Job application form template");
+    expect(templatePageTitle("Event Registration")).toBe("Event registration form template");
+    expect(templatePageTitle("IT Request")).toBe("IT request form template");
+
+    for (const template of listTemplates()) {
+      const title = templatePageTitle(template.name);
+      const description = templatePageDescription(template);
+
+      expect(title).toEndWith(" form template");
+      expect(description.toLocaleLowerCase()).toContain(title.toLocaleLowerCase());
+      expect(description).toContain(template.description);
+      expect(description.length).toBeLessThanOrEqual(160);
+    }
   });
 });
