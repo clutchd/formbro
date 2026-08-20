@@ -1,0 +1,87 @@
+import type { TemplateDefinition } from "../types";
+
+export const template: TemplateDefinition = {
+  id: "event_inquiry",
+  version: 1,
+  description: "Collect an event type, timing, guest count, and the details needed to reply.",
+  category: "inquiry",
+  categories: ["inquiry", "event-registration"],
+  tags: ["events", "venues", "facilities", "questions"],
+  schema: {
+    id: "event_inquiry",
+    name: "Event Inquiry",
+    elements: [
+      {
+        id: "event_inquiry_heading",
+        name: "Plan an event",
+        type: "heading",
+        label: "Plan an event",
+        level: 1,
+      },
+      {
+        id: "event_inquiry_intro",
+        name: "Plan an event intro",
+        type: "description",
+        label: "Share the shape of the event and we will follow up with availability and options.",
+      },
+      {
+        id: "contact_name",
+        name: "Contact name",
+        type: "short_text",
+        label: "Contact name",
+        placeholder: "Taylor Morgan",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "contact_email",
+        name: "Email",
+        type: "email",
+        label: "Email",
+        placeholder: "you@example.com",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "organization",
+        name: "Organization",
+        type: "short_text",
+        label: "Organization",
+        placeholder: "Acme Operations",
+      },
+      {
+        id: "event_type",
+        name: "Event type",
+        type: "single_select",
+        label: "Event type",
+        placeholder: "Select a type",
+        options: ["Meeting", "Workshop", "Conference", "Celebration", "Other"],
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "guest_count",
+        name: "Estimated guest count",
+        type: "number",
+        label: "Estimated guest count",
+        placeholder: "75",
+      },
+      {
+        id: "event_timing",
+        name: "Preferred date or timeframe",
+        type: "short_text",
+        label: "Preferred date or timeframe",
+        placeholder: "A weekday in early October",
+      },
+      {
+        id: "event_details",
+        name: "What do you need?",
+        type: "long_text",
+        label: "What do you need?",
+        placeholder: "Venue, setup, catering, accessibility, or other questions.",
+        rules: [{ type: "required", value: true }],
+      },
+    ],
+    submit: {
+      label: "Send inquiry",
+      size: "full-width",
+    },
+  },
+};

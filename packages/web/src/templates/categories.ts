@@ -79,17 +79,18 @@ export const TEMPLATE_CATEGORY_PAGES: Record<TemplateCategory, TemplateCategoryP
     heading: "Order Forms",
     metaTitle: "Order form templates",
     metaDescription:
-      "Order and purchase form templates for quotes, quantities, and internal buy requests. Preview the FormBro schema, then rebuild it in your workspace.",
+      "Order form templates for products, wholesale, supplies, catering, quotes, and internal purchases. Preview the FormBro schema, then make it your own.",
     intro:
-      "Order forms collect what someone wants, how many, and why — enough for a quote or a purchase request without a payment field yet.",
+      "Order forms collect what someone wants, how many, where it goes, and who needs to approve it — from a product order to catering and supplies.",
     about: {
       heading: "About order forms",
-      body: "An order form is a structured buy or quote request. FormBro does not take payments in the schema today, so these templates capture item, quantity, estimate, and reason. Add payment in the builder when that field ships.",
+      body: "An order form is a structured buy or quote request. These templates use the fields FormBro supports today to capture the buyer, item, quantity, timing, estimate, and fulfillment notes.",
     },
     useCases: [
       "Internal purchase requests",
       "Quote requests with scope and budget",
-      "Quantity and vendor notes before finance approves",
+      "Product and wholesale orders",
+      "Supply and catering coordination",
     ],
   },
   request: {
@@ -136,14 +137,19 @@ export const TEMPLATE_CATEGORY_PAGES: Record<TemplateCategory, TemplateCategoryP
     heading: "Inquiry Forms",
     metaTitle: "Inquiry and contact form templates",
     metaDescription:
-      "Contact and partnership inquiry form templates. A short FormBro schema for name, email, and the ask.",
+      "Inquiry form templates for contact, sales, products, partnerships, admissions, and events. Start with a focused FormBro schema for the first conversation.",
     intro:
-      "Inquiry forms are the shortest path from a website to a reply: who they are and what they want.",
+      "Inquiry forms are the shortest path from interest to a useful reply, with just enough context to reach the right person.",
     about: {
       heading: "About inquiry forms",
-      body: "Keep inquiry forms small. Name, email, and a message is enough for contact. Add company and website when the ask is a partnership.",
+      body: "Keep inquiry forms focused. Name, email, and the question are the base; add only the context needed to route a sales, product, admissions, partnership, or event conversation.",
     },
-    useCases: ["Website contact", "Partnership and vendor outreach"],
+    useCases: [
+      "Website contact and product questions",
+      "Sales and partnership outreach",
+      "Admissions and program questions",
+      "Venue and event planning",
+    ],
   },
   feedback: {
     slug: "feedback",

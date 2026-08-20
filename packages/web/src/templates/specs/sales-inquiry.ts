@@ -1,0 +1,80 @@
+import type { TemplateDefinition } from "../types";
+
+export const template: TemplateDefinition = {
+  id: "sales_inquiry",
+  version: 1,
+  description: "Qualify a sales conversation with company, team size, interest, and question.",
+  category: "inquiry",
+  categories: ["inquiry", "intake"],
+  tags: ["sales", "leads", "customers"],
+  schema: {
+    id: "sales_inquiry",
+    name: "Sales Inquiry",
+    elements: [
+      {
+        id: "sales_inquiry_heading",
+        name: "Talk to sales",
+        type: "heading",
+        label: "Talk to sales",
+        level: 1,
+      },
+      {
+        id: "sales_inquiry_intro",
+        name: "Talk to sales intro",
+        type: "description",
+        label: "Tell us what you are evaluating and we will route the right person.",
+      },
+      {
+        id: "contact_name",
+        name: "Name",
+        type: "short_text",
+        label: "Name",
+        placeholder: "Taylor Morgan",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "work_email",
+        name: "Work email",
+        type: "email",
+        label: "Work email",
+        placeholder: "you@company.com",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "company",
+        name: "Company",
+        type: "short_text",
+        label: "Company",
+        placeholder: "Acme Operations",
+      },
+      {
+        id: "team_size",
+        name: "Team size",
+        type: "single_select",
+        label: "Team size",
+        placeholder: "Select a range",
+        options: ["1–10", "11–50", "51–200", "201+"],
+      },
+      {
+        id: "interest",
+        name: "What are you evaluating?",
+        type: "single_select",
+        label: "What are you evaluating?",
+        placeholder: "Select an area",
+        options: ["Forms", "Workflow automation", "Self-hosting", "Enterprise rollout"],
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "question",
+        name: "How can we help?",
+        type: "long_text",
+        label: "How can we help?",
+        placeholder: "Share the workflow, timeline, or decision you are working through.",
+      },
+    ],
+    submit: {
+      label: "Contact sales",
+      size: "full-width",
+    },
+  },
+};

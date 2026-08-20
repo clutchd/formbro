@@ -6,17 +6,21 @@ import { TEMPLATE_DEFINITIONS } from "./catalog";
 import {
   getTemplate,
   getTemplateCategoryPage,
+  getTemplateIndustryPage,
   instantiateTemplate,
   listTemplates,
   TEMPLATE_CATEGORIES,
+  TEMPLATE_INDUSTRIES,
   templateCategoryLabel,
   templateCategoryPath,
+  templateIndustryLabel,
+  templateIndustryPath,
   templatePath,
 } from "./index";
 
 describe("templates catalog", () => {
   it("loads every template as a valid FormBro form", () => {
-    expect(TEMPLATE_DEFINITIONS).toHaveLength(24);
+    expect(TEMPLATE_DEFINITIONS).toHaveLength(32);
 
     const ids = new Set<string>();
     for (const definition of TEMPLATE_DEFINITIONS) {
@@ -100,6 +104,35 @@ describe("templates catalog", () => {
     const orderPages = listTemplates({ category: "order-form" });
     expect(orderPages.map((card) => card.id)).toContain("purchase_request");
     expect(orderPages.every((card) => card.categories.includes("order-form"))).toBe(true);
+  });
+
+  it("keeps focused intent pages deep enough to browse", () => {
+    for (const category of ["order-form", "inquiry"] as const) {
+      const templates = listTemplates({ category });
+      expect(templates.length).toBeGreaterThanOrEqual(6);
+      expect(templates.length).toBeLessThanOrEqual(8);
+    }
+  });
+
+  it("reuses canonical templates across industry pages", () => {
+    for (const industry of TEMPLATE_INDUSTRIES) {
+      const page = getTemplateIndustryPage(industry);
+      expect(page).toBeDefined();
+      if (!page) continue;
+
+      expect(page.slug).toBe(industry);
+      expect(templateIndustryLabel(industry)).toBe(page.label);
+      expect(templateIndustryPath(industry)).toBe(`/templates/industry/${industry}`);
+
+      const templates = listTemplates({ industry });
+      expect(templates.length).toBeGreaterThanOrEqual(6);
+      expect(templates.length).toBeLessThanOrEqual(8);
+      expect(new Set(page.templateIds).size).toBe(page.templateIds.length);
+      expect(templates.map((template) => template.id).sort()).toEqual(
+        page.templateIds.slice().sort(),
+      );
+      expect(templates.every((template) => getTemplate(template.id)?.schema)).toBe(true);
+    }
   });
 
   it("builds public template slugs", () => {

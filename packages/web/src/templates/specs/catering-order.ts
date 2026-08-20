@@ -1,0 +1,88 @@
+import type { TemplateDefinition } from "../types";
+
+export const template: TemplateDefinition = {
+  id: "catering_order",
+  version: 1,
+  description: "Plan catering with the event, guest count, service style, and dietary needs.",
+  category: "order-form",
+  categories: ["order-form", "event-registration"],
+  tags: ["catering", "events", "facilities", "orders"],
+  schema: {
+    id: "catering_order",
+    name: "Catering Order",
+    elements: [
+      {
+        id: "catering_order_heading",
+        name: "Catering order",
+        type: "heading",
+        label: "Catering order",
+        level: 1,
+      },
+      {
+        id: "catering_order_intro",
+        name: "Catering order intro",
+        type: "description",
+        label: "Share the headcount and service needs. We will confirm the menu and price.",
+      },
+      {
+        id: "organizer_name",
+        name: "Organizer name",
+        type: "short_text",
+        label: "Organizer name",
+        placeholder: "Taylor Morgan",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "organizer_email",
+        name: "Organizer email",
+        type: "email",
+        label: "Organizer email",
+        placeholder: "you@example.com",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "event_name",
+        name: "Event name",
+        type: "short_text",
+        label: "Event name",
+        placeholder: "Quarterly planning day",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "event_timing",
+        name: "Event date and time",
+        type: "short_text",
+        label: "Event date and time",
+        placeholder: "October 8, lunch at noon",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "guest_count",
+        name: "Guest count",
+        type: "number",
+        label: "Guest count",
+        placeholder: "40",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "service_style",
+        name: "Service style",
+        type: "single_select",
+        label: "Service style",
+        placeholder: "Select a style",
+        options: ["Drop-off", "Buffet", "Boxed meals", "Full service"],
+      },
+      {
+        id: "dietary_needs",
+        name: "Dietary and service notes",
+        type: "long_text",
+        label: "Dietary and service notes",
+        placeholder: "Dietary restrictions, beverages, setup, or cleanup.",
+      },
+    ],
+    submit: {
+      label: "Request catering",
+      size: "full-width",
+    },
+  },
+};

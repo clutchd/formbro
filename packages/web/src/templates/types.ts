@@ -13,6 +13,17 @@ export const TEMPLATE_CATEGORIES = [
 
 export type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number];
 
+export const TEMPLATE_INDUSTRIES = [
+  "hr",
+  "vendors",
+  "facilities",
+  "it",
+  "education",
+  "events",
+] as const;
+
+export type TemplateIndustry = (typeof TEMPLATE_INDUSTRIES)[number];
+
 export type TemplateDefinition = {
   id: string;
   version: number;
@@ -43,5 +54,6 @@ export type FormTemplate = TemplateCard & {
 
 export type ListTemplatesFilter = {
   category?: TemplateCategory | "all";
+  industry?: TemplateIndustry;
   query?: string;
 };

@@ -6,19 +6,24 @@ import type {
   TemplateCard,
   TemplateCategory,
   TemplateDefinition,
+  TemplateIndustry,
 } from "./types";
 import { TEMPLATE_DEFINITIONS } from "./catalog";
-import { TEMPLATE_CATEGORIES } from "./types";
+import { TEMPLATE_INDUSTRY_PAGES } from "./industries";
+import { TEMPLATE_CATEGORIES, TEMPLATE_INDUSTRIES } from "./types";
 
 export { TEMPLATE_CATEGORY_PAGES, getTemplateCategoryPage } from "./categories";
 export type { TemplateCategoryPage } from "./categories";
-export { TEMPLATE_CATEGORIES } from "./types";
+export { TEMPLATE_INDUSTRY_PAGES, getTemplateIndustryPage } from "./industries";
+export type { TemplateIndustryPage } from "./industries";
+export { TEMPLATE_CATEGORIES, TEMPLATE_INDUSTRIES } from "./types";
 export type {
   FormTemplate,
   ListTemplatesFilter,
   TemplateCard,
   TemplateCategory,
   TemplateDefinition,
+  TemplateIndustry,
 } from "./types";
 
 function loadTemplate(definition: TemplateDefinition): FormTemplate {
@@ -75,6 +80,10 @@ export function templateCategoryLabel(category: TemplateCategory): string {
   }
 }
 
+export function templateIndustryLabel(industry: TemplateIndustry): string {
+  return TEMPLATE_INDUSTRY_PAGES[industry].label;
+}
+
 function toCard(template: FormTemplate): TemplateCard {
   return {
     id: template.id,
@@ -91,7 +100,7 @@ function toCard(template: FormTemplate): TemplateCard {
 }
 
 function matchesQuery(template: FormTemplate, query: string) {
-  const haystack = [template.name, template.description, template.category, ...template.tags]
+  const haystack = [template.name, template.description, ...template.categories, ...template.tags]
     .join(" ")
     .toLowerCase();
   return haystack.includes(query);
@@ -99,10 +108,14 @@ function matchesQuery(template: FormTemplate, query: string) {
 
 export function listTemplates(filter: ListTemplatesFilter = {}): TemplateCard[] {
   const category = filter.category ?? "all";
+  const industryIds = filter.industry
+    ? new Set(TEMPLATE_INDUSTRY_PAGES[filter.industry].templateIds)
+    : undefined;
   const query = filter.query?.trim().toLowerCase();
 
   return TEMPLATES.filter((template) => {
     if (category !== "all" && !template.categories.includes(category)) return false;
+    if (industryIds && !industryIds.has(template.id)) return false;
     if (query && !matchesQuery(template, query)) return false;
     return true;
   })
@@ -134,8 +147,16 @@ export function templateCategoryPath(category: TemplateCategory) {
   return `/templates/category/${category}`;
 }
 
+export function templateIndustryPath(industry: TemplateIndustry) {
+  return `/templates/industry/${industry}`;
+}
+
 export function isTemplateCategory(value: string): value is TemplateCategory {
   return (TEMPLATE_CATEGORIES as readonly string[]).includes(value);
+}
+
+export function isTemplateIndustry(value: string): value is TemplateIndustry {
+  return (TEMPLATE_INDUSTRIES as readonly string[]).includes(value);
 }
 
 export function instantiateTemplate(

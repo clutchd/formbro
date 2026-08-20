@@ -9,11 +9,15 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
   TEMPLATE_CATEGORIES,
+  TEMPLATE_INDUSTRIES,
   templateCategoryLabel,
   templateCategoryPath,
+  templateIndustryLabel,
+  templateIndustryPath,
   templatePath,
   type TemplateCard,
   type TemplateCategory,
+  type TemplateIndustry,
 } from "@/templates";
 
 function chipClassName(active: boolean) {
@@ -29,14 +33,16 @@ export function TemplatesGallery({
   templates,
   heading,
   intro,
-  activeCategory = "all",
+  activeCategory,
+  activeIndustry,
   about,
   useCases,
 }: {
   templates: TemplateCard[];
   heading: string;
   intro: string;
-  activeCategory?: TemplateCategory | "all";
+  activeCategory?: TemplateCategory;
+  activeIndustry?: TemplateIndustry;
   about?: { heading: string; body: string };
   useCases?: string[];
 }) {
@@ -46,7 +52,7 @@ export function TemplatesGallery({
     const normalized = query.trim().toLowerCase();
     if (!normalized) return templates;
     return templates.filter((template) =>
-      [template.name, template.description, template.category, ...template.tags]
+      [template.name, template.description, ...template.categories, ...template.tags]
         .join(" ")
         .toLowerCase()
         .includes(normalized),
@@ -65,7 +71,7 @@ export function TemplatesGallery({
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">{intro}</p>
       </div>
 
-      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-start">
         <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
@@ -73,20 +79,39 @@ export function TemplatesGallery({
           aria-label="Search templates"
           className="sm:max-w-xs"
         />
-        <nav aria-label="Template categories" className="flex flex-wrap gap-1.5">
-          <Link href="/templates" className={chipClassName(activeCategory === "all")}>
-            All
-          </Link>
-          {TEMPLATE_CATEGORIES.map((item) => (
-            <Link
-              key={item}
-              href={templateCategoryPath(item)}
-              className={chipClassName(activeCategory === item)}
-            >
-              {templateCategoryLabel(item)}
-            </Link>
-          ))}
-        </nav>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={twx(tuiFont, "mr-1 text-muted-foreground")}>Workflow</span>
+            <nav aria-label="Template categories" className="flex flex-wrap gap-1.5">
+              <Link href="/templates" className={chipClassName(!activeCategory && !activeIndustry)}>
+                All
+              </Link>
+              {TEMPLATE_CATEGORIES.map((item) => (
+                <Link
+                  key={item}
+                  href={templateCategoryPath(item)}
+                  className={chipClassName(activeCategory === item)}
+                >
+                  {templateCategoryLabel(item)}
+                </Link>
+              ))}
+            </nav>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className={twx(tuiFont, "mr-1 text-muted-foreground")}>Industry</span>
+            <nav aria-label="Template industries" className="flex flex-wrap gap-1.5">
+              {TEMPLATE_INDUSTRIES.map((item) => (
+                <Link
+                  key={item}
+                  href={templateIndustryPath(item)}
+                  className={chipClassName(activeIndustry === item)}
+                >
+                  {templateIndustryLabel(item)}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </div>
       </div>
 
       <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">

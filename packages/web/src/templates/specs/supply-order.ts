@@ -1,0 +1,80 @@
+import type { TemplateDefinition } from "../types";
+
+export const template: TemplateDefinition = {
+  id: "supply_order",
+  version: 1,
+  description: "Order office or facility supplies with department, quantity, and cost center.",
+  category: "order-form",
+  categories: ["order-form", "request"],
+  tags: ["supplies", "facilities", "procurement", "internal"],
+  schema: {
+    id: "supply_order",
+    name: "Supply Order",
+    elements: [
+      {
+        id: "supply_order_heading",
+        name: "Order supplies",
+        type: "heading",
+        label: "Order supplies",
+        level: 1,
+      },
+      {
+        id: "supply_order_intro",
+        name: "Order supplies intro",
+        type: "description",
+        label: "Give purchasing enough detail to source and route the supplies.",
+      },
+      {
+        id: "requester_name",
+        name: "Requester name",
+        type: "short_text",
+        label: "Requester name",
+        placeholder: "Taylor Morgan",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "department",
+        name: "Department or site",
+        type: "short_text",
+        label: "Department or site",
+        placeholder: "Warehouse 2",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "supply_type",
+        name: "Supply type",
+        type: "single_select",
+        label: "Supply type",
+        placeholder: "Select a type",
+        options: ["Office", "Cleaning", "Safety", "Shipping", "Other"],
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "items",
+        name: "Items needed",
+        type: "long_text",
+        label: "Items needed",
+        placeholder: "List items, sizes, and quantities.",
+        rules: [{ type: "required", value: true }],
+      },
+      {
+        id: "cost_center",
+        name: "Cost center",
+        type: "short_text",
+        label: "Cost center",
+        placeholder: "Optional",
+      },
+      {
+        id: "needed_by",
+        name: "Needed by",
+        type: "short_text",
+        label: "Needed by",
+        placeholder: "Friday or within two weeks",
+      },
+    ],
+    submit: {
+      label: "Submit order",
+      size: "full-width",
+    },
+  },
+};
