@@ -2,7 +2,6 @@ import { z } from "zod";
 import type { CompiledField } from "../compile";
 import type { FieldRegistryKey } from "../registry";
 import type { ExtractFormData } from "./extract";
-// import type { TanStackForm } from "@/forms/hooks/tanstack";
 import { ElementSchema } from "./element";
 import { FieldSchema } from "./field";
 import { IdSchema } from "./id";
@@ -105,39 +104,44 @@ export type FormActionResult<TData = undefined, TError = unknown> =
       error?: TError;
     };
 
-export type FormAction<T extends FormInput = FormInput, TData = undefined> = ({
-  values,
-  //tanstack,
-}: {
+/** Lets a renderer expose its form API without coupling core to that renderer. */
+export type FormActionContext<T extends FormInput = FormInput, TFormApi = unknown> = {
   values: FormValues<T>;
-  //tanstack?: TanStackForm;
-}) => FormActionResult<TData> | Promise<FormActionResult<TData>>;
+  tanstack: TFormApi;
+};
 
-export type FormOnMutate<T extends FormInput = FormInput> = ({
-  values,
-  //tanstack,
-}: {
-  values: FormValues<T>;
-  //tanstack?: TanStackForm;
-}) => FormValues<T>;
+export type FormAction<T extends FormInput = FormInput, TData = undefined, TFormApi = unknown> = (
+  context: FormActionContext<T, TFormApi>,
+) => FormActionResult<TData> | Promise<FormActionResult<TData>>;
 
-export type FormOnSuccess<T extends FormInput = FormInput, TData = undefined> = ({
-  result,
-  data,
-  //tanstack,
-}: {
+export type FormOnMutate<T extends FormInput = FormInput, TFormApi = unknown> = (
+  context: FormActionContext<T, TFormApi>,
+) => FormValues<T>;
+
+export type FormOnSuccessContext<
+  T extends FormInput = FormInput,
+  TData = undefined,
+  TFormApi = unknown,
+> = {
   result: FormValues<T>;
   data: TData;
-  //tanstack?: TanStackForm;
-}) => void;
+  tanstack: TFormApi;
+};
 
-export type FormOnError<T extends FormInput = FormInput> = ({
-  error,
-  //tanstack,
-}: {
+export type FormOnSuccess<
+  T extends FormInput = FormInput,
+  TData = undefined,
+  TFormApi = unknown,
+> = (context: FormOnSuccessContext<T, TData, TFormApi>) => void;
+
+export type FormOnErrorContext<TFormApi = unknown> = {
   error: unknown;
-  //tanstack?: TanStackForm;
-}) => void;
+  tanstack: TFormApi;
+};
+
+export type FormOnError<_T extends FormInput = FormInput, TFormApi = unknown> = (
+  context: FormOnErrorContext<TFormApi>,
+) => void;
 
 export type FormFieldAriaAttributes = {
   "aria-describedby"?: string;
