@@ -54,9 +54,6 @@ export default defineSchema({
     draftSchemaId: v.optional(v.id("formSchemas")),
     publishedSchemaId: v.optional(v.id("formSchemas")),
     status: v.union(v.literal("draft"), v.literal("open"), v.literal("closed")),
-    sourceKind: v.optional(
-      v.union(v.literal("blank"), v.literal("template"), v.literal("duplicate")),
-    ),
     sourceTemplateId: v.optional(v.string()),
     sourceTemplateVersion: v.optional(v.number()),
   })

@@ -33,6 +33,17 @@ export function TemplatePreview({ schema }: { schema: FormInput }) {
   return <Form schema={schema} preview />;
 }
 
+export function TemplateCreatedCount({ templateId }: { templateId: string }) {
+  const count = useQuery(api.forms.countByTemplate, { templateId });
+  if (!count) return null;
+  return (
+    <>
+      {" · "}
+      Used {count} {count === 1 ? "time" : "times"}
+    </>
+  );
+}
+
 type TemplateUseCtaProps = {
   templateId: string;
   templateVersion: number;

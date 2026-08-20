@@ -18,7 +18,6 @@ export function formCreateFromTemplateArgs({
     workspaceId,
     name,
     source: {
-      kind: "template" as const,
       templateId,
       templateVersion,
       schema,

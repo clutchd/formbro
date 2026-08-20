@@ -51,7 +51,6 @@ export async function _createForm({
   schema,
   createdBy,
   status = "draft",
-  sourceKind,
   sourceTemplateId,
   sourceTemplateVersion,
 }: {
@@ -61,7 +60,6 @@ export async function _createForm({
   schema: FormInput;
   createdBy?: Id<"workspaceMembers">;
   status?: FormStatus;
-  sourceKind?: "blank" | "template" | "duplicate";
   sourceTemplateId?: string;
   sourceTemplateVersion?: number;
 }) {
@@ -70,7 +68,6 @@ export async function _createForm({
     slug,
     workspaceId,
     status,
-    ...(sourceKind ? { sourceKind } : {}),
     ...(sourceTemplateId ? { sourceTemplateId } : {}),
     ...(sourceTemplateVersion !== undefined ? { sourceTemplateVersion } : {}),
   });
@@ -170,7 +167,6 @@ export const create = mutation({
     name: v.string(),
     source: v.optional(
       v.object({
-        kind: v.literal("template"),
         templateId: v.string(),
         templateVersion: v.number(),
         schema: v.any(),
@@ -182,7 +178,6 @@ export const create = mutation({
     if (!reserved.ok) return reserved;
 
     let schema;
-    let sourceKind: "blank" | "template" = "blank";
     let sourceTemplateId: string | undefined;
     let sourceTemplateVersion: number | undefined;
 
@@ -205,7 +200,6 @@ export const create = mutation({
         return fail({ data: null, error: ERRORS.SCHEMA_INVALID });
       }
 
-      sourceKind = "template";
       sourceTemplateId = args.source.templateId;
       sourceTemplateVersion = args.source.templateVersion;
     } else {
@@ -219,7 +213,6 @@ export const create = mutation({
         slug: reserved.data.slug,
         schema,
         createdBy: reserved.data.createdBy,
-        sourceKind,
         sourceTemplateId,
         sourceTemplateVersion,
       }),
@@ -246,6 +239,20 @@ export const get = query({
       return fail({ data: null, error: ERRORS.FORM_NOT_FOUND });
     }
     return ok(form);
+  },
+});
+
+export const countByTemplate = query({
+  args: { templateId: v.string() },
+  handler: async (ctx, args) => {
+    if (!TEMPLATE_ID.test(args.templateId)) return 0;
+
+    const forms = await ctx.db
+      .query("forms")
+      .withIndex("by_source_template", (q) => q.eq("sourceTemplateId", args.templateId))
+      .collect();
+
+    return forms.length;
   },
 });
 

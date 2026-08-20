@@ -15,7 +15,7 @@ import {
   templateSlug,
 } from "@/templates";
 import { LandingPage } from "../../../landing-chrome";
-import { TemplatePreview, TemplateUseCta } from "./template-preview";
+import { TemplateCreatedCount, TemplatePreview, TemplateUseCta } from "./template-preview";
 
 type TemplatePageProps = {
   params: Promise<{ id: string }>;
@@ -86,6 +86,7 @@ export default async function TemplateDetailPage({ params, searchParams }: Templ
               {templateCategoryLabel(template.category)}
               {template.pageCount > 1 ? ` · ${template.pageCount} pages` : ""} ·{" "}
               {template.fieldCount} fields
+              <TemplateCreatedCount templateId={template.id} />
             </p>
             <h1 className="mt-2 font-display text-3xl leading-[0.95] font-bold tracking-tight text-balance sm:text-4xl">
               {template.name}
