@@ -139,7 +139,12 @@ export type FormOnError<T extends FormInput = FormInput> = ({
   //tanstack?: TanStackForm;
 }) => void;
 
-export interface IFieldProps {
+export type FormFieldAriaAttributes = {
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean | "false" | "true" | "grammar" | "spelling";
+  "aria-required"?: boolean | "false" | "true";
+};
+
+export interface IFieldProps extends FormFieldAriaAttributes {
   schema: CompiledField;
-  ariaInvalid?: boolean;
 }
