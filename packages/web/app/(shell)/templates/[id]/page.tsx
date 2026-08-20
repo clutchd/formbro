@@ -11,6 +11,8 @@ import {
   templateCategoryLabel,
   templateCategoryPath,
   templateIdFromSlug,
+  templatePageDescription,
+  templatePageTitle,
   templatePath,
   templateSlug,
 } from "@/templates";
@@ -29,12 +31,20 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: TemplatePageProps): Promise<Metadata> {
   const { id } = await params;
   const template = getTemplate(templateIdFromSlug(id));
-  if (!template) return { title: `Form templates | ${APP_NAME}` };
+  if (!template) return { title: "Form templates" };
+
+  const title = templatePageTitle(template.name);
+  const description = templatePageDescription(template);
 
   return {
-    title: `${template.name} | ${APP_NAME}`,
-    description: template.description,
+    title,
+    description,
     alternates: { canonical: templatePath(template.id) },
+    openGraph: {
+      title: `${title} | ${APP_NAME}`,
+      description,
+      url: templatePath(template.id),
+    },
   };
 }
 
@@ -47,15 +57,16 @@ export default async function TemplateDetailPage({ params, searchParams }: Templ
     (card) => card.id !== template.id,
   );
   const useParam = Array.isArray(query.use) ? query.use[0] : query.use;
+  const title = templatePageTitle(template.name);
 
   return (
     <LandingPage>
       <article>
-        <div className="mx-auto w-full max-w-7xl px-5 pt-6 sm:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="border-y bg-muted/20 bg-[linear-gradient(var(--color-muted)_1px,transparent_1px),linear-gradient(90deg,var(--color-muted)_1px,transparent_1px)] bg-size-[48px_48px]">
+          <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
             <nav
               aria-label="Breadcrumb"
-              className="flex flex-wrap items-center gap-2 font-mono text-xs tracking-wider text-muted-foreground uppercase"
+              className="flex w-fit flex-wrap items-center gap-2 border bg-background px-2.5 py-1.5 font-mono text-xs tracking-wider text-foreground/60 uppercase"
             >
               <Link
                 href="/templates"
@@ -72,32 +83,46 @@ export default async function TemplateDetailPage({ params, searchParams }: Templ
                 {templateCategoryLabel(template.category)}
               </Link>
             </nav>
-            <TemplateUseCta
-              templateId={template.id}
-              templateVersion={template.version}
-              name={template.name}
-              schema={template.schema}
-              autoUse={useParam === "1"}
-            />
-          </div>
 
-          <header className="mx-auto mt-8 max-w-2xl text-center">
-            <p className={twx(tuiFont, "text-muted-foreground")}>
-              {templateCategoryLabel(template.category)}
-              {template.pageCount > 1 ? ` · ${template.pageCount} pages` : ""} ·{" "}
-              {template.fieldCount} fields
-              <TemplateCreatedCount templateId={template.id} />
-            </p>
-            <h1 className="mt-2 font-display text-3xl leading-[0.95] font-bold tracking-tight text-balance sm:text-4xl">
-              {template.name}
-            </h1>
-            <p className="mt-3 text-pretty text-muted-foreground">{template.description}</p>
-          </header>
-        </div>
+            <div className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(28rem,1.2fr)] lg:gap-12">
+              <header className="max-w-xl rounded-xl border bg-background p-6 shadow-xl sm:p-8 lg:sticky lg:top-6">
+                <p className={twx(tuiFont, "text-foreground/60")}>
+                  {templateCategoryLabel(template.category)}
+                  {template.pageCount > 1 ? ` · ${template.pageCount} pages` : ""} ·{" "}
+                  {template.fieldCount} fields
+                  <TemplateCreatedCount templateId={template.id} />
+                </p>
+                <h1 className="mt-3 font-display text-4xl leading-[1.02] font-bold tracking-tight text-balance sm:text-5xl">
+                  {title}
+                </h1>
+                <p className="mt-5 max-w-lg text-base leading-7 text-pretty text-foreground/70 sm:text-lg">
+                  {template.description}
+                </p>
+                <div className="mt-7">
+                  <TemplateUseCta
+                    templateId={template.id}
+                    templateVersion={template.version}
+                    name={template.name}
+                    schema={template.schema}
+                    autoUse={useParam === "1"}
+                  />
+                </div>
+              </header>
 
-        <div className="mt-10 border-y bg-muted/40 bg-[linear-gradient(var(--color-border)_1px,transparent_1px),linear-gradient(90deg,var(--color-border)_1px,transparent_1px)] bg-size-[32px_32px] px-5 py-12 sm:px-8 sm:py-16">
-          <div className="mx-auto w-full max-w-lg rounded-xl border bg-background p-6 shadow-xl sm:p-8">
-            <TemplatePreview schema={template.schema} />
+              <section aria-labelledby="template-preview-heading" className="min-w-0">
+                <div className="w-full rounded-xl border bg-background p-6 shadow-xl sm:p-8">
+                  <h2
+                    id="template-preview-heading"
+                    className={twx(tuiFont, "border-b pb-4 text-foreground/60")}
+                  >
+                    Live form preview
+                  </h2>
+                  <div className="mt-6">
+                    <TemplatePreview schema={template.schema} />
+                  </div>
+                </div>
+              </section>
+            </div>
           </div>
         </div>
 
