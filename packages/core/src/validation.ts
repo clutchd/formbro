@@ -187,7 +187,10 @@ function required(validatorPlan: CompiledValidator, validator: z.ZodTypeAny): z.
   }
 
   if (unwrapped instanceof z.ZodArray) {
-    return unwrapped.min(1, `${getDisplayName(validatorPlan)} is required`);
+    return unwrapped.refine(
+      (value) => value.some((item) => typeof item === "string" && item.trim().length > 0),
+      { message: `${getDisplayName(validatorPlan)} is required` },
+    );
   }
 
   if (unwrapped instanceof z.ZodUnion) {

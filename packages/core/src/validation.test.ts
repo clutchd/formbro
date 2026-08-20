@@ -134,6 +134,14 @@ describe("validateFormSubmission", () => {
       issues: [{ fieldId: "skills", message: "Select your skills is required" }],
       success: false,
     });
+    expect(validateFormSubmission(checkboxForm, { skills: [""] })).toEqual({
+      issues: [{ fieldId: "skills", message: "Select your skills is required" }],
+      success: false,
+    });
+    expect(validateFormSubmission(checkboxForm, { skills: ["   "] })).toEqual({
+      issues: [{ fieldId: "skills", message: "Select your skills is required" }],
+      success: false,
+    });
     expect(validateFormSubmission(checkboxForm, {})).toEqual({
       issues: [{ fieldId: "skills", message: "Select your skills is required" }],
       success: false,
