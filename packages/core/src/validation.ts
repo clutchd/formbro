@@ -59,7 +59,8 @@ export function validateFormSubmission(
     const submissionValidator = buildSubmissionValidator(field);
     const fieldValidators = validators.get(field.id);
     const emptyValue = field.type === "multi_select" ? [] : "";
-    const value = valueForValidation(field, data[field.id] ?? emptyValue);
+    const hasSubmittedValue = Object.prototype.hasOwnProperty.call(data, field.id);
+    const value = valueForValidation(field, hasSubmittedValue ? data[field.id] : emptyValue);
 
     if (submissionValidator) {
       const parsed = submissionValidator.safeParse(value);

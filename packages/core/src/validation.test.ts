@@ -192,5 +192,16 @@ describe("validateFormSubmission", () => {
       ],
       success: false,
     });
+
+    const explicitNulls = validateFormSubmission(rulelessForm, {
+      title: null,
+      tracks: null,
+    });
+    expect(explicitNulls.success).toBe(false);
+    if (!explicitNulls.success) {
+      expect(explicitNulls.issues.map((issue) => issue.fieldId)).toEqual(["title", "tracks"]);
+    }
+
+    expect(validateFormSubmission(rulelessForm, {})).toEqual({ success: true });
   });
 });
