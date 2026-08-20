@@ -8,7 +8,7 @@ import { useFieldContext } from "../hooks/tanstack-context";
 export const icon = RiListRadio;
 export const color = "bg-violet-100 text-violet-600";
 
-export const component = function RadioGroupComponent({ schema, ariaInvalid }: IFieldProps) {
+export const component = function RadioGroupComponent({ schema, ...ariaAttributes }: IFieldProps) {
   const field = useFieldContext<string>();
   const options =
     Array.isArray(schema.options) && schema.options.length > 0
@@ -30,18 +30,18 @@ export const component = function RadioGroupComponent({ schema, ariaInvalid }: I
       id={schema.id}
       name={schema.id}
       value={selectedValue}
-      aria-invalid={ariaInvalid}
       onValueChange={(value) => field.handleChange(value)}
       onBlur={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget)) field.handleBlur();
       }}
+      {...ariaAttributes}
     >
       {fallbackOptions.map((option, index) => {
         const optionId = `${schema.id}-option-${index}`;
 
         return (
           <div key={option} className="flex items-center gap-3">
-            <RadioGroupItem id={optionId} value={option} aria-invalid={ariaInvalid} />
+            <RadioGroupItem id={optionId} value={option} />
             <Label htmlFor={optionId} className="cursor-pointer leading-normal font-normal">
               {option}
             </Label>
