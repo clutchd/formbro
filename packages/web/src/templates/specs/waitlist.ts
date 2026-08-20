@@ -2,7 +2,7 @@ import type { TemplateDefinition } from "../types";
 
 export const template: TemplateDefinition = {
   id: "waitlist",
-  version: 1,
+  version: 2,
   description: "Capture interest when a session, product, or list is full.",
   category: "registration",
   tags: ["waitlist", "demand"],
@@ -48,6 +48,13 @@ export const template: TemplateDefinition = {
             value: true,
           },
         ],
+      },
+      {
+        id: "waitlist_phone",
+        name: "Phone",
+        type: "phone",
+        label: "Phone",
+        placeholder: "+1 555 123 4567",
       },
       {
         id: "company",

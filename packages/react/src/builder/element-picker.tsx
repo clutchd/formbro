@@ -19,7 +19,7 @@ import { getRegistryVisual } from "../registry";
 const pickerGroups: Array<{ label: string; keys: RegistryKey[] }> = [
   { label: "Questions", keys: ["short_text", "long_text", "number", "date"] },
   { label: "Choice", keys: ["single_select", "radio_group"] },
-  { label: "Contact", keys: ["email", "link"] },
+  { label: "Contact", keys: ["email", "phone", "link"] },
   { label: "Text/Layout", keys: ["heading", "description", "divider", "page_break"] },
 ];
 

@@ -27,6 +27,31 @@ describe("Form", () => {
     expect(html).toContain('value="2026-08-19"');
   });
 
+  it("renders a native telephone input with contact autofill hints", () => {
+    const schema = {
+      id: "contact",
+      name: "Contact",
+      elements: [
+        {
+          id: "phone",
+          name: "Phone",
+          type: "phone",
+          label: "Phone",
+          default: "+1 (415) 555-0100",
+        },
+      ],
+    } as const satisfies FormInput;
+
+    const html = renderToStaticMarkup(<Form schema={schema} preview />);
+
+    expect(html).toContain('id="phone"');
+    expect(html).toContain('name="phone"');
+    expect(html).toContain('type="tel"');
+    expect(html).toContain('inputMode="tel"');
+    expect(html).toContain('autoComplete="tel"');
+    expect(html).toContain('value="+1 (415) 555-0100"');
+  });
+
   it("renders a controlled radio group", () => {
     const schema = {
       id: "radio_preview",

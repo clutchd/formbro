@@ -8,6 +8,7 @@ const fieldTypes = [
   "link",
   "long_text",
   "number",
+  "phone",
   "short_text",
   "single_select",
 ] as const;

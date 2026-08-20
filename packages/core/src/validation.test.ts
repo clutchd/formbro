@@ -117,4 +117,28 @@ describe("validateFormSubmission", () => {
       success: false,
     });
   });
+
+  it("accepts broad phone formats but rejects whitespace-only required values", () => {
+    const phoneForm = compile({
+      id: "phone_validation",
+      name: "Phone validation",
+      elements: [
+        {
+          id: "phone",
+          name: "Phone",
+          type: "phone",
+          label: "Phone",
+          rules: [{ type: "required", value: true, event: "onSubmit" }],
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(phoneForm, { phone: "+44 (0)20 7946 0958 ext. 2" })).toEqual({
+      success: true,
+    });
+    expect(validateFormSubmission(phoneForm, { phone: "   " })).toEqual({
+      issues: [{ fieldId: "phone", message: "Phone is required" }],
+      success: false,
+    });
+  });
 });
