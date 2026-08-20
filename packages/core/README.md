@@ -56,6 +56,7 @@ Future builders should assign an ID once when an element is created and persist 
 
 ## Public API
 
+- `@formbro/core/analytics` - typed product events and `createAnalytics()` for runtime adapters.
 - `@formbro/core/compile` - `compile()`, compiled form types, and compiler output types.
 - `@formbro/core/registry` - built-in field and element registry metadata.
 - `@formbro/core/schema/form` - `FormSchema`, `FormInput`, `FormValues`, and form action types.

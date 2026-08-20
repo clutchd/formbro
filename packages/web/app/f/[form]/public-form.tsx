@@ -4,14 +4,15 @@ import type { Id } from "@formbro/convex/_generated/dataModel";
 import type { CompiledForm } from "@formbro/core/compile";
 import { api } from "@formbro/convex/_generated/api";
 import { getErrorMessage } from "@formbro/convex/errors";
+import { ANALYTICS_EVENTS, type PublicFormAnalyticsProperties } from "@formbro/core/analytics";
 import { Form } from "@formbro/react/components/form";
 import { RiAlertLine, RiCheckboxCircleLine } from "@remixicon/react";
 import { useMutation } from "convex/react";
-import { usePostHog } from "posthog-js/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Page } from "@/components/page";
 import { PageState } from "@/components/page-state";
+import { analytics } from "@/lib/posthog";
 
 type PublicFormAnalyticsProps = {
   formId?: Id<"forms">;
@@ -27,7 +28,7 @@ function publicFormProperties({
   formSlug,
   status,
   workspaceSlug,
-}: PublicFormAnalyticsProps) {
+}: PublicFormAnalyticsProps): PublicFormAnalyticsProperties {
   return {
     form_id: formId,
     form_name: formName,
@@ -44,14 +45,12 @@ export function PublicFormAnalytics({
   status,
   workspaceSlug,
 }: PublicFormAnalyticsProps) {
-  const posthog = usePostHog();
-
   useEffect(() => {
-    posthog.capture(
-      "public_form_viewed",
+    analytics.capture(
+      ANALYTICS_EVENTS.PUBLIC_FORM_VIEWED,
       publicFormProperties({ formId, formName, formSlug, status, workspaceSlug }),
     );
-  }, [formId, formName, formSlug, posthog, status, workspaceSlug]);
+  }, [formId, formName, formSlug, status, workspaceSlug]);
 
   return null;
 }
@@ -71,11 +70,10 @@ export function PublicForm({
   schemaId: Id<"formSchemas">;
   workspaceSlug?: string;
 }) {
-  const posthog = usePostHog();
   const submit = useMutation(api.submissions.create);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const analytics = {
+  const analyticsProperties = {
     formId,
     formName,
     formSlug,
@@ -113,13 +111,16 @@ export function PublicForm({
         onSuccess={() => {
           setSubmitError(null);
           setSubmitted(true);
-          posthog.capture("public_form_submitted", publicFormProperties(analytics));
+          analytics.capture(
+            ANALYTICS_EVENTS.PUBLIC_FORM_SUBMITTED,
+            publicFormProperties(analyticsProperties),
+          );
         }}
         onError={({ error }) => {
           const message = getErrorMessage(error);
           setSubmitError(message);
-          posthog.capture("public_form_submit_failed", {
-            ...publicFormProperties(analytics),
+          analytics.capture(ANALYTICS_EVENTS.PUBLIC_FORM_SUBMIT_FAILED, {
+            ...publicFormProperties(analyticsProperties),
             error_message: message,
           });
           toast.error("Could not submit response", {
