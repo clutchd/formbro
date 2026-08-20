@@ -139,6 +139,8 @@ export type FormOnError<T extends FormInput = FormInput> = ({
 }) => void;
 
 export type FormFieldAriaAttributes = {
+  "aria-label"?: string;
+  "aria-labelledby"?: string;
   "aria-describedby"?: string;
   "aria-invalid"?: boolean | "false" | "true" | "grammar" | "spelling";
   "aria-required"?: boolean | "false" | "true";

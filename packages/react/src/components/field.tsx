@@ -46,8 +46,11 @@ export function Field({
     >
       {(field) => {
         const LabelContent = label ?? schema.label;
+        const isChoiceGroup = schema.type === "multi_select" || schema.type === "radio_group";
+        const labelId = LabelContent ? `${schema.id}-label` : undefined;
+        const labelFor = isChoiceGroup ? `${schema.id}-option-0` : schema.id;
         const Label = LabelContent && (
-          <FieldLabel htmlFor={schema.id}>
+          <FieldLabel id={labelId} htmlFor={labelFor}>
             <span className="inline-flex items-center gap-1">
               {LabelContent}
               {schema.required && (
@@ -94,6 +97,8 @@ export function Field({
                 aria-invalid={errored}
                 aria-required={schema.required}
                 aria-describedby={describedBy}
+                aria-labelledby={isChoiceGroup ? labelId : undefined}
+                aria-label={isChoiceGroup && !labelId ? schema.name : undefined}
               />
             </div>
             <div

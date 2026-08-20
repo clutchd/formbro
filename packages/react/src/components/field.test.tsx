@@ -43,4 +43,54 @@ describe("Field ARIA attributes", () => {
       expect(markup).toContain('aria-required="true"');
     });
   }
+
+  it("names a multi-select group and points its question label at a checkbox", () => {
+    const markup = renderToStaticMarkup(
+      <Form
+        preview
+        schema={{
+          id: "multi_select_aria_form",
+          name: "Multi-select ARIA form",
+          elements: [
+            {
+              id: "tracks",
+              name: "Tracks",
+              type: "multi_select",
+              label: "Choose tracks",
+              options: ["Product", "Engineering"],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(markup).toContain('id="tracks-label"');
+    expect(markup).toContain('for="tracks-option-0"');
+    expect(markup).toContain('role="group"');
+    expect(markup).toContain('aria-labelledby="tracks-label"');
+  });
+
+  it("uses the field name when a multi-select question label is hidden", () => {
+    const markup = renderToStaticMarkup(
+      <Form
+        preview
+        schema={{
+          id: "hidden_label_aria_form",
+          name: "Hidden label ARIA form",
+          elements: [
+            {
+              id: "tracks",
+              name: "Tracks",
+              type: "multi_select",
+              label: false,
+              options: ["Product", "Engineering"],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(markup).toContain('role="group"');
+    expect(markup).toContain('aria-label="Tracks"');
+  });
 });
