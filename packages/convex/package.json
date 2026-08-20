@@ -22,7 +22,7 @@
     "@posthog/ai": "7.21.0",
     "@react-email/render": "2.0.8",
     "ai": "catalog:",
-    "better-auth": "1.5.3",
+    "better-auth": "1.6.22",
     "convex": "catalog:",
     "resend": "6.12.4",
     "stripe": "22.2.0",
