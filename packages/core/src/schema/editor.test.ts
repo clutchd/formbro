@@ -35,6 +35,14 @@ describe("form editor schema helpers", () => {
       level: 2,
       type: "heading",
     });
+
+    expect(createFormElementDraft({ id: "choice", type: "radio_group" })).toMatchObject({
+      id: "choice",
+      label: "Choose one",
+      name: "Radio Group",
+      options: ["Option 1", "Option 2", "Option 3"],
+      type: "radio_group",
+    });
   });
 
   it("converts element type while preserving useful author state", () => {
@@ -72,6 +80,9 @@ describe("form editor schema helpers", () => {
     };
 
     expect(convertFormElementDraftType({ element: source, type: "single_select" })).toMatchObject({
+      options: ["A", "B"],
+    });
+    expect(convertFormElementDraftType({ element: source, type: "radio_group" })).toMatchObject({
       options: ["A", "B"],
     });
     expect(convertFormElementDraftType({ element: source, type: "short_text" })).not.toHaveProperty(

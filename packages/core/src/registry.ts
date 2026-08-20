@@ -413,8 +413,51 @@ const single_select = field({
   schema: z.string(),
 });
 
+const radio_group = field({
+  key: "radio_group",
+  display: "Radio Group",
+  description: "Visible radio options for selecting a single choice",
+  editor: {
+    defaults: {
+      label: "Choose one",
+      options: ["Option 1", "Option 2", "Option 3"],
+    },
+    preview: {
+      control: "radio_group",
+    },
+    properties: [
+      { key: "label", label: "Question", control: "text", placeholder: "Question" },
+      {
+        key: "description",
+        label: "Helper text",
+        control: "text",
+        placeholder: "Optional helper text",
+      },
+      {
+        key: "options",
+        label: "Options",
+        control: "options",
+        placeholder: "Option 1\nOption 2\nOption 3",
+        section: "content",
+        span: "full",
+      },
+      { key: "required", label: "Required", control: "rule", section: "validation" },
+    ],
+  },
+  rules: ["required"],
+  schema: z.string(),
+});
+
 export const ElementRegistry = elements([description, divider, heading, page_break]);
-export const FieldRegistry = fields([email, link, long_text, number, short_text, single_select]);
+export const FieldRegistry = fields([
+  email,
+  link,
+  long_text,
+  number,
+  short_text,
+  single_select,
+  radio_group,
+]);
 export type ElementRegistryItem = (typeof ElementRegistry)[number];
 export type FieldRegistryItem = (typeof FieldRegistry)[number];
 export type RegistryItem = ElementRegistryItem | FieldRegistryItem;

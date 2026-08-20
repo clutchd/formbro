@@ -380,6 +380,8 @@ function PreviewControl({
         </div>
       );
     }
+    case "radio_group":
+      return <EditorRadioGroupPreview element={element as FormFieldInput} />;
     case "select":
       return (
         <EditorSelectPreview
@@ -475,6 +477,27 @@ export function EditorSelectPreview({
     <div className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-sm text-muted-foreground">
       <span>{element.placeholder || fallbackPlaceholder}</span>
       <RiArrowDownSLine className="size-4" />
+    </div>
+  );
+}
+
+export function EditorRadioGroupPreview({ element }: { element: FormFieldInput }) {
+  const options =
+    Array.isArray(element.options) && element.options.length > 0
+      ? element.options
+      : ["Option 1", "Option 2", "Option 3"];
+  const validOptions = options.filter((option) => option.trim().length > 0);
+  const fallbackOptions =
+    validOptions.length > 0 ? validOptions : ["Option 1", "Option 2", "Option 3"];
+
+  return (
+    <div className="grid gap-3" aria-hidden="true">
+      {fallbackOptions.map((option) => (
+        <div key={option} className="flex items-center gap-3">
+          <span className="size-4 shrink-0 rounded-full border border-input bg-background" />
+          <span className="text-sm leading-normal">{option}</span>
+        </div>
+      ))}
     </div>
   );
 }

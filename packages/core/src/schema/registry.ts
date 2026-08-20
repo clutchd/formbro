@@ -6,6 +6,7 @@ const RegistryEditorPreviewSchema = z.object({
     "input",
     "textarea",
     "select",
+    "radio_group",
     "heading",
     "description",
     "divider",

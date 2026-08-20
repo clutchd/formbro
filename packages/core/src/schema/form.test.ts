@@ -39,6 +39,29 @@ describe("FormSchema", () => {
     expect(parsed.elements[0]).not.toHaveProperty("rules");
   });
 
+  it("parses radio groups as choice fields", () => {
+    const parsed = FormSchema.parse({
+      id: "survey",
+      name: "Survey",
+      elements: [
+        {
+          id: "satisfaction",
+          name: "Satisfaction",
+          type: "radio_group",
+          label: "How satisfied are you?",
+          options: ["Very satisfied", "Satisfied", "Not satisfied"],
+          rules: [{ type: "required", value: true }],
+        },
+      ],
+    });
+
+    expect(parsed.elements[0]).toMatchObject({
+      category: "field",
+      options: ["Very satisfied", "Satisfied", "Not satisfied"],
+      type: "radio_group",
+    });
+  });
+
   it("rejects invalid ids", () => {
     expect(() =>
       FormSchema.parse({
