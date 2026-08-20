@@ -45,7 +45,7 @@ describe("Field ARIA attributes", () => {
     });
   }
 
-  it("names a multi-select group and points its question label at a checkbox", () => {
+  it("names a multi-select group without pointing its question label at a checkbox", () => {
     const markup = renderToStaticMarkup(
       <Form
         preview
@@ -66,9 +66,35 @@ describe("Field ARIA attributes", () => {
     );
 
     expect(markup).toContain('id="tracks-label"');
-    expect(markup).toContain('for="tracks-option-0"');
+    expect(markup).not.toMatch(/data-slot="field-label"[^>]*for=/);
     expect(markup).toContain('role="group"');
     expect(markup).toContain('aria-labelledby="tracks-label"');
+  });
+
+  it("names a radio group without pointing its question label at a radio", () => {
+    const markup = renderToStaticMarkup(
+      <Form
+        preview
+        schema={{
+          id: "radio_group_aria_form",
+          name: "Radio group ARIA form",
+          elements: [
+            {
+              id: "attendance",
+              name: "Attendance",
+              type: "radio_group",
+              label: "Will you attend?",
+              options: ["Yes", "No"],
+            },
+          ],
+        }}
+      />,
+    );
+
+    expect(markup).toContain('id="attendance-label"');
+    expect(markup).not.toMatch(/data-slot="field-label"[^>]*for=/);
+    expect(markup).toContain('data-slot="radio-group"');
+    expect(markup).toContain('aria-labelledby="attendance-label"');
   });
 
   it("uses the field name when a multi-select question label is hidden", () => {

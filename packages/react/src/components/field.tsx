@@ -48,9 +48,8 @@ export function Field({
         const LabelContent = label ?? schema.label;
         const isChoiceGroup = schema.type === "multi_select" || schema.type === "radio_group";
         const labelId = LabelContent ? `${schema.id}-label` : undefined;
-        const labelFor = isChoiceGroup ? `${schema.id}-option-0` : schema.id;
         const Label = LabelContent && (
-          <FieldLabel id={labelId} htmlFor={labelFor}>
+          <FieldLabel id={labelId} htmlFor={isChoiceGroup ? undefined : schema.id}>
             <span className="inline-flex items-center gap-1">
               {LabelContent}
               {schema.required && (

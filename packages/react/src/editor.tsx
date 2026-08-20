@@ -150,15 +150,25 @@ function getEditorOptionsText(element: FormFieldInput) {
   return Array.isArray(element.options) ? element.options.join("\n") : "";
 }
 
-function setEditorOptions(element: FormFieldInput, value: string): FormFieldInput {
+export function setEditorOptions(element: FormFieldInput, value: string): FormFieldInput {
   const options = value.split("\n").flatMap((option) => {
     const trimmed = option.trim();
     return trimmed ? [trimmed] : [];
   });
-
-  return {
+  const nextOptions = options.length > 0 ? options : ["Option 1"];
+  const nextElement = {
     ...element,
-    options: options.length > 0 ? options : ["Option 1"],
+    options: nextOptions,
+  };
+
+  if (element.type !== "multi_select" || !Array.isArray(element.default)) {
+    return nextElement;
+  }
+
+  const nextDefault = element.default.filter((item) => nextOptions.includes(item));
+  return {
+    ...nextElement,
+    default: nextDefault.length > 0 ? nextDefault : undefined,
   };
 }
 
