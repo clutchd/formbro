@@ -10,6 +10,7 @@ import {
 } from "@formbro/core/registry";
 import { getRegistryEditorMetadata, getRegistryRules } from "@formbro/core/schema/editor";
 import { RegistryElementEditor, type EditorProps, type EditorTransformOption } from "./editor";
+import * as date from "./elements/date";
 import * as description from "./elements/description";
 import * as divider from "./elements/divider";
 import * as email from "./elements/email";
@@ -30,6 +31,7 @@ export const ElementComponents = {
 } as const;
 
 export const FieldComponents = {
+  date: date,
   email: email,
   link: link,
   long_text: long_text,

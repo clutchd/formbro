@@ -148,6 +148,33 @@ function fields<const TFields extends readonly [FormRegistryField, ...FormRegist
   return fields;
 }
 
+const date = field({
+  key: "date",
+  display: "Date",
+  description: "Date input for start dates, event days, and establishment dates",
+  editor: {
+    defaults: {
+      label: "Date",
+    },
+    preview: {
+      control: "input",
+      inputType: "date",
+    },
+    properties: [
+      { key: "label", label: "Question", control: "text", placeholder: "Question" },
+      {
+        key: "description",
+        label: "Helper text",
+        control: "text",
+        placeholder: "Optional helper text",
+      },
+      { key: "required", label: "Required", control: "rule", section: "validation" },
+    ],
+  },
+  rules: ["required"],
+  schema: z.iso.date(),
+});
+
 const email = field({
   key: "email",
   display: "Email",
@@ -450,6 +477,7 @@ const radio_group = field({
 
 export const ElementRegistry = elements([description, divider, heading, page_break]);
 export const FieldRegistry = fields([
+  date,
   email,
   link,
   long_text,

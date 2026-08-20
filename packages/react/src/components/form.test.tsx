@@ -4,6 +4,29 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { Form } from "./form";
 
 describe("Form", () => {
+  it("renders a native date input with an ISO string value", () => {
+    const schema = {
+      id: "event",
+      name: "Event",
+      elements: [
+        {
+          id: "start_date",
+          name: "Start date",
+          type: "date",
+          label: "Start date",
+          default: "2026-08-19",
+        },
+      ],
+    } as const satisfies FormInput;
+
+    const html = renderToStaticMarkup(<Form schema={schema} preview />);
+
+    expect(html).toContain('id="start_date"');
+    expect(html).toContain('name="start_date"');
+    expect(html).toContain('type="date"');
+    expect(html).toContain('value="2026-08-19"');
+  });
+
   it("renders a controlled radio group", () => {
     const schema = {
       id: "radio_preview",
