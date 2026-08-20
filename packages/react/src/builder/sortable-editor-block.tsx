@@ -8,7 +8,7 @@ import { getRegistryEditorPreview, labelForFormElement } from "@formbro/core/sch
 import { twx } from "@formbro/shared/twx";
 import { Button } from "@formbro/ui/button";
 import { RiDeleteBinLine, RiDraggable } from "@remixicon/react";
-import { editorTransformOptions, getRegistryEditor, getRegistryVisual } from "../registry";
+import { editorTransformOptions, getRegistryEditor } from "../registry";
 import { handleKeyboardSelect, type EditorElement } from "./canvas-utils";
 import { ElementPicker } from "./element-picker";
 
