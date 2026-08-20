@@ -2,7 +2,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 import { PLANS } from "./billingUtils";
 
-export const SubmissionValue = v.union(v.string());
+export const SubmissionValue = v.union(v.string(), v.array(v.string()));
 
 export default defineSchema({
   workspaces: defineTable({

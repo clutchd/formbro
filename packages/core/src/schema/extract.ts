@@ -3,6 +3,10 @@ import { FieldRegistry } from "../registry";
 
 type FieldElementType = (typeof FieldRegistry)[number]["key"];
 
+type FieldValue<TType extends FieldElementType> = TType extends "checkbox_group"
+  ? string[]
+  : string;
+
 type ExtractFormDataKeysFromElements<TElements extends readonly unknown[]> =
   TElements extends readonly [infer THead, ...infer TTail]
     ? THead extends {
@@ -12,7 +16,7 @@ type ExtractFormDataKeysFromElements<TElements extends readonly unknown[]> =
       ? TType extends FieldElementType
         ? TId extends string
           ? {
-              [K in TId]: string;
+              [K in TId]: FieldValue<TType>;
             } & ExtractFormDataKeysFromElements<TTail>
           : ExtractFormDataKeysFromElements<TTail>
         : ExtractFormDataKeysFromElements<TTail>

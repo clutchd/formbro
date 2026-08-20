@@ -14,9 +14,12 @@ import { useCallback, useMemo } from "react";
 import { buildListeners } from "../utils/build-listeners";
 import { useAppForm } from "./tanstack";
 
-function stringifyValues<T extends FormInput>(value: Record<string, unknown>) {
+export function normalizeFormValues<T extends FormInput>(value: Record<string, unknown>) {
   return Object.fromEntries(
-    Object.entries(value).map(([key, item]) => [key, String(item)]),
+    Object.entries(value).map(([key, item]) => [
+      key,
+      Array.isArray(item) ? item.map(String) : String(item),
+    ]),
   ) as FormValues<T>;
 }
 
@@ -80,11 +83,11 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
         return;
       }
 
-      const stringValues = stringifyValues<T>(value);
+      const values = normalizeFormValues<T>(value);
 
       try {
-        instrumentation?.onSubmitStart?.({ form: compiled, values: stringValues });
-        const mutatedValues = onMutate ? onMutate({ values: stringValues }) : stringValues;
+        instrumentation?.onSubmitStart?.({ form: compiled, values });
+        const mutatedValues = onMutate ? onMutate({ values }) : values;
         const result = await action({ values: mutatedValues });
 
         if (!result.ok) {
@@ -92,7 +95,7 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
 
           instrumentation?.onSubmitError?.({
             form: compiled,
-            values: stringValues,
+            values,
             error,
           });
           onError?.({ error });
@@ -103,14 +106,14 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
 
         instrumentation?.onSubmitSuccess?.({
           form: compiled,
-          values: stringValues,
+          values,
           data,
         });
-        onSuccess?.({ result: stringValues, data });
+        onSuccess?.({ result: values, data });
       } catch (error) {
         instrumentation?.onSubmitError?.({
           form: compiled,
-          values: stringValues,
+          values,
           error,
         });
         onError?.({ error });

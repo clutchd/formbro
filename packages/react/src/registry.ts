@@ -10,6 +10,7 @@ import {
 } from "@formbro/core/registry";
 import { getRegistryEditorMetadata, getRegistryRules } from "@formbro/core/schema/editor";
 import { RegistryElementEditor, type EditorProps, type EditorTransformOption } from "./editor";
+import * as checkbox_group from "./elements/checkbox-group";
 import * as description from "./elements/description";
 import * as divider from "./elements/divider";
 import * as email from "./elements/email";
@@ -30,6 +31,7 @@ export const ElementComponents = {
 } as const;
 
 export const FieldComponents = {
+  checkbox_group: checkbox_group,
   email: email,
   link: link,
   long_text: long_text,

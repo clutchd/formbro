@@ -50,10 +50,29 @@ export function validateFormSubmission(
   }
 
   for (const field of fields) {
+    const emptyValue = field.type === "checkbox_group" ? [] : "";
+    const rawValue = data[field.id] ?? emptyValue;
+
+    if (field.type === "checkbox_group") {
+      const parsed = Registry.checkbox_group.schema.safeParse(rawValue);
+      if (!parsed.success) {
+        issues.push({
+          fieldId: field.id,
+          message: `${field.label ?? field.name} must be a list of choices`,
+        });
+        continue;
+      }
+    } else if (typeof rawValue !== "string") {
+      issues.push({
+        fieldId: field.id,
+        message: `${field.label ?? field.name} must be a string`,
+      });
+      continue;
+    }
+
+    const value = valueForValidation(field, rawValue);
     const fieldValidators = validators.get(field.id);
     if (!fieldValidators) continue;
-
-    const value = valueForValidation(field, data[field.id] ?? "");
 
     for (const event of SYNC_EVENTS) {
       const validator = fieldValidators[event];
@@ -159,6 +178,10 @@ function required(validatorPlan: CompiledValidator, validator: z.ZodTypeAny): z.
 
   if (unwrapped instanceof z.ZodNumber) {
     return unwrapped;
+  }
+
+  if (unwrapped instanceof z.ZodArray) {
+    return unwrapped.min(1, `${getDisplayName(validatorPlan)} is required`);
   }
 
   if (unwrapped instanceof z.ZodUnion) {

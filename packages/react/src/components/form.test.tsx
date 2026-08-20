@@ -30,4 +30,33 @@ describe("Form", () => {
     expect(html.match(/name="attendance" value="Yes"/g)).toHaveLength(1);
     expect(html).toMatch(/name="attendance" (?:checked="" )?value="No"/);
   });
+
+  it("renders a controlled checkbox group", () => {
+    const schema = {
+      id: "skills_preview",
+      name: "Skills preview",
+      elements: [
+        {
+          id: "skills",
+          name: "Skills",
+          type: "checkbox_group",
+          label: "Select your skills",
+          description: "Select all that apply.",
+          default: ["React"],
+          options: ["TypeScript", "React", "React"],
+          rules: [{ type: "required", value: true }],
+        },
+      ],
+    } as const satisfies FormInput;
+
+    const html = renderToStaticMarkup(<Form schema={schema} preview />);
+
+    expect(html).toContain('data-slot="checkbox-group"');
+    expect(html).toContain('role="group"');
+    expect(html).toContain('aria-describedby="skills-description"');
+    expect(html).toContain('aria-required="true"');
+    expect(html).toContain('data-state="checked" value="React"');
+    expect(html).toContain('name="skills" value="TypeScript"');
+    expect(html.match(/name="skills"(?: checked="")? value="React"/g)).toHaveLength(1);
+  });
 });

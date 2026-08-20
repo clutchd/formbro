@@ -14,7 +14,7 @@ import {
 import { FormElementSchema, type FormElementInput, type FormFieldInput } from "./form";
 
 const fieldKeys = new Set(FieldRegistry.map((item) => item.key));
-const sharedFieldKeys = ["description", "placeholder", "default", "orientation"] as const;
+const sharedFieldKeys = ["description", "placeholder", "orientation"] as const;
 
 function registryEditorForType(type: RegistryKey): FormRegistryEditor {
   const item = Registry[type];
@@ -114,6 +114,15 @@ export function convertFormElementDraftType({
       if (current[key] !== undefined) {
         draft[key] = current[key] as never;
       }
+    }
+
+    const targetRegistryItem = Registry[type];
+    const targetDefault = "default" in targetRegistryItem ? targetRegistryItem.default : undefined;
+    if (
+      current.default !== undefined &&
+      Array.isArray(current.default) === Array.isArray(targetDefault)
+    ) {
+      draft.default = current.default;
     }
 
     if (

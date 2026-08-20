@@ -1,3 +1,4 @@
+import type { FormValue } from "@formbro/core/schema/form";
 import { compile, type CompiledField, type CompiledForm } from "@formbro/core/compile";
 import { validateFormSubmission } from "@formbro/core/validation";
 import { fail, ok } from "@formbro/shared/result";
@@ -108,7 +109,7 @@ async function _insertSubmission(
   }: {
     form: Doc<"forms">;
     schemaId: Id<"formSchemas">;
-    data: Record<string, string>;
+    data: Record<string, FormValue>;
   },
 ) {
   const submittedTime = Date.now();
@@ -135,7 +136,7 @@ export async function _createSubmission(
   args: {
     formId: Id<"forms">;
     schemaId: Id<"formSchemas">;
-    data: Record<string, string>;
+    data: Record<string, FormValue>;
   },
 ) {
   const schema = await ctx.db.get(args.schemaId);
@@ -173,7 +174,7 @@ export async function _createSubmission(
 
 export async function _createFromSlug(
   ctx: MutationCtx,
-  args: { slug: string; data: Record<string, string> },
+  args: { slug: string; data: Record<string, FormValue> },
 ) {
   const form = await ctx.db
     .query("forms")

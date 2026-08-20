@@ -260,7 +260,7 @@ Shared field properties:
 - placeholder: optional input placeholder
 - default: optional default value
 - orientation: optional "vertical" | "horizontal" | "responsive"
-- options: required string array for single_select fields
+- options: required string array for single_select, radio_group, and checkbox_group fields
 - rules: optional validation rules supported by the field type
 
 Layout elements:

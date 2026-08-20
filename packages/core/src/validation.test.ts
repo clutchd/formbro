@@ -89,4 +89,81 @@ describe("validateFormSubmission", () => {
       success: false,
     });
   });
+
+  it("validates checkbox groups as required array values", () => {
+    const checkboxForm = compile({
+      id: "checkbox_validation",
+      name: "Checkbox validation",
+      elements: [
+        {
+          id: "skills",
+          name: "Skills",
+          type: "checkbox_group",
+          label: "Select your skills",
+          options: ["TypeScript", "React"],
+          rules: [{ type: "required", value: true, event: "onSubmit" }],
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(checkboxForm, { skills: ["TypeScript", "React"] })).toEqual({
+      success: true,
+    });
+    expect(validateFormSubmission(checkboxForm, { skills: [] })).toEqual({
+      issues: [{ fieldId: "skills", message: "Select your skills is required" }],
+      success: false,
+    });
+    expect(validateFormSubmission(checkboxForm, {})).toEqual({
+      issues: [{ fieldId: "skills", message: "Select your skills is required" }],
+      success: false,
+    });
+    expect(validateFormSubmission(checkboxForm, { skills: "TypeScript" })).toEqual({
+      issues: [{ fieldId: "skills", message: "Select your skills must be a list of choices" }],
+      success: false,
+    });
+  });
+
+  it("enforces checkbox group array values without validation rules", () => {
+    const checkboxForm = compile({
+      id: "optional_checkbox_validation",
+      name: "Optional checkbox validation",
+      elements: [
+        {
+          id: "confirmations",
+          name: "Confirmations",
+          type: "checkbox_group",
+          label: "Confirm any that apply",
+          options: ["I agree"],
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(checkboxForm, { confirmations: [] })).toEqual({ success: true });
+    expect(validateFormSubmission(checkboxForm, { confirmations: "I agree" })).toEqual({
+      issues: [
+        { fieldId: "confirmations", message: "Confirm any that apply must be a list of choices" },
+      ],
+      success: false,
+    });
+  });
+
+  it("rejects array values for scalar fields", () => {
+    const scalarForm = compile({
+      id: "scalar_shape_validation",
+      name: "Scalar shape validation",
+      elements: [
+        {
+          id: "name",
+          name: "Name",
+          type: "short_text",
+          label: "Your name",
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(scalarForm, { name: ["Ada", "Lovelace"] })).toEqual({
+      issues: [{ fieldId: "name", message: "Your name must be a string" }],
+      success: false,
+    });
+  });
 });
