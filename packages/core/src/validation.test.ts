@@ -89,4 +89,34 @@ describe("validateFormSubmission", () => {
       success: false,
     });
   });
+
+  it("validates required multi-select arrays", () => {
+    const multiSelectForm = compile({
+      id: "multi_select_validation",
+      name: "Multi select validation",
+      elements: [
+        {
+          id: "tracks",
+          name: "Tracks",
+          type: "multi_select",
+          label: "Choose tracks",
+          options: ["Product", "Engineering", "Design"],
+          rules: [{ type: "required", value: true, event: "onSubmit" }],
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(multiSelectForm, { tracks: ["Product", "Design"] })).toEqual({
+      success: true,
+    });
+    expect(validateFormSubmission(multiSelectForm, { tracks: [] })).toEqual({
+      issues: [{ fieldId: "tracks", message: "Choose tracks is required" }],
+      success: false,
+    });
+    expect(validateFormSubmission(multiSelectForm, {})).toEqual({
+      issues: [{ fieldId: "tracks", message: "Choose tracks is required" }],
+      success: false,
+    });
+    expect(validateFormSubmission(multiSelectForm, { tracks: "Product" }).success).toBe(false);
+  });
 });

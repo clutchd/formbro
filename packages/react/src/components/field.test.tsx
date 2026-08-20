@@ -2,7 +2,15 @@ import { describe, expect, it } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Form } from "./form";
 
-const fieldTypes = ["email", "link", "long_text", "number", "short_text", "single_select"] as const;
+const fieldTypes = [
+  "email",
+  "link",
+  "long_text",
+  "multi_select",
+  "number",
+  "short_text",
+  "single_select",
+] as const;
 
 describe("Field ARIA attributes", () => {
   for (const type of fieldTypes) {
@@ -20,7 +28,8 @@ describe("Field ARIA attributes", () => {
                 type,
                 label: "Answer",
                 description: "Helpful context",
-                options: type === "single_select" ? ["One", "Two"] : undefined,
+                options:
+                  type === "single_select" || type === "multi_select" ? ["One", "Two"] : undefined,
                 rules: [{ type: "required", value: true }],
               },
             ],

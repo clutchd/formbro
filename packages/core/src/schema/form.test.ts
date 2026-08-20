@@ -62,6 +62,31 @@ describe("FormSchema", () => {
     });
   });
 
+  it("parses multi selects as array-valued choice fields", () => {
+    const parsed = FormSchema.parse({
+      id: "preferences",
+      name: "Preferences",
+      elements: [
+        {
+          id: "dietary_extras",
+          name: "Dietary extras",
+          type: "multi_select",
+          label: "Which extras would you like?",
+          default: ["Fruit"],
+          options: ["Fruit", "Salad", "Dessert"],
+          rules: [{ type: "required", value: true }],
+        },
+      ],
+    });
+
+    expect(parsed.elements[0]).toMatchObject({
+      category: "field",
+      default: ["Fruit"],
+      options: ["Fruit", "Salad", "Dessert"],
+      type: "multi_select",
+    });
+  });
+
   it("rejects invalid ids", () => {
     expect(() =>
       FormSchema.parse({

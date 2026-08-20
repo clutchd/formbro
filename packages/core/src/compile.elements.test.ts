@@ -167,6 +167,34 @@ describe("compile:elements", () => {
     });
   });
 
+  it("uses array defaults for multi-select fields", () => {
+    const elements = parseElements([
+      {
+        id: "tracks",
+        name: "Tracks",
+        type: "multi_select",
+        label: "Tracks",
+        options: ["Product", "Engineering"],
+      },
+      {
+        id: "roles",
+        name: "Roles",
+        type: "multi_select",
+        label: "Roles",
+        default: ["Reviewer"],
+        options: ["Author", "Reviewer"],
+      },
+    ]);
+
+    const compiled = _private.compileElements(elements);
+
+    expect(compiled.defaults).toEqual({ tracks: [], roles: ["Reviewer"] });
+    expect(compiled.elements).toMatchObject([
+      { id: "tracks", default: [], type: "multi_select" },
+      { id: "roles", default: ["Reviewer"], type: "multi_select" },
+    ]);
+  });
+
   it("builds validator plans by event and omits fields without rules", () => {
     const elements = parseElements([
       {

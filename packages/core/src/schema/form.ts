@@ -95,8 +95,7 @@ export function JsonParse(schema: string) {
   return FormSchema.parse(JSON.parse(schema));
 }
 
-export type FormValues<T extends FormInput = FormInput> = ExtractFormData<T> &
-  Record<string, string>;
+export type FormValues<T extends FormInput = FormInput> = ExtractFormData<T>;
 export type FormActionResult<TData = undefined, TError = unknown> =
   | { ok: true; data: TData }
   | {

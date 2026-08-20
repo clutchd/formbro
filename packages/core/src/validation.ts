@@ -53,7 +53,8 @@ export function validateFormSubmission(
     const fieldValidators = validators.get(field.id);
     if (!fieldValidators) continue;
 
-    const value = valueForValidation(field, data[field.id] ?? "");
+    const emptyValue = field.type === "multi_select" ? [] : "";
+    const value = valueForValidation(field, data[field.id] ?? emptyValue);
 
     for (const event of SYNC_EVENTS) {
       const validator = fieldValidators[event];
@@ -159,6 +160,10 @@ function required(validatorPlan: CompiledValidator, validator: z.ZodTypeAny): z.
 
   if (unwrapped instanceof z.ZodNumber) {
     return unwrapped;
+  }
+
+  if (unwrapped instanceof z.ZodArray) {
+    return unwrapped.min(1, `${getDisplayName(validatorPlan)} is required`);
   }
 
   if (unwrapped instanceof z.ZodUnion) {
