@@ -62,11 +62,11 @@ export default async function TemplateDetailPage({ params, searchParams }: Templ
   return (
     <LandingPage>
       <article>
-        <div className="border-y bg-muted/40 bg-[linear-gradient(var(--color-border)_1px,transparent_1px),linear-gradient(90deg,var(--color-border)_1px,transparent_1px)] bg-size-[32px_32px]">
+        <div className="border-y bg-muted/20 bg-[linear-gradient(var(--color-muted)_1px,transparent_1px),linear-gradient(90deg,var(--color-muted)_1px,transparent_1px)] bg-size-[48px_48px]">
           <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 sm:py-10">
             <nav
               aria-label="Breadcrumb"
-              className="flex flex-wrap items-center gap-2 font-mono text-xs tracking-wider text-muted-foreground uppercase"
+              className="flex w-fit flex-wrap items-center gap-2 border bg-background px-2.5 py-1.5 font-mono text-xs tracking-wider text-foreground/60 uppercase"
             >
               <Link
                 href="/templates"
@@ -85,17 +85,17 @@ export default async function TemplateDetailPage({ params, searchParams }: Templ
             </nav>
 
             <div className="mt-6 grid items-start gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(28rem,1.2fr)] lg:gap-12">
-              <header className="max-w-xl lg:pt-10">
-                <p className={twx(tuiFont, "text-muted-foreground")}>
+              <header className="max-w-xl rounded-xl border bg-background p-6 shadow-xl sm:p-8 lg:sticky lg:top-6">
+                <p className={twx(tuiFont, "text-foreground/60")}>
                   {templateCategoryLabel(template.category)}
                   {template.pageCount > 1 ? ` · ${template.pageCount} pages` : ""} ·{" "}
                   {template.fieldCount} fields
                   <TemplateCreatedCount templateId={template.id} />
                 </p>
-                <h1 className="mt-3 font-display text-4xl leading-[0.95] font-bold tracking-tight text-balance sm:text-5xl">
+                <h1 className="mt-3 font-display text-4xl leading-[1.02] font-bold tracking-tight text-balance sm:text-5xl">
                   {title}
                 </h1>
-                <p className="mt-5 max-w-lg text-lg text-pretty text-muted-foreground">
+                <p className="mt-5 max-w-lg text-base leading-7 text-pretty text-foreground/70 sm:text-lg">
                   {template.description}
                 </p>
                 <div className="mt-7">
@@ -110,14 +110,16 @@ export default async function TemplateDetailPage({ params, searchParams }: Templ
               </header>
 
               <section aria-labelledby="template-preview-heading" className="min-w-0">
-                <h2
-                  id="template-preview-heading"
-                  className={twx(tuiFont, "mb-3 text-muted-foreground")}
-                >
-                  Live form preview
-                </h2>
                 <div className="w-full rounded-xl border bg-background p-6 shadow-xl sm:p-8">
-                  <TemplatePreview schema={template.schema} />
+                  <h2
+                    id="template-preview-heading"
+                    className={twx(tuiFont, "border-b pb-4 text-foreground/60")}
+                  >
+                    Live form preview
+                  </h2>
+                  <div className="mt-6">
+                    <TemplatePreview schema={template.schema} />
+                  </div>
                 </div>
               </section>
             </div>
