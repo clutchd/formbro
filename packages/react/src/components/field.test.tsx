@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { Form } from "./form";
 
 const fieldTypes = [
+  "date",
   "email",
   "link",
   "long_text",

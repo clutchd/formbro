@@ -3,7 +3,7 @@ import { validateFormSubmission } from "@formbro/core/validation";
 import { fail, ok } from "@formbro/shared/result";
 import { getDocumentSize, v } from "convex/values";
 import type { Doc, Id } from "./_generated/dataModel";
-import { mutation, query, type MutationCtx } from "./_generated/server";
+import { mutation, query, type MutationCtx, type QueryCtx } from "./_generated/server";
 import { getFormAccess } from "./access";
 import { getUser } from "./auth";
 import { defineErrors } from "./errors";
@@ -190,6 +190,90 @@ export async function _createFromSlug(
   });
 }
 
+type SubmissionPage = {
+  label: string | null;
+  fields: Array<{
+    id: string;
+    label: string;
+    type: string | null;
+    value: string;
+  }>;
+};
+
+function buildSubmissionPages(form: CompiledForm | null, data: Record<string, unknown>) {
+  const seenFieldIds = new Set<string>();
+  const pages: SubmissionPage[] = (form?.pages ?? []).flatMap((page) => {
+    const fields = page.elements.flatMap((element) => {
+      if (element.category !== "field") return [];
+
+      seenFieldIds.add(element.id);
+      return [
+        {
+          id: element.id,
+          label: element.label ?? element.name,
+          type: element.type,
+          value: formatSubmissionValue(data[element.id]),
+        },
+      ];
+    });
+
+    return fields.length > 0
+      ? [
+          {
+            label: page.label ?? null,
+            fields,
+          },
+        ]
+      : [];
+  });
+
+  const unrecognizedFields = Object.entries(data).flatMap(([fieldId, value]) => {
+    if (seenFieldIds.has(fieldId)) return [];
+
+    return [
+      {
+        id: fieldId,
+        label: fieldId,
+        type: null,
+        value: formatSubmissionValue(value),
+      },
+    ];
+  });
+
+  if (unrecognizedFields.length > 0) {
+    pages.push({ label: "Other responses", fields: unrecognizedFields });
+  }
+
+  return pages;
+}
+
+async function getSubmissionFiles(
+  ctx: QueryCtx,
+  submissionId: Id<"submissions">,
+  fields: CompiledField[],
+  data: Record<string, unknown>,
+) {
+  const attachmentIds = collectFileStorageIds(fields, data);
+
+  return await Promise.all(
+    attachmentIds.map(async (attachmentId, index) => {
+      const fileId = attachmentId as Id<"_storage">;
+      const [url, metadata] = await Promise.all([
+        ctx.storage.getUrl(fileId),
+        ctx.db.system.get(fileId),
+      ]);
+
+      return {
+        id: fileId,
+        name: `submission-${submissionId}-${index + 1}`,
+        url,
+        size: metadata?.size ?? null,
+        contentType: metadata?.contentType ?? null,
+      };
+    }),
+  );
+}
+
 export const create = mutation({
   args: {
     formId: v.id("forms"),
@@ -280,25 +364,7 @@ export const list = query({
       submissions.map(async (submission) => {
         const form = formsBySchemaId.get(submission.schemaId);
         const fields = form ? getCompiledFields(form) : [];
-        const attachmentIds = collectFileStorageIds(fields, submission.data);
-
-        const files = await Promise.all(
-          attachmentIds.map(async (attachmentId, index) => {
-            const fileId = attachmentId as Id<"_storage">;
-            const [url, metadata] = await Promise.all([
-              ctx.storage.getUrl(fileId),
-              ctx.db.system.get(fileId),
-            ]);
-
-            return {
-              id: fileId,
-              name: `submission-${submission._id}-${index + 1}`,
-              url,
-              size: metadata?.size ?? null,
-              contentType: metadata?.contentType ?? null,
-            };
-          }),
-        );
+        const files = await getSubmissionFiles(ctx, submission._id, fields, submission.data);
 
         return {
           id: submission._id,
@@ -333,6 +399,44 @@ export const list = query({
         completed: rows.length,
         partial: 0,
         files: fileCount,
+      },
+    });
+  },
+});
+
+export const get = query({
+  args: {
+    formId: v.id("forms"),
+    submissionId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const formWithAccess = await getFormAccess(ctx, args.formId);
+    if (!formWithAccess.ok) return fail({ data: null, error: formWithAccess.error });
+
+    const submissionId = ctx.db.normalizeId("submissions", args.submissionId);
+    const submission = submissionId ? await ctx.db.get(submissionId) : null;
+
+    if (!submission || submission.formId !== args.formId) {
+      return fail({ data: null, error: ERRORS.SUBMISSION_NOT_FOUND });
+    }
+
+    const schemaDoc = await ctx.db.get(submission.schemaId);
+    const compiledForm = schemaDoc ? parseStoredForm(schemaDoc.schema) : null;
+    const fields = compiledForm ? getCompiledFields(compiledForm) : [];
+    const pages = buildSubmissionPages(compiledForm, submission.data);
+    const files = await getSubmissionFiles(ctx, submission._id, fields, submission.data);
+    const allFields = pages.flatMap((page) => page.fields);
+
+    return ok({
+      submission: {
+        id: submission._id,
+        submittedTime: submission.submittedTime,
+      },
+      pages,
+      files,
+      counts: {
+        fields: allFields.length,
+        answered: allFields.filter((field) => field.value !== "").length,
       },
     });
   },

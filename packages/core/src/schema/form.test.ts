@@ -121,6 +121,29 @@ describe("FormSchema", () => {
     );
   });
 
+  it("parses dates as ISO string fields", () => {
+    const parsed = FormSchema.parse({
+      id: "event",
+      name: "Event",
+      elements: [
+        {
+          id: "start_date",
+          name: "Start date",
+          type: "date",
+          label: "Start date",
+          default: "2026-08-19",
+          rules: [{ type: "required", value: true }],
+        },
+      ],
+    });
+
+    expect(parsed.elements[0]).toMatchObject({
+      category: "field",
+      default: "2026-08-19",
+      type: "date",
+    });
+  });
+
   it("rejects invalid ids", () => {
     expect(() =>
       FormSchema.parse({

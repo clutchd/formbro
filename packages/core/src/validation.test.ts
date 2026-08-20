@@ -204,4 +204,32 @@ describe("validateFormSubmission", () => {
 
     expect(validateFormSubmission(rulelessForm, {})).toEqual({ success: true });
   });
+
+  it("validates date fields as ISO calendar dates", () => {
+    const dateForm = compile({
+      id: "date_validation",
+      name: "Date validation",
+      elements: [
+        {
+          id: "start_date",
+          name: "Start date",
+          type: "date",
+          label: "Start date",
+          rules: [{ type: "required", value: true, event: "onSubmit" }],
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(dateForm, { start_date: "2026-08-19" })).toEqual({
+      success: true,
+    });
+    expect(validateFormSubmission(dateForm, { start_date: "2026-02-29" })).toEqual({
+      issues: [{ fieldId: "start_date", message: "Invalid ISO date" }],
+      success: false,
+    });
+    expect(validateFormSubmission(dateForm, { start_date: "August 19, 2026" })).toEqual({
+      issues: [{ fieldId: "start_date", message: "Invalid ISO date" }],
+      success: false,
+    });
+  });
 });

@@ -17,7 +17,7 @@ import { useMemo, useState } from "react";
 import { getRegistryVisual } from "../registry";
 
 const pickerGroups: Array<{ label: string; keys: RegistryKey[] }> = [
-  { label: "Questions", keys: ["short_text", "long_text", "number"] },
+  { label: "Questions", keys: ["short_text", "long_text", "number", "date"] },
   { label: "Choice", keys: ["single_select", "multi_select", "radio_group"] },
   { label: "Contact", keys: ["email", "link"] },
   { label: "Text/Layout", keys: ["heading", "description", "divider", "page_break"] },
