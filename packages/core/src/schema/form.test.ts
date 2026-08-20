@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { compile } from "../compile";
 import { createDefaultFormSchema, FormSchema, JsonParse, JsonSerialize } from "./form";
 
 describe("FormSchema", () => {
@@ -85,6 +86,39 @@ describe("FormSchema", () => {
       options: ["Fruit", "Salad", "Dessert"],
       type: "multi_select",
     });
+  });
+
+  it("rejects invalid multi-select defaults", () => {
+    const schema = (defaultValue: unknown) => ({
+      id: "preferences",
+      name: "Preferences",
+      elements: [
+        {
+          id: "tracks",
+          name: "Tracks",
+          type: "multi_select" as const,
+          label: "Tracks",
+          default: defaultValue,
+          options: ["Product", "Engineering"],
+        },
+      ],
+    });
+
+    expect(() => FormSchema.parse(schema("Product"))).toThrow(
+      "Multi select default must be an array of strings",
+    );
+    expect(() => FormSchema.parse(schema([1]))).toThrow(
+      "Multi select default must be an array of strings",
+    );
+    expect(() => FormSchema.parse(schema(["Design"]))).toThrow(
+      "Multi select default is not a configured option: Design",
+    );
+    expect(() => FormSchema.parse(schema(["Product", "Product"]))).toThrow(
+      "Multi select default must not contain duplicate options",
+    );
+    expect(() => compile(schema(["Design"]))).toThrow(
+      "Multi select default is not a configured option: Design",
+    );
   });
 
   it("rejects invalid ids", () => {

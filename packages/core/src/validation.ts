@@ -5,6 +5,12 @@ import { Registry } from "./registry";
 import { SYNC_EVENTS } from "./schema/event";
 
 type SyncFormEvent = (typeof SYNC_EVENTS)[number];
+const CHOICE_FIELD_TYPES = new Set<CompiledField["type"]>([
+  "single_select",
+  "multi_select",
+  "radio_group",
+]);
+const DEFAULT_CHOICE_OPTIONS = ["Option 1", "Option 2", "Option 3"];
 
 export type BuiltValidators = Map<string, Partial<Record<SyncFormEvent, z.ZodTypeAny>>>;
 
@@ -50,11 +56,23 @@ export function validateFormSubmission(
   }
 
   for (const field of fields) {
+    const submissionValidator = buildSubmissionValidator(field);
     const fieldValidators = validators.get(field.id);
-    if (!fieldValidators) continue;
-
     const emptyValue = field.type === "multi_select" ? [] : "";
     const value = valueForValidation(field, data[field.id] ?? emptyValue);
+
+    if (submissionValidator) {
+      const parsed = submissionValidator.safeParse(value);
+      if (!parsed.success) {
+        issues.push({
+          fieldId: field.id,
+          message: parsed.error.issues[0]?.message ?? `${field.label ?? field.name} is invalid`,
+        });
+        continue;
+      }
+    }
+
+    if (!fieldValidators) continue;
 
     for (const event of SYNC_EVENTS) {
       const validator = fieldValidators[event];
@@ -72,6 +90,34 @@ export function validateFormSubmission(
   }
 
   return issues.length > 0 ? { issues, success: false } : { success: true };
+}
+
+function buildSubmissionValidator(field: CompiledField): z.ZodTypeAny | undefined {
+  const baseValidator: z.ZodTypeAny | undefined = Registry[field.type]?.schema;
+  if (!baseValidator) return undefined;
+
+  const validator = toOptionalValidator(baseValidator);
+  if (!CHOICE_FIELD_TYPES.has(field.type)) return validator;
+
+  const validOptions = new Set(
+    (field.options?.length ? field.options : DEFAULT_CHOICE_OPTIONS).filter(
+      (option) => option.trim().length > 0,
+    ),
+  );
+  const configuredOptions = validOptions.size > 0 ? validOptions : new Set(DEFAULT_CHOICE_OPTIONS);
+
+  return validator.refine(
+    (value) => {
+      if (value === "" || value === undefined) return true;
+      const values = Array.isArray(value) ? value : [value];
+      return values.every(
+        (selected) => typeof selected === "string" && configuredOptions.has(selected),
+      );
+    },
+    {
+      message: `${field.label ?? field.name} must only include configured options`,
+    },
+  );
 }
 
 function buildFieldValidators(validatorPlan: CompiledValidator) {

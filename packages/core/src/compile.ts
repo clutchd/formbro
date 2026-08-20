@@ -9,7 +9,7 @@ import { FORMBRO_SCHEMA_VERSION } from "./schema/version";
 
 export function compile(schema: FormInput) {
   const parsed = FormSchema.parse(schema);
-  const interpolated = interpolate(parsed, parsed.variables);
+  const interpolated = FormSchema.parse(interpolate(parsed, parsed.variables));
   const formId = interpolated.id;
   const version = compileVersion(interpolated.version);
   const { defaults, events, elements, fieldIds, validators } = compileElements(

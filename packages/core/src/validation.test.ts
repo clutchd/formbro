@@ -118,5 +118,79 @@ describe("validateFormSubmission", () => {
       success: false,
     });
     expect(validateFormSubmission(multiSelectForm, { tracks: "Product" }).success).toBe(false);
+    expect(validateFormSubmission(multiSelectForm, { tracks: ["not-an-option"] })).toEqual({
+      issues: [
+        {
+          fieldId: "tracks",
+          message: "Choose tracks must only include configured options",
+        },
+      ],
+      success: false,
+    });
+  });
+
+  it("enforces field schemas and choice options without configured rules", () => {
+    const rulelessForm = compile({
+      id: "ruleless_validation",
+      name: "Ruleless validation",
+      elements: [
+        {
+          id: "title",
+          name: "Title",
+          type: "short_text",
+          label: "Title",
+        },
+        {
+          id: "priority",
+          name: "Priority",
+          type: "single_select",
+          label: "Priority",
+          options: ["Low", "High"],
+        },
+        {
+          id: "tracks",
+          name: "Tracks",
+          type: "multi_select",
+          label: "Tracks",
+          options: ["Product", "Engineering"],
+        },
+      ],
+    });
+
+    expect(
+      validateFormSubmission(rulelessForm, {
+        title: "Roadmap",
+        priority: "High",
+        tracks: ["Product"],
+      }),
+    ).toEqual({ success: true });
+
+    const invalidShapes = validateFormSubmission(rulelessForm, {
+      title: ["Roadmap"],
+      priority: ["High"],
+      tracks: "Product",
+    });
+    expect(invalidShapes.success).toBe(false);
+    if (!invalidShapes.success) {
+      expect(invalidShapes.issues.map((issue) => issue.fieldId)).toEqual([
+        "title",
+        "priority",
+        "tracks",
+      ]);
+    }
+
+    expect(
+      validateFormSubmission(rulelessForm, {
+        title: "Roadmap",
+        priority: "Urgent",
+        tracks: ["Design"],
+      }),
+    ).toEqual({
+      issues: [
+        { fieldId: "priority", message: "Priority must only include configured options" },
+        { fieldId: "tracks", message: "Tracks must only include configured options" },
+      ],
+      success: false,
+    });
   });
 });
