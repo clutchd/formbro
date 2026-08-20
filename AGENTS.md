@@ -29,6 +29,10 @@ We should not compromise on simplicity and good ux. We want to be pleasant to us
 - Less clicks to get to where you want to go
 - Minimize blocking states to let users perform actions asap
 
+### Contribution
+
+Commits should be clear and concise. All changes should be atomic and well-documented. Well-documented can just mean human-readable and human-friendly code.
+
 ### Security
 
 We want to make things convenient, but we don't want to be insecure. Be thoughtful about how things are implemented.

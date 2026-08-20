@@ -1,5 +1,6 @@
 "use client";
 
+import type { Id } from "@formbro/convex/_generated/dataModel";
 import { api } from "@formbro/convex/_generated/api";
 import { CREATE_WORKSPACE } from "@formbro/convex/system/forms/create_workspace";
 import { RiAddLine } from "@remixicon/react";
@@ -9,7 +10,13 @@ import * as React from "react";
 import { InternalDialogForm } from "@/components/internal-dialog-form";
 import { prewarmWorkspaceRoute } from "../[workspace]/_prewarm";
 
-export function CreateWorkspace({ children }: { children?: React.ReactNode }) {
+export function CreateWorkspace({
+  children,
+  onCreated,
+}: {
+  children?: React.ReactNode;
+  onCreated?: (data: { workspaceId: Id<"workspaces">; slug: string }) => void | Promise<void>;
+}) {
   const router = useRouter();
   const convex = useConvex();
   const createWorkspace = useMutation(api.workspace.create);
@@ -32,7 +39,11 @@ export function CreateWorkspace({ children }: { children?: React.ReactNode }) {
 
         return workspace;
       }}
-      onSuccess={({ data }) => {
+      onSuccess={async ({ data }) => {
+        if (onCreated) {
+          await onCreated(data);
+          return;
+        }
         router.push(`/dashboard/${data.slug}`);
       }}
       Icon={RiAddLine}

@@ -9,14 +9,12 @@ import { Form } from "@formbro/react/components/form";
 import { APP_NAME, TAGLINE } from "@formbro/shared/brand";
 import { Badge } from "@formbro/ui/badge";
 import { Button } from "@formbro/ui/button";
-import { Logo } from "@formbro/ui/logo";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@formbro/ui/tooltip";
 import {
   RiArrowRightLine,
   RiCheckboxCircleLine,
   RiFullscreenExitLine,
   RiFullscreenLine,
-  RiGithubFill,
   RiRefreshLine,
   RiSparklingLine,
   type RemixiconComponentType,
@@ -32,8 +30,8 @@ import {
   type RefObject,
   type SetStateAction,
 } from "react";
-import { ThemeIcon, useToggleTheme } from "@/components/theme";
 import { useDashboardPrewarmIntent } from "./(shell)/(app)/dashboard/(dashboard)/_data-provider";
+import { LandingPage } from "./landing-chrome";
 
 type BuilderTemplate = {
   id: string;
@@ -102,7 +100,6 @@ const POSITIONING_FEATURES = [
       "Required fields, page breaks, draft publishing, workspace members, and response history are built in.",
   },
 ];
-const COPYRIGHT_YEAR = 2026;
 const BUILDER_DEMO_STEP_DELAY_MS = 620;
 const BUILDER_DEMO_BETWEEN_STEP_DELAY_MS = 160;
 
@@ -590,64 +587,16 @@ export function HomePage() {
   const dashboardPrewarmIntent = useDashboardPrewarmIntent({ eager: true });
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-background">
-      <LandingHeader
+    <LandingPage>
+      <HeroSection
         isAuthenticated={isAuthenticated}
         dashboardPrewarmIntent={dashboardPrewarmIntent}
       />
-      <main>
-        <HeroSection
-          isAuthenticated={isAuthenticated}
-          dashboardPrewarmIntent={dashboardPrewarmIntent}
-        />
-        <WorkflowSection />
-        <PositioningSection />
-        <IntegrationsSection />
-        <PricingSection isAuthenticated={isAuthenticated} />
-      </main>
-      <LandingFooter />
-    </div>
-  );
-}
-
-function LandingHeader({
-  isAuthenticated,
-  dashboardPrewarmIntent,
-}: {
-  isAuthenticated: boolean;
-  dashboardPrewarmIntent: LinkIntent;
-}) {
-  return (
-    <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-5 sm:px-8">
-      <Link href="/" aria-label="FormBro home">
-        <Logo />
-      </Link>
-      <nav className="hidden items-center gap-6 font-mono text-xs tracking-wider text-muted-foreground uppercase md:flex">
-        <Link href="#builder" className="hover:text-foreground">
-          Builder
-        </Link>
-        <Link href="#workflow" className="hover:text-foreground">
-          Workflow
-        </Link>
-        <Link href="#pricing" className="hover:text-foreground">
-          Pricing
-        </Link>
-      </nav>
-      {isAuthenticated ? (
-        <Button asChild variant="outline">
-          <Link {...dashboardPrewarmIntent}>Dashboard</Link>
-        </Button>
-      ) : (
-        <div className="flex items-center gap-2">
-          <Button asChild variant="link" className="hidden sm:inline-flex">
-            <Link href="/sign-in">Sign in</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/sign-up">Start for free</Link>
-          </Button>
-        </div>
-      )}
-    </header>
+      <WorkflowSection />
+      <PositioningSection />
+      <IntegrationsSection />
+      <PricingSection isAuthenticated={isAuthenticated} />
+    </LandingPage>
   );
 }
 
@@ -1312,41 +1261,5 @@ function PlanCard({ plan }: { plan: PlanDetails }) {
         ))}
       </div>
     </article>
-  );
-}
-
-function LandingFooter() {
-  const { isDark, toggle } = useToggleTheme();
-
-  return (
-    <footer className="border-t bg-muted/30">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-5 py-8 sm:px-8 md:flex-row md:items-center md:justify-between">
-        <div>
-          <Logo className="text-xl" />
-          <p className="mt-2 text-sm text-muted-foreground">
-            © {COPYRIGHT_YEAR} Clutchd, LLC. {TAGLINE}
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Button asChild variant="outline" size="dense">
-            <Link href="https://github.com/clutchd/formbro" target="_blank" rel="noreferrer">
-              <RiGithubFill className="size-4" />
-              GitHub
-            </Link>
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="dense"
-            onClick={toggle}
-            aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
-          >
-            <ThemeIcon />
-            {isDark ? "Light mode" : "Dark mode"}
-          </Button>
-        </div>
-      </div>
-    </footer>
   );
 }

@@ -54,11 +54,17 @@ export default defineSchema({
     draftSchemaId: v.optional(v.id("formSchemas")),
     publishedSchemaId: v.optional(v.id("formSchemas")),
     status: v.union(v.literal("draft"), v.literal("open"), v.literal("closed")),
+    sourceKind: v.optional(
+      v.union(v.literal("blank"), v.literal("template"), v.literal("duplicate")),
+    ),
+    sourceTemplateId: v.optional(v.string()),
+    sourceTemplateVersion: v.optional(v.number()),
   })
     .index("by_slug", ["slug"])
     .index("by_workspace_and_slug", ["workspaceId", "slug"])
     .index("by_workspace", ["workspaceId"])
-    .index("by_workspace_and_status", ["workspaceId", "status"]),
+    .index("by_workspace_and_status", ["workspaceId", "status"])
+    .index("by_source_template", ["sourceTemplateId"]),
 
   formSchemas: defineTable({
     formId: v.id("forms"),
