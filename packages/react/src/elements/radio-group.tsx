@@ -13,7 +13,7 @@ export const component = function RadioGroupComponent({ schema, ariaInvalid }: I
     Array.isArray(schema.options) && schema.options.length > 0
       ? schema.options
       : ["Option 1", "Option 2", "Option 3"];
-  const validOptions = options.filter((option) => option.trim().length > 0);
+  const validOptions = [...new Set(options.filter((option) => option.trim().length > 0))];
   const fallbackOptions =
     validOptions.length > 0 ? validOptions : ["Option 1", "Option 2", "Option 3"];
   const selectedValue =

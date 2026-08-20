@@ -16,7 +16,7 @@ describe("Form", () => {
           label: "Will you attend?",
           description: "Choose one response.",
           default: "No",
-          options: ["Yes", "No"],
+          options: ["Yes", "No", "Yes"],
           rules: [{ type: "required", value: true }],
         },
       ],
@@ -27,6 +27,7 @@ describe("Form", () => {
     expect(html).toContain('data-slot="radio-group"');
     expect(html).toContain('data-state="checked" value="No"');
     expect(html).toContain('name="attendance" value="Yes"');
+    expect(html.match(/name="attendance" value="Yes"/g)).toHaveLength(1);
     expect(html).toMatch(/name="attendance" (?:checked="" )?value="No"/);
   });
 });
