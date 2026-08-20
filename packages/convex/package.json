@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "bun --env-file=../../.env convex dev",
     "studio": "bun convex dashboard",
+    "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -29,9 +30,13 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@edge-runtime/vm": "5.0.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
-    "typescript": "catalog:"
+    "convex-test": "0.0.56",
+    "typescript": "catalog:",
+    "vite": "8.0.8",
+    "vitest": "4.1.4"
   }
 }
