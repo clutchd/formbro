@@ -58,6 +58,14 @@ describe("form editor schema helpers", () => {
       options: ["Option 1", "Option 2", "Option 3"],
       type: "radio_group",
     });
+
+    expect(createFormElementDraft({ id: "extras", type: "multi_select" })).toMatchObject({
+      id: "extras",
+      label: "Choose one or more",
+      name: "Multi Select",
+      options: ["Option 1", "Option 2", "Option 3"],
+      type: "multi_select",
+    });
   });
 
   it("converts element type while preserving useful author state", () => {
@@ -100,9 +108,30 @@ describe("form editor schema helpers", () => {
     expect(convertFormElementDraftType({ element: source, type: "radio_group" })).toMatchObject({
       options: ["A", "B"],
     });
+    expect(convertFormElementDraftType({ element: source, type: "multi_select" })).toMatchObject({
+      options: ["A", "B"],
+    });
     expect(convertFormElementDraftType({ element: source, type: "short_text" })).not.toHaveProperty(
       "options",
     );
+  });
+
+  it("only preserves defaults with the target field's value shape", () => {
+    const source: FormElementInput = {
+      id: "roles",
+      name: "Roles",
+      type: "multi_select",
+      label: "Roles",
+      default: ["Reviewer"],
+      options: ["Author", "Reviewer"],
+    };
+
+    expect(convertFormElementDraftType({ element: source, type: "multi_select" })).toMatchObject({
+      default: ["Reviewer"],
+    });
+    expect(
+      convertFormElementDraftType({ element: source, type: "single_select" }),
+    ).not.toHaveProperty("default");
   });
 
   it("declares editor preview and properties for every registry item", () => {

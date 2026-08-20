@@ -13,6 +13,7 @@ import { SubmissionValue } from "./schema";
 import { isSystemFormSlug } from "./system/initialize";
 
 const FILE_FIELD_TYPES = new Set(["file_upload"]);
+type SubmissionData = Record<string, string | string[]>;
 
 export const ERRORS = defineErrors({
   SUBMISSION_NOT_FOUND: {
@@ -109,7 +110,7 @@ async function _insertSubmission(
   }: {
     form: Doc<"forms">;
     schemaId: Id<"formSchemas">;
-    data: Record<string, string>;
+    data: SubmissionData;
   },
 ) {
   const submittedTime = Date.now();
@@ -136,7 +137,7 @@ export async function _createSubmission(
   args: {
     formId: Id<"forms">;
     schemaId: Id<"formSchemas">;
-    data: Record<string, string>;
+    data: SubmissionData;
   },
 ) {
   const schema = await ctx.db.get(args.schemaId);
@@ -175,7 +176,7 @@ export async function _createSubmission(
 
 export async function _createFromSlug(
   ctx: MutationCtx,
-  args: { slug: string; data: Record<string, string> },
+  args: { slug: string; data: SubmissionData },
 ) {
   const form = await ctx.db
     .query("forms")

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "bun:test";
+import { compile } from "../compile";
 import { createDefaultFormSchema, FormSchema, JsonParse, JsonSerialize } from "./form";
 
 describe("FormSchema", () => {
@@ -60,6 +61,64 @@ describe("FormSchema", () => {
       options: ["Very satisfied", "Satisfied", "Not satisfied"],
       type: "radio_group",
     });
+  });
+
+  it("parses multi selects as array-valued choice fields", () => {
+    const parsed = FormSchema.parse({
+      id: "preferences",
+      name: "Preferences",
+      elements: [
+        {
+          id: "dietary_extras",
+          name: "Dietary extras",
+          type: "multi_select",
+          label: "Which extras would you like?",
+          default: ["Fruit"],
+          options: ["Fruit", "Salad", "Dessert"],
+          rules: [{ type: "required", value: true }],
+        },
+      ],
+    });
+
+    expect(parsed.elements[0]).toMatchObject({
+      category: "field",
+      default: ["Fruit"],
+      options: ["Fruit", "Salad", "Dessert"],
+      type: "multi_select",
+    });
+  });
+
+  it("rejects invalid multi-select defaults", () => {
+    const schema = (defaultValue: unknown) => ({
+      id: "preferences",
+      name: "Preferences",
+      elements: [
+        {
+          id: "tracks",
+          name: "Tracks",
+          type: "multi_select" as const,
+          label: "Tracks",
+          default: defaultValue,
+          options: ["Product", "Engineering"],
+        },
+      ],
+    });
+
+    expect(() => FormSchema.parse(schema("Product"))).toThrow(
+      "Multi select default must be an array of strings",
+    );
+    expect(() => FormSchema.parse(schema([1]))).toThrow(
+      "Multi select default must be an array of strings",
+    );
+    expect(() => FormSchema.parse(schema(["Design"]))).toThrow(
+      "Multi select default is not a configured option: Design",
+    );
+    expect(() => FormSchema.parse(schema(["Product", "Product"]))).toThrow(
+      "Multi select default must not contain duplicate options",
+    );
+    expect(() => compile(schema(["Design"]))).toThrow(
+      "Multi select default is not a configured option: Design",
+    );
   });
 
   it("parses dates as ISO string fields", () => {

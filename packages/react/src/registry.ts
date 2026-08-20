@@ -17,6 +17,7 @@ import * as email from "./elements/email";
 import * as heading from "./elements/heading";
 import * as link from "./elements/link";
 import * as long_text from "./elements/long-text";
+import * as multi_select from "./elements/multi-select";
 import * as number from "./elements/number";
 import * as page_break from "./elements/page-break";
 import * as phone from "./elements/phone";
@@ -36,6 +37,7 @@ export const FieldComponents = {
   email: email,
   link: link,
   long_text: long_text,
+  multi_select: multi_select,
   number: number,
   phone: phone,
   radio_group: radio_group,

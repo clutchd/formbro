@@ -258,9 +258,9 @@ Shared field properties:
 - label: string or boolean (boolean controls whether the label is shown)
 - description: optional helper text
 - placeholder: optional input placeholder
-- default: optional default value
+- default: optional default value (a string array for multi_select; a scalar for other fields)
 - orientation: optional "vertical" | "horizontal" | "responsive"
-- options: required string array for single_select fields
+- options: required string array for single_select, multi_select, and radio_group fields
 - rules: optional validation rules supported by the field type
 
 Layout elements:

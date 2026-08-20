@@ -181,6 +181,35 @@ describe("compile", () => {
     });
   });
 
+  it("validates multi-select defaults after interpolation", () => {
+    const schema = {
+      id: "preferences",
+      name: "Preferences",
+      variables: {
+        primary: "Product",
+        secondary: "Engineering",
+      },
+      elements: [
+        {
+          id: "tracks",
+          name: "Tracks",
+          type: "multi_select" as const,
+          label: "Tracks",
+          default: ["{{primary}}", "{{secondary}}"],
+          options: ["{{primary}}", "{{secondary}}"],
+        },
+      ],
+    };
+
+    expect(compile(schema).defaults).toEqual({ tracks: ["Product", "Engineering"] });
+    expect(() =>
+      compile({
+        ...schema,
+        variables: { primary: "Product", secondary: "Product" },
+      }),
+    ).toThrow("Multi select default must not contain duplicate options");
+  });
+
   it("throws when a listener source cannot be resolved", () => {
     expect(() =>
       compile({

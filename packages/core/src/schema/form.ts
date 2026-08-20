@@ -95,8 +95,7 @@ export function JsonParse(schema: string) {
   return FormSchema.parse(JSON.parse(schema));
 }
 
-export type FormValues<T extends FormInput = FormInput> = ExtractFormData<T> &
-  Record<string, string>;
+export type FormValues<T extends FormInput = FormInput> = ExtractFormData<T>;
 export type FormActionResult<TData = undefined, TError = unknown> =
   | { ok: true; data: TData }
   | {
@@ -140,6 +139,8 @@ export type FormOnError<T extends FormInput = FormInput> = ({
 }) => void;
 
 export type FormFieldAriaAttributes = {
+  "aria-label"?: string;
+  "aria-labelledby"?: string;
   "aria-describedby"?: string;
   "aria-invalid"?: boolean | "false" | "true" | "grammar" | "spelling";
   "aria-required"?: boolean | "false" | "true";

@@ -3,12 +3,13 @@ import type { FormEvent } from "./schema/event";
 import type { FormLabel } from "./schema/label";
 import type { FormListener } from "./schema/listener";
 import type { FormRule } from "./schema/rule";
+import { Registry } from "./registry";
 import { type FormInput, FormSchema } from "./schema/form";
 import { FORMBRO_SCHEMA_VERSION } from "./schema/version";
 
 export function compile(schema: FormInput) {
   const parsed = FormSchema.parse(schema);
-  const interpolated = interpolate(parsed, parsed.variables);
+  const interpolated = FormSchema.parse(interpolate(parsed, parsed.variables));
   const formId = interpolated.id;
   const version = compileVersion(interpolated.version);
   const { defaults, events, elements, fieldIds, validators } = compileElements(
@@ -69,6 +70,11 @@ function compileLabel(label: FormLabel, fallback?: string): string | undefined {
 
 function compileField(field: Extract<ReturnType<typeof compileElement>, { category: "field" }>) {
   const { default: defaultValue, rules, label, ...rest } = field;
+  const registryItem = Registry[field.type];
+  const registryDefault = "default" in registryItem ? registryItem.default : "";
+  const fallbackDefault = Array.isArray(registryDefault)
+    ? [...registryDefault]
+    : (registryDefault ?? "");
 
   let required = false;
 
@@ -90,7 +96,7 @@ function compileField(field: Extract<ReturnType<typeof compileElement>, { catego
   return {
     ...rest,
     label: compileLabel(label, field.name),
-    default: defaultValue ?? "",
+    default: defaultValue ?? fallbackDefault,
     events,
     required,
   };

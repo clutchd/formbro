@@ -475,6 +475,42 @@ const single_select = field({
   schema: z.string(),
 });
 
+const multi_select = field({
+  key: "multi_select",
+  display: "Multi Select",
+  description: "Visible checkbox options for selecting multiple choices",
+  default: [],
+  editor: {
+    defaults: {
+      label: "Choose one or more",
+      options: ["Option 1", "Option 2", "Option 3"],
+    },
+    preview: {
+      control: "multi_select",
+    },
+    properties: [
+      { key: "label", label: "Question", control: "text", placeholder: "Question" },
+      {
+        key: "description",
+        label: "Helper text",
+        control: "text",
+        placeholder: "Optional helper text",
+      },
+      {
+        key: "options",
+        label: "Options",
+        control: "options",
+        placeholder: "Option 1\nOption 2\nOption 3",
+        section: "content",
+        span: "full",
+      },
+      { key: "required", label: "Required", control: "rule", section: "validation" },
+    ],
+  },
+  rules: ["required"],
+  schema: z.array(z.string()),
+});
+
 const radio_group = field({
   key: "radio_group",
   display: "Radio Group",
@@ -520,6 +556,7 @@ export const FieldRegistry = fields([
   phone,
   short_text,
   single_select,
+  multi_select,
   radio_group,
 ]);
 export type ElementRegistryItem = (typeof ElementRegistry)[number];

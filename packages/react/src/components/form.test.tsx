@@ -78,4 +78,30 @@ describe("Form", () => {
     expect(html.match(/name="attendance" value="Yes"/g)).toHaveLength(1);
     expect(html).toMatch(/name="attendance" (?:checked="" )?value="No"/);
   });
+
+  it("renders a controlled multi select with array defaults", () => {
+    const schema = {
+      id: "tracks_preview",
+      name: "Tracks preview",
+      elements: [
+        {
+          id: "tracks",
+          name: "Tracks",
+          type: "multi_select",
+          label: "Choose tracks",
+          description: "Choose every relevant track.",
+          default: ["Product", "Design"],
+          options: ["Product", "Engineering", "Design", "Product"],
+          rules: [{ type: "required", value: true }],
+        },
+      ],
+    } as const satisfies FormInput;
+
+    const html = renderToStaticMarkup(<Form schema={schema} preview />);
+
+    expect(html.match(/data-slot="checkbox"/g)).toHaveLength(3);
+    expect(html.match(/data-slot="checkbox-indicator"/g)).toHaveLength(2);
+    expect(html).toContain('role="group"');
+    expect(html).toContain('aria-required="true"');
+  });
 });

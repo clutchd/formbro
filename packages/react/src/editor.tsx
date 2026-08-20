@@ -380,6 +380,8 @@ function PreviewControl({
         </div>
       );
     }
+    case "multi_select":
+      return <EditorMultiSelectPreview element={element as FormFieldInput} />;
     case "radio_group":
       return <EditorRadioGroupPreview element={element as FormFieldInput} />;
     case "select":
@@ -495,6 +497,27 @@ export function EditorRadioGroupPreview({ element }: { element: FormFieldInput }
       {fallbackOptions.map((option) => (
         <div key={option} className="flex items-center gap-3">
           <span className="size-4 shrink-0 rounded-full border border-input bg-background" />
+          <span className="text-sm leading-normal">{option}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function EditorMultiSelectPreview({ element }: { element: FormFieldInput }) {
+  const options =
+    Array.isArray(element.options) && element.options.length > 0
+      ? element.options
+      : ["Option 1", "Option 2", "Option 3"];
+  const validOptions = [...new Set(options.filter((option) => option.trim().length > 0))];
+  const fallbackOptions =
+    validOptions.length > 0 ? validOptions : ["Option 1", "Option 2", "Option 3"];
+
+  return (
+    <div className="grid gap-3" aria-hidden="true">
+      {fallbackOptions.map((option) => (
+        <div key={option} className="flex items-center gap-3">
+          <span className="size-4 shrink-0 rounded-[4px] border border-input bg-background" />
           <span className="text-sm leading-normal">{option}</span>
         </div>
       ))}
