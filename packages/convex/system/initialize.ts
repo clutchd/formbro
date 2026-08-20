@@ -38,14 +38,7 @@ export const SYSTEM_FORMS = {
 export type SystemFormSlug = keyof typeof SYSTEM_FORMS;
 
 export function isSystemFormSlug(slug: string): slug is SystemFormSlug {
-  switch (slug) {
-    case CREATE_WORKSPACE.slug:
-    case CREATE_FORM.slug:
-    case INVITE_MEMBER.slug:
-      return true;
-    default:
-      return false;
-  }
+  return Object.hasOwn(SYSTEM_FORMS, slug);
 }
 
 export const init = internalMutation({
