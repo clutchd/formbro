@@ -1,71 +1,50 @@
 # FormBro Agent Guide
 
-Read the code to understand what's going on, yes even node_modules.
-
-## Mission
-
 FormBro is the open-source form platform for serious workflows.
 
-## Philosophy
+## Working Agreement
 
-We have a few philosophies we should always honor:
+- Inspect the existing implementation, tests, and types before changing behavior. Read dependency source when its contract is material; do not guess from memory.
+- Preserve unrelated user changes and keep each change focused on the requested outcome.
+- Use Bun and the existing workspace scripts. Prefer existing dependencies and patterns unless a new dependency has a clear benefit.
+- Keep progress and handoff messages concise. Report outcomes, verification, risks, and blockers; omit routine tool narration.
 
-### Performance above all else
+## Product Priorities
 
-When in doubt, do the thing that makes the app feel the fastest to use.
+- Performance: avoid waterfalls, parallelize independent work, and use optimistic updates with a clear rollback path.
+- Good defaults: prefer safe behavior that needs less configuration.
+- Convenience: minimize clicks and blocking states without weakening security.
 
-- Optimistic updates
-- Avoiding waterfalls
-- etc.
+## Durable Invariants
 
-### Good defaults
+- Form and element IDs are stable identity. Never derive them from mutable names, labels, placeholders, or interpolated text.
+- Private Convex operations must authorize workspace or form access before returning or mutating protected data.
+- Public submissions must target an open form and its current published schema.
+- Never send secrets or form submission contents to logs, analytics, or error-reporting tools.
 
-Users should expect things to behave well by default. Less config is best.
+## Repository Map
 
-### Convenience
+- `packages/core`: durable schemas, compilation, and validation.
+- `packages/react`: React form rendering and builder behavior.
+- `packages/ui`: generic interactive UI primitives.
+- `packages/convex`: authentication, persistence, billing, and server workflows.
+- `packages/web`: the Next.js application and product UI.
+- `packages/email`: transactional and marketing email UI.
+- `packages/storybook`: UI documentation and visual checks.
 
-We should not compromise on simplicity and good ux. We want to be pleasant to use with as little friction as possible.
+## Task-Specific Guidance
 
-- Less clicks to get to where you want to go
-- Minimize blocking states to let users perform actions asap
+- Before changing user-facing UI, read `docs/design.md`.
+- Before changing the core form contract, read `packages/core/README.md`.
+- Before every commit, load and follow `.agents/skills/commit/SKILL.md`. This is the canonical commit policy for every agent and tool.
 
-### Contribution
+## Verification
 
-Commits should be clear and concise. All changes should be atomic and well-documented. Well-documented can just mean human-readable and human-friendly code.
+- Add or update regression tests for behavior changes.
+- During iteration, run the smallest relevant test and typecheck commands.
+- Before handing off code changes, run `bun run verify`. If it cannot run, state exactly what was skipped and why.
 
-### Security
+## Git
 
-We want to make things convenient, but we don't want to be insecure. Be thoughtful about how things are implemented.
-
-## Design Language
-
-The best of two worlds conveyed with two distinct stlyes. An interface that feels **percise** without being cold, and **approachable** without being generic.
-
-- **Technical:** Monospace typography, uppercase tracking, sharp edges, information density, percision and performance.
-- **Modern:** Rounded interactive elements, generous whitespace, soft palette, comfort and ease of use for non-technical users.
-
-### Typography
-
-- **Headings**: font display (Manrope) bold, tight tracking
-- **Body**: font default (Inter), regular weight, clean and readable
-- **Monospace**: font mono (Geist Mono), extra small, uppercase, tracking wide. For technical information, stats, and metadata.
-
-### Borders
-
-- Strong contrasting borders
-- Sharp corners for informational and decorative elements (badges, status labels, empty state icons, metrics, etc.)
-- Rounded corners for interactive and container elements (buttons, inputs, cards, dialogs, dropdowns, avatars, etc.)
-- Never use sharp corners on something the user clicks. Never round an element that just displays information.
-
-### Spacing
-
-- Clear visual hierarchy through spacing
-- Generous padding (p-6 to p-8 typical)
-- Tight spacing for dense information (gap-4)
-- Consistent vertical rhythm (space-y-4)
-
-### Forms
-
-- Colors should be neutral and standard, leveraging browser defaults.
-- We explicitly want to opt out of the default color palette and use the "best practices for webforms".
-- Forms should feel native on any website. No brand colors, no custom accents.
+- Do not commit or push unless the user or an invoked command explicitly requests it.
+- Keep commits atomic: one coherent intent, including its tests and documentation, per commit.
