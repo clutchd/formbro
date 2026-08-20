@@ -9,7 +9,7 @@ import { getUser } from "./auth";
 import { defineErrors } from "./errors";
 import { ERRORS as FORM_ERRORS } from "./forms";
 import { SubmissionValue } from "./schema";
-import { isSystemFormSlug } from "./system/initialize";
+import { isSystemFormSlug } from "./system/registry";
 
 const FILE_FIELD_TYPES = new Set(["file_upload"]);
 

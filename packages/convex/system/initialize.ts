@@ -12,9 +12,9 @@ import {
   generateSlug,
   type WorkspaceMember,
 } from "../workspace";
-import { CREATE_FORM } from "./forms/create_form";
-import { CREATE_WORKSPACE } from "./forms/create_workspace";
-import { INVITE_MEMBER } from "./forms/invite_member";
+import { SYSTEM_FORMS, type SystemFormSlug } from "./registry";
+
+export { isSystemFormSlug, SYSTEM_FORMS, type SystemFormSlug } from "./registry";
 
 const ERRORS = defineErrors({
   SYSTEM_OWNER_NOT_FOUND: {
@@ -29,24 +29,6 @@ const ERRORS = defineErrors({
 
 const SYSTEM_WORKSPACE_NAME = APP_NAME;
 const SYSTEM_WORKSPACE_SLUG = generateSlug(SYSTEM_WORKSPACE_NAME);
-export const SYSTEM_FORMS = {
-  [CREATE_WORKSPACE.slug]: CREATE_WORKSPACE,
-  [CREATE_FORM.slug]: CREATE_FORM,
-  [INVITE_MEMBER.slug]: INVITE_MEMBER,
-} as const;
-
-export type SystemFormSlug = keyof typeof SYSTEM_FORMS;
-
-export function isSystemFormSlug(slug: string): slug is SystemFormSlug {
-  switch (slug) {
-    case CREATE_WORKSPACE.slug:
-    case CREATE_FORM.slug:
-    case INVITE_MEMBER.slug:
-      return true;
-    default:
-      return false;
-  }
-}
 
 export const init = internalMutation({
   args: {},
