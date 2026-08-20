@@ -2,10 +2,10 @@
 
 import type { Properties } from "posthog-js";
 import type { PropsWithChildren } from "react";
-import posthog from "posthog-js";
 import { PostHogProvider as Provider } from "posthog-js/react";
 import { useEffect, useRef } from "react";
 import { useSession } from "@/lib/auth/client";
+import { initializePosthog, posthog } from "./posthog-init";
 
 const IDENTIFIED_USER_STORAGE_KEY = "formbro.posthog.identified_user_id";
 
@@ -63,12 +63,18 @@ type AnalyticsUser = {
 };
 
 export function identifyAnalyticsUser(user: AnalyticsUser) {
-  posthog.identify(user.id, personProperties(user));
+  const client = initializePosthog();
+  if (!client) return;
+
+  client.identify(user.id, personProperties(user));
   identifiedStorageSet(user.id);
 }
 
 export function resetAnalytics() {
-  posthog.reset();
+  const client = initializePosthog();
+  if (!client) return;
+
+  client.reset();
   identifiedStorageClear();
 }
 
@@ -83,6 +89,7 @@ function PosthogIdentity() {
 
   useEffect(() => {
     if (isPending) return;
+    if (!initializePosthog()) return;
 
     if (!userId) {
       if (identifiedUserIdRef.current || identifiedStorageGet()) {
@@ -115,5 +122,5 @@ export function PosthogProvider({ children }: PropsWithChildren) {
 }
 
 export function captureClientException(error: unknown, properties?: Properties) {
-  posthog.captureException(error, properties);
+  initializePosthog()?.captureException(error, properties);
 }

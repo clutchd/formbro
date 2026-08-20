@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
 import { APP_DESCRIPTION, APP_NAME, APP_URL } from "@formbro/shared/brand";
 import { fonts } from "@formbro/ui/typography";
-import { Toaster } from "@/components/sonner";
 import { ThemeProvider } from "@/components/theme";
-import { PosthogProvider } from "@/lib/posthog";
 import "./globals.css";
 
 const ogImage = {
@@ -44,12 +42,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
   return (
     <html lang="en" className={`${fonts.join(" ")} size-full antialiased`} suppressHydrationWarning>
       <body className="flex min-h-screen flex-1 flex-col">
-        <ThemeProvider>
-          <PosthogProvider>
-            {children}
-            <Toaster />
-          </PosthogProvider>
-        </ThemeProvider>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );
