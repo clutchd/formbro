@@ -29,6 +29,13 @@ describe("form editor schema helpers", () => {
       type: "email",
     });
 
+    expect(createFormElementDraft({ id: "event_date", type: "date" })).toMatchObject({
+      id: "event_date",
+      label: "Date",
+      name: "Date",
+      type: "date",
+    });
+
     expect(createFormElementDraft({ id: "heading", type: "heading" })).toMatchObject({
       id: "heading",
       label: "New heading",

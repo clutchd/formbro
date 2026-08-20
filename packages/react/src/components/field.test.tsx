@@ -2,7 +2,15 @@ import { describe, expect, it } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Form } from "./form";
 
-const fieldTypes = ["email", "link", "long_text", "number", "short_text", "single_select"] as const;
+const fieldTypes = [
+  "date",
+  "email",
+  "link",
+  "long_text",
+  "number",
+  "short_text",
+  "single_select",
+] as const;
 
 describe("Field ARIA attributes", () => {
   for (const type of fieldTypes) {
