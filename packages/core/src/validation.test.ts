@@ -66,4 +66,27 @@ describe("validateFormSubmission", () => {
       ]);
     }
   });
+
+  it("validates required radio groups", () => {
+    const radioForm = compile({
+      id: "radio_validation",
+      name: "Radio validation",
+      elements: [
+        {
+          id: "attendance",
+          name: "Attendance",
+          type: "radio_group",
+          label: "Will you attend?",
+          options: ["Yes", "No"],
+          rules: [{ type: "required", value: true, event: "onSubmit" }],
+        },
+      ],
+    });
+
+    expect(validateFormSubmission(radioForm, { attendance: "Yes" })).toEqual({ success: true });
+    expect(validateFormSubmission(radioForm, { attendance: "" })).toEqual({
+      issues: [{ fieldId: "attendance", message: "Will you attend? is required" }],
+      success: false,
+    });
+  });
 });

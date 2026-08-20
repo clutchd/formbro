@@ -8,7 +8,7 @@ import { useFieldContext } from "../hooks/tanstack-context";
 export const icon = RiLinkM;
 export const color = "bg-cyan-100 text-cyan-600";
 
-export const component = function LinkComponent({ schema, ariaInvalid }: IFieldProps) {
+export const component = function LinkComponent({ schema, ...ariaProps }: IFieldProps) {
   const field = useFieldContext<string>();
 
   return (
@@ -21,7 +21,7 @@ export const component = function LinkComponent({ schema, ariaInvalid }: IFieldP
       value={field.state.value ?? ""}
       onChange={(e) => field.handleChange(e.target.value)}
       onBlur={field.handleBlur}
-      aria-invalid={ariaInvalid}
+      {...ariaProps}
     />
   );
 };

@@ -141,5 +141,9 @@ export type FormOnError<T extends FormInput = FormInput> = ({
 
 export interface IFieldProps {
   schema: CompiledField;
-  ariaInvalid?: boolean;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
+  "aria-label"?: string;
+  "aria-labelledby"?: string;
+  "aria-required"?: boolean;
 }

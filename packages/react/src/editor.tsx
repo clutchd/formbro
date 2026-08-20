@@ -24,6 +24,7 @@ import {
   RiSettings3Line,
 } from "@remixicon/react";
 import * as React from "react";
+import { getChoiceOptions } from "./elements/choice-options";
 
 export type EditorTransformOption = {
   color?: string;
@@ -151,14 +152,9 @@ function getEditorOptionsText(element: FormFieldInput) {
 }
 
 function setEditorOptions(element: FormFieldInput, value: string): FormFieldInput {
-  const options = value.split("\n").flatMap((option) => {
-    const trimmed = option.trim();
-    return trimmed ? [trimmed] : [];
-  });
-
   return {
     ...element,
-    options: options.length > 0 ? options : ["Option 1"],
+    options: value.split("\n"),
   };
 }
 
@@ -380,6 +376,8 @@ function PreviewControl({
         </div>
       );
     }
+    case "radio_group":
+      return <EditorRadioGroupPreview element={element as FormFieldInput} />;
     case "select":
       return (
         <EditorSelectPreview
@@ -475,6 +473,21 @@ export function EditorSelectPreview({
     <div className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-1 text-sm text-muted-foreground">
       <span>{element.placeholder || fallbackPlaceholder}</span>
       <RiArrowDownSLine className="size-4" />
+    </div>
+  );
+}
+
+export function EditorRadioGroupPreview({ element }: { element: FormFieldInput }) {
+  const options = getChoiceOptions(element.options);
+
+  return (
+    <div className="grid gap-3" aria-hidden="true">
+      {options.map((option) => (
+        <div key={option} className="flex items-center gap-3">
+          <span className="size-4 shrink-0 rounded-full border border-input bg-background" />
+          <span className="text-sm leading-normal">{option}</span>
+        </div>
+      ))}
     </div>
   );
 }
