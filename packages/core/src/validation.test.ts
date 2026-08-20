@@ -45,6 +45,27 @@ describe("validateFormSubmission", () => {
         count: "3",
       }),
     ).toEqual({ success: true });
+
+    expect(
+      validateFormSubmission(form, {
+        email: "hello@example.com",
+        notes: "hello",
+        count: 3,
+      }),
+    ).toEqual({ success: true });
+  });
+
+  it("rejects invalid non-numeric types for number fields", () => {
+    expect(
+      validateFormSubmission(form, {
+        email: "hello@example.com",
+        notes: "hello",
+        count: true,
+      }),
+    ).toEqual({
+      issues: [{ fieldId: "count", message: "Count must be a number or numeric string" }],
+      success: false,
+    });
   });
 
   it("rejects invalid values and unknown fields", () => {

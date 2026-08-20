@@ -62,10 +62,16 @@ export function validateFormSubmission(
         });
         continue;
       }
-    } else if (typeof rawValue !== "string") {
+    } else if (
+      typeof rawValue !== "string" &&
+      !(field.type === "number" && typeof rawValue === "number")
+    ) {
       issues.push({
         fieldId: field.id,
-        message: `${field.label ?? field.name} must be a string`,
+        message:
+          field.type === "number"
+            ? `${field.label ?? field.name} must be a number or numeric string`
+            : `${field.label ?? field.name} must be a string`,
       });
       continue;
     }
