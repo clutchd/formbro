@@ -12,7 +12,7 @@ import {
 import { buildValidators } from "@formbro/core/validation";
 import { useCallback, useMemo } from "react";
 import { buildListeners } from "../utils/build-listeners";
-import { useAppForm } from "./tanstack";
+import { type TanStackForm, useAppForm } from "./tanstack";
 
 function stringifyValues<T extends FormInput>(value: Record<string, unknown>) {
   return Object.fromEntries(
@@ -53,11 +53,11 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
   preview = false,
   schema,
 }: {
-  action?: FormAction<T, TData>;
+  action?: FormAction<T, TData, TanStackForm>;
   compiledSchema?: CompiledForm;
-  onMutate?: FormOnMutate<T>;
-  onSuccess?: FormOnSuccess<T, TData>;
-  onError?: FormOnError<T>;
+  onMutate?: FormOnMutate<T, TanStackForm>;
+  onSuccess?: FormOnSuccess<T, TData, TanStackForm>;
+  onError?: FormOnError<T, TanStackForm>;
   instrumentation?: UseFormInstrumentation<T, TData>;
   disabled?: boolean;
   preview?: boolean;
@@ -69,7 +69,7 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
     return compile(schema);
   }, [compiledSchema, schema]);
 
-  const tanstack = useAppForm({
+  const tanstack: TanStackForm = useAppForm({
     defaultValues: compiled.defaults,
     onSubmit: async ({ value }) => {
       if (disabled || preview) {
@@ -84,8 +84,10 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
 
       try {
         instrumentation?.onSubmitStart?.({ form: compiled, values: stringValues });
-        const mutatedValues = onMutate ? onMutate({ values: stringValues }) : stringValues;
-        const result = await action({ values: mutatedValues });
+        const mutatedValues = onMutate
+          ? onMutate({ values: stringValues, tanstack })
+          : stringValues;
+        const result = await action({ values: mutatedValues, tanstack });
 
         if (!result.ok) {
           const error = "error" in result ? result.error : result;
@@ -95,7 +97,7 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
             values: stringValues,
             error,
           });
-          onError?.({ error });
+          onError?.({ error, tanstack });
           return;
         }
 
@@ -106,14 +108,14 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
           values: stringValues,
           data,
         });
-        onSuccess?.({ result: stringValues, data });
+        onSuccess?.({ result: stringValues, data, tanstack });
       } catch (error) {
         instrumentation?.onSubmitError?.({
           form: compiled,
           values: stringValues,
           error,
         });
-        onError?.({ error });
+        onError?.({ error, tanstack });
       }
     },
   });

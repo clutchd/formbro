@@ -20,17 +20,20 @@ import {
 } from "@remixicon/react";
 import * as React from "react";
 import { useEffect, useState } from "react";
+import type { TanStackForm } from "../hooks/tanstack";
 import { type UseFormInstrumentation, useForm } from "../hooks/use-form";
 import { Page } from "./page";
+
+export type { TanStackForm } from "../hooks/tanstack";
 
 export type FormProps<T extends FormInput = FormInput, TData = unknown> = {
   schema: T;
   compiledSchema?: never;
   className?: string;
-  action?: FormAction<T, TData>;
-  onMutate?: FormOnMutate<T>;
-  onSuccess?: FormOnSuccess<T, TData>;
-  onError?: FormOnError<T>;
+  action?: FormAction<T, TData, TanStackForm>;
+  onMutate?: FormOnMutate<T, TanStackForm>;
+  onSuccess?: FormOnSuccess<T, TData, TanStackForm>;
+  onError?: FormOnError<T, TanStackForm>;
   instrumentation?: UseFormInstrumentation<T, TData>;
   onPercentChange?: (percent: number) => void;
   disabled?: boolean;
@@ -69,11 +72,11 @@ export function Form<T extends FormInput = FormInput, TData = unknown>({
   }
 
   const state = useForm<T, TData>({
-    action: action as FormAction<T, TData> | undefined,
+    action: action as FormAction<T, TData, TanStackForm> | undefined,
     compiledSchema,
-    onMutate: onMutate as FormOnMutate<T> | undefined,
-    onSuccess: onSuccess as FormOnSuccess<T, TData> | undefined,
-    onError: onError as FormOnError<T> | undefined,
+    onMutate: onMutate as FormOnMutate<T, TanStackForm> | undefined,
+    onSuccess: onSuccess as FormOnSuccess<T, TData, TanStackForm> | undefined,
+    onError: onError as FormOnError<T, TanStackForm> | undefined,
     instrumentation: instrumentation as UseFormInstrumentation<T, TData> | undefined,
     disabled,
     preview,
