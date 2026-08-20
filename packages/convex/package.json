@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "deploy:vercel": "bun convex deploy --cmd 'cd ../.. && bunx turbo run build --filter=@formbro/web' --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL && if [ \"$VERCEL_ENV\" = \"production\" ]; then bun convex run system/initialize:init --prod; else bun convex run system/initialize:init --preview-name \"$VERCEL_GIT_COMMIT_REF\"; fi",
+    "deploy:vercel": "bun convex deploy --cmd 'cd ../.. && bunx turbo run build --filter=@formbro/web' --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL && if [ \"$VERCEL_ENV\" = \"production\" ]; then : \"${CONVEX_SYSTEM_INIT_KEY:?CONVEX_SYSTEM_INIT_KEY must allow deployment:functions:runInternalMutations}\" && CONVEX_DEPLOY_KEY=\"$CONVEX_SYSTEM_INIT_KEY\" bun convex run system/initialize:init --prod; fi",
     "dev": "bun --env-file=../../.env convex dev",
     "studio": "bun convex dashboard",
     "typecheck": "tsc -p tsconfig.json --noEmit"
