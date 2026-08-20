@@ -144,6 +144,29 @@ describe("FormSchema", () => {
     });
   });
 
+  it("parses phone numbers as string fields", () => {
+    const parsed = FormSchema.parse({
+      id: "contact",
+      name: "Contact",
+      elements: [
+        {
+          id: "phone",
+          name: "Phone",
+          type: "phone",
+          label: "Phone",
+          default: "+1 (415) 555-0100",
+          rules: [{ type: "required", value: true }],
+        },
+      ],
+    });
+
+    expect(parsed.elements[0]).toMatchObject({
+      category: "field",
+      default: "+1 (415) 555-0100",
+      type: "phone",
+    });
+  });
+
   it("rejects invalid ids", () => {
     expect(() =>
       FormSchema.parse({

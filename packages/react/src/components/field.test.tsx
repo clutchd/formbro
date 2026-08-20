@@ -9,6 +9,7 @@ const fieldTypes = [
   "long_text",
   "multi_select",
   "number",
+  "phone",
   "short_text",
   "single_select",
 ] as const;

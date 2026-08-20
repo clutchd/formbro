@@ -1,6 +1,7 @@
 "use client";
 
 import { type CompiledForm, compile } from "@formbro/core/compile";
+import { normalizeSubmissionValues } from "@formbro/core/normalization";
 import {
   type FormAction,
   type FormInput,
@@ -86,7 +87,7 @@ export function useForm<T extends FormInput = FormInput, TData = unknown>({
         return;
       }
 
-      const formValues = serializeFormValues<T>(value);
+      const formValues = serializeFormValues<T>(normalizeSubmissionValues(compiled, value));
 
       try {
         instrumentation?.onSubmitStart?.({ form: compiled, values: formValues });

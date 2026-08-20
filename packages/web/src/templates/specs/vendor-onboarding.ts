@@ -2,7 +2,7 @@ import type { TemplateDefinition } from "../types";
 
 export const template: TemplateDefinition = {
   id: "vendor_onboarding",
-  version: 1,
+  version: 2,
   description: "Collect vendor identity, services, and payment terms for accounting review.",
   category: "application",
   tags: ["vendors", "accounting", "onboarding"],
@@ -49,6 +49,13 @@ export const template: TemplateDefinition = {
             value: true,
           },
         ],
+      },
+      {
+        id: "vendor_contact_phone",
+        name: "Accounts payable phone",
+        type: "phone",
+        label: "Accounts payable phone",
+        placeholder: "+1 555 123 4567",
       },
       {
         id: "tax_classification",

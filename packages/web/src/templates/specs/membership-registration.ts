@@ -2,7 +2,7 @@ import type { TemplateDefinition } from "../types";
 
 export const template: TemplateDefinition = {
   id: "membership_registration",
-  version: 1,
+  version: 2,
   description: "Register a new member with contact details and membership type.",
   category: "registration",
   tags: ["membership", "clubs"],
@@ -48,6 +48,13 @@ export const template: TemplateDefinition = {
             value: true,
           },
         ],
+      },
+      {
+        id: "member_phone",
+        name: "Phone",
+        type: "phone",
+        label: "Phone",
+        placeholder: "+1 555 123 4567",
       },
       {
         id: "membership_type",

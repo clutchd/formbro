@@ -20,6 +20,7 @@ import * as long_text from "./elements/long-text";
 import * as multi_select from "./elements/multi-select";
 import * as number from "./elements/number";
 import * as page_break from "./elements/page-break";
+import * as phone from "./elements/phone";
 import * as radio_group from "./elements/radio-group";
 import * as short_text from "./elements/short-text";
 import * as single_select from "./elements/single-select";
@@ -38,6 +39,7 @@ export const FieldComponents = {
   long_text: long_text,
   multi_select: multi_select,
   number: number,
+  phone: phone,
   radio_group: radio_group,
   single_select: single_select,
   short_text: short_text,

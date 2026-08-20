@@ -1,4 +1,5 @@
 import { compile, type CompiledField, type CompiledForm } from "@formbro/core/compile";
+import { normalizeSubmissionValues } from "@formbro/core/normalization";
 import { validateFormSubmission } from "@formbro/core/validation";
 import { fail, ok } from "@formbro/shared/result";
 import { getDocumentSize, v } from "convex/values";
@@ -164,12 +165,13 @@ export async function _createSubmission(
   const compiled = parseStoredForm(schema.schema);
   if (!compiled) return fail({ data: null, error: FORM_ERRORS.SCHEMA_INVALID });
 
-  const validation = validateFormSubmission(compiled, args.data);
+  const data = normalizeSubmissionValues(compiled, args.data);
+  const validation = validateFormSubmission(compiled, data);
   if (!validation.success) {
     return fail({ data: null, error: ERRORS.SUBMISSION_INVALID });
   }
 
-  return ok(await _insertSubmission(ctx, { form, schemaId: schema._id, data: args.data }));
+  return ok(await _insertSubmission(ctx, { form, schemaId: schema._id, data }));
 }
 
 export async function _createFromSlug(

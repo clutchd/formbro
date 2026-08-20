@@ -2,7 +2,7 @@ import type { TemplateDefinition } from "../types";
 
 export const template: TemplateDefinition = {
   id: "course_registration",
-  version: 1,
+  version: 2,
   description: "Sign students up for a course with contact details and schedule preference.",
   category: "registration",
   tags: ["education", "courses"],
@@ -48,6 +48,13 @@ export const template: TemplateDefinition = {
             value: true,
           },
         ],
+      },
+      {
+        id: "student_phone",
+        name: "Student phone",
+        type: "phone",
+        label: "Student phone",
+        placeholder: "+1 555 123 4567",
       },
       {
         id: "course",
