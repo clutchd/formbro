@@ -47,7 +47,7 @@ export function Field({
       {(field) => {
         const LabelContent = label ?? schema.label;
         const Label = LabelContent && (
-          <FieldLabel id={`${schema.id}-label`} htmlFor={schema.id}>
+          <FieldLabel htmlFor={schema.id}>
             <span className="inline-flex items-center gap-1">
               {LabelContent}
               {schema.required && (
@@ -59,7 +59,7 @@ export function Field({
           </FieldLabel>
         );
         const Description = schema.description && (
-          <FieldDescription id={`${schema.id}-description`}>{schema.description}</FieldDescription>
+          <FieldDescription>{schema.description}</FieldDescription>
         );
 
         const hasErrors = field.state.meta.errors.length > 0;
@@ -90,15 +90,12 @@ export function Field({
                 schema={schema}
                 aria-invalid={errored}
                 aria-required={schema.required}
-                aria-label={Label ? undefined : schema.name}
-                aria-labelledby={Label ? `${schema.id}-label` : undefined}
                 aria-describedby={
-                  [
-                    schema.description ? `${schema.id}-description` : undefined,
-                    errored ? `${schema.id}-error` : undefined,
-                  ]
-                    .filter(Boolean)
-                    .join(" ") || undefined
+                  errored
+                    ? `${schema.id}-error`
+                    : schema.description
+                      ? `${schema.id}-description`
+                      : undefined
                 }
               />
             </div>
@@ -120,7 +117,7 @@ export function Field({
                   hasErrors && (
                     <>
                       <RiErrorWarningLine className="mt-0.5 size-4 shrink-0 text-destructive" />
-                      <FieldError id={`${schema.id}-error`} errors={field.state.meta.errors} />
+                      <FieldError errors={field.state.meta.errors} />
                     </>
                   )
                 ))}

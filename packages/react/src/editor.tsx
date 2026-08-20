@@ -24,7 +24,6 @@ import {
   RiSettings3Line,
 } from "@remixicon/react";
 import * as React from "react";
-import { getChoiceOptions } from "./elements/choice-options";
 
 export type EditorTransformOption = {
   color?: string;
@@ -152,9 +151,14 @@ function getEditorOptionsText(element: FormFieldInput) {
 }
 
 function setEditorOptions(element: FormFieldInput, value: string): FormFieldInput {
+  const options = value.split("\n").flatMap((option) => {
+    const trimmed = option.trim();
+    return trimmed ? [trimmed] : [];
+  });
+
   return {
     ...element,
-    options: value.split("\n"),
+    options: options.length > 0 ? options : ["Option 1"],
   };
 }
 
@@ -478,11 +482,17 @@ export function EditorSelectPreview({
 }
 
 export function EditorRadioGroupPreview({ element }: { element: FormFieldInput }) {
-  const options = getChoiceOptions(element.options);
+  const options =
+    Array.isArray(element.options) && element.options.length > 0
+      ? element.options
+      : ["Option 1", "Option 2", "Option 3"];
+  const validOptions = options.filter((option) => option.trim().length > 0);
+  const fallbackOptions =
+    validOptions.length > 0 ? validOptions : ["Option 1", "Option 2", "Option 3"];
 
   return (
     <div className="grid gap-3" aria-hidden="true">
-      {options.map((option) => (
+      {fallbackOptions.map((option) => (
         <div key={option} className="flex items-center gap-3">
           <span className="size-4 shrink-0 rounded-full border border-input bg-background" />
           <span className="text-sm leading-normal">{option}</span>

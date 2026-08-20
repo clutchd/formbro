@@ -6,7 +6,7 @@ import { useFieldContext } from "../hooks/tanstack-context";
 export const icon = RiText;
 export const color = "bg-orange-100 text-orange-600";
 
-export const component = function LongTextComponent({ schema, ...ariaProps }: IFieldProps) {
+export const component = function LongTextComponent({ schema, ariaInvalid }: IFieldProps) {
   const field = useFieldContext<string>();
 
   return (
@@ -18,7 +18,7 @@ export const component = function LongTextComponent({ schema, ...ariaProps }: IF
       value={field.state.value ?? ""}
       onChange={(e) => field.handleChange(e.target.value)}
       onBlur={field.handleBlur}
-      {...ariaProps}
+      aria-invalid={ariaInvalid}
     />
   );
 };

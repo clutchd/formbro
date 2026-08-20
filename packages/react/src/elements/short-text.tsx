@@ -6,7 +6,7 @@ import { useFieldContext } from "../hooks/tanstack-context";
 export const icon = RiInputField;
 export const color = "bg-rose-100 text-rose-600";
 
-export const component = function ShortTextComponent({ schema, ...ariaProps }: IFieldProps) {
+export const component = function ShortTextComponent({ schema, ariaInvalid }: IFieldProps) {
   const field = useFieldContext<string>();
 
   return (
@@ -19,7 +19,7 @@ export const component = function ShortTextComponent({ schema, ...ariaProps }: I
       value={field.state.value ?? ""}
       onChange={(e) => field.handleChange(e.target.value)}
       onBlur={field.handleBlur}
-      {...ariaProps}
+      aria-invalid={ariaInvalid}
     />
   );
 };

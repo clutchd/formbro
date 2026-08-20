@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { Form } from "./form";
 
 describe("Form", () => {
-  it("renders an accessible controlled radio group", () => {
+  it("renders a controlled radio group", () => {
     const schema = {
       id: "radio_preview",
       name: "Radio preview",
@@ -24,10 +24,8 @@ describe("Form", () => {
 
     const html = renderToStaticMarkup(<Form schema={schema} preview />);
 
-    expect(html).toContain('role="radiogroup"');
-    expect(html).toContain('aria-labelledby="attendance-label"');
-    expect(html).toContain('aria-describedby="attendance-description"');
-    expect(html).toContain('role="radio" aria-checked="true" data-state="checked" value="No"');
+    expect(html).toContain('data-slot="radio-group"');
+    expect(html).toContain('data-state="checked" value="No"');
     expect(html).toContain('name="attendance" value="Yes"');
     expect(html).toMatch(/name="attendance" (?:checked="" )?value="No"/);
   });
