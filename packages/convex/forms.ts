@@ -207,7 +207,7 @@ export const create = mutation({
     }
 
     const [_created, _published] = await Promise.all([
-      await _createForm({
+      _createForm({
         ctx,
         workspaceId: args.workspaceId,
         slug: reserved.data.slug,
@@ -217,7 +217,7 @@ export const create = mutation({
         sourceTemplateVersion,
       }),
 
-      await _createFromSlug(ctx, {
+      _createFromSlug(ctx, {
         slug: CREATE_FORM.slug,
         data: { name: args.name },
       }),

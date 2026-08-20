@@ -34,7 +34,6 @@ export function SortableEditorBlock({
   selected: boolean;
 }) {
   const item = Registry[element.type as RegistryKey];
-  const visual = getRegistryVisual(element.type);
   const Editor = getRegistryEditor(element.type);
   const {
     attributes,

@@ -366,7 +366,7 @@ export const create = mutation({
     }
 
     const [created, _published] = await Promise.all([
-      await _createWorkspace({
+      _createWorkspace({
         ctx,
         name: args.name,
         owner: {
@@ -376,7 +376,7 @@ export const create = mutation({
           avatarUrl: profile.image,
         },
       }),
-      await _createFromSlugSubmission(ctx, {
+      _createFromSlugSubmission(ctx, {
         slug: CREATE_WORKSPACE.slug,
         data: { name: args.name },
       }),
